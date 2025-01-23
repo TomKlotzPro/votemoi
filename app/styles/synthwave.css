@@ -1,0 +1,108 @@
+/* Synthwave Theme */
+:root {
+  --synthwave-bg: #1a1b26;
+  --synthwave-card-bg: rgba(30, 31, 45, 0.95);
+  --synthwave-text: #f0f0f0;
+  --synthwave-primary: #ff79c6;
+  --synthwave-secondary: #bd93f9;
+  --synthwave-accent: #50fa7b;
+  --synthwave-error: #ff5555;
+}
+
+/* Base styles */
+body {
+  background-color: var(--synthwave-bg);
+  color: var(--synthwave-text);
+  background-image: 
+    linear-gradient(0deg, rgba(26, 27, 38, 0.9), rgba(26, 27, 38, 0.9)),
+    url('/grid.svg');
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+/* Card styles */
+.synthwave-card {
+  background: var(--synthwave-card-bg);
+  border: 1px solid rgba(255, 121, 198, 0.2);
+  box-shadow: 0 0 20px rgba(255, 121, 198, 0.15);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.synthwave-card:hover {
+  border-color: rgba(255, 121, 198, 0.4);
+  box-shadow: 0 0 30px rgba(255, 121, 198, 0.25);
+}
+
+/* Input styles */
+.synthwave-input {
+  background: rgba(40, 42, 54, 0.8);
+  border: 1px solid rgba(255, 121, 198, 0.2);
+  color: var(--synthwave-text);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.synthwave-input:focus {
+  outline: none;
+  border-color: var(--synthwave-primary);
+  box-shadow: 0 0 10px rgba(255, 121, 198, 0.25);
+}
+
+.synthwave-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Button styles */
+.synthwave-button {
+  background: linear-gradient(45deg, var(--synthwave-primary), var(--synthwave-secondary));
+  color: var(--synthwave-text);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.synthwave-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 15px rgba(255, 121, 198, 0.4);
+}
+
+.synthwave-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.synthwave-button.bg-gray-500 {
+  background: linear-gradient(45deg, #4a5568, #718096);
+}
+
+.synthwave-button.bg-red-500 {
+  background: linear-gradient(45deg, #f56565, #e53e3e);
+}
+
+/* Text effects */
+.glow-text {
+  color: var(--synthwave-text);
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+/* Loading animation */
+.synthwave-loading {
+  border: 3px solid rgba(255, 121, 198, 0.1);
+  border-top: 3px solid var(--synthwave-primary);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
