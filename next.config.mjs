@@ -2,7 +2,7 @@
 const nextConfig = {
   experimental: {
     serverActions: true,
-    serverComponentsExternalPackages: ['undici'],
+    serverComponentsExternalPackages: ['undici', 'node-fetch'],
   },
   images: {
     domains: ['*'],
