@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "NODE_OPTIONS='--experimental-fetch' prisma generate && prisma migrate deploy && next build",
+  "buildCommand": "prisma generate && prisma migrate deploy && next build",
   "installCommand": "npm install",
   "framework": "nextjs",
   "builds": [
@@ -8,8 +8,5 @@
       "src": "package.json",
       "use": "@vercel/next"
     }
-  ],
-  "env": {
-    "NODE_OPTIONS": "--experimental-fetch"
-  }
+  ]
 }

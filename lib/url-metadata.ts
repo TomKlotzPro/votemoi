@@ -1,4 +1,3 @@
-import 'isomorphic-fetch';
 import { load } from 'cheerio';
 import { getLinkPreview } from 'link-preview-js';
 

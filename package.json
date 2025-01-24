@@ -11,9 +11,7 @@
     "start": "NODE_OPTIONS='--experimental-fetch' next start",
     "lint": "next lint",
     "prisma:seed": "npx ts-node prisma/seed.ts",
-    "postinstall": "prisma generate",
-    "predev": "node -r isomorphic-fetch/register",
-    "prebuild": "node -r isomorphic-fetch/register"
+    "postinstall": "prisma generate"
   },
   "prisma": {
     "seed": "npx ts-node prisma/seed.ts"
@@ -25,7 +23,6 @@
     "@vercel/postgres": "^0.10.0",
     "cheerio": "^1.0.0-rc.12",
     "framer-motion": "^12.0.3",
-    "isomorphic-fetch": "^3.0.0",
     "link-preview-js": "^3.0.13",
     "next": "15.1.6",
     "next-themes": "^0.4.4",
