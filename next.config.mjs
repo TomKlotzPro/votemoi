@@ -22,6 +22,11 @@ const nextConfig = {
         tls: false,
       };
     }
+    config.module.rules.push({
+      test: /\.js$/,
+      include: /node_modules/,
+      type: 'javascript/auto',
+    });
     return config;
   },
 };

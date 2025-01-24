@@ -7,11 +7,12 @@
   },
   "scripts": {
     "dev": "NODE_OPTIONS='--experimental-fetch' next dev",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "NODE_OPTIONS='--experimental-fetch' next start",
     "lint": "next lint",
     "prisma:seed": "npx ts-node prisma/seed.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "vercel-build": "prisma generate && prisma db push && next build"
   },
   "prisma": {
     "seed": "npx ts-node prisma/seed.ts"
