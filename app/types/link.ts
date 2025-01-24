@@ -39,7 +39,11 @@ export interface Comment {
   link: Pick<Link, 'id' | 'url' | 'title'>;
 }
 
-export interface FormattedLink extends Omit<Link, 'createdAt' | 'updatedAt' | 'createdBy' | 'votes' | 'comments'> {
+export interface FormattedLink
+  extends Omit<
+    Link,
+    'createdAt' | 'updatedAt' | 'createdBy' | 'votes' | 'comments'
+  > {
   createdAt: string;
   updatedAt: string;
   createdBy: Pick<User, 'id' | 'name' | 'avatarUrl'>;
@@ -47,12 +51,19 @@ export interface FormattedLink extends Omit<Link, 'createdAt' | 'updatedAt' | 'c
   comments: FormattedComment[];
 }
 
-export interface FormattedVote extends Omit<Vote, 'createdAt' | 'user' | 'link'> {
+export interface FormattedVote {
+  userId: string;
+  userName: string;
   createdAt: string;
-  user: Pick<User, 'id' | 'name' | 'avatarUrl'>;
+  user: {
+    id: string;
+    name: string;
+    avatarUrl: string;
+  };
 }
 
-export interface FormattedComment extends Omit<Comment, 'createdAt' | 'updatedAt' | 'user' | 'link'> {
+export interface FormattedComment
+  extends Omit<Comment, 'createdAt' | 'updatedAt' | 'user' | 'link'> {
   createdAt: string;
   updatedAt: string;
   user: Pick<User, 'id' | 'name' | 'avatarUrl'>;

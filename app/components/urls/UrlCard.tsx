@@ -1,11 +1,11 @@
 'use client';
 
-import Image from 'next/image';
 import { useUser } from '@/app/context/user-context';
-import { fr } from '@/app/translations/fr';
-import { Tooltip } from '../common/Tooltip';
-import { Url } from '@/app/types/url';
 import { useUrls } from '@/app/hooks/useUrls';
+import { fr } from '@/app/translations/fr';
+import { Url } from '@/app/types/url';
+import Image from 'next/image';
+import { Tooltip } from '../common/Tooltip';
 
 interface UrlCardProps {
   url: Url;
@@ -19,9 +19,7 @@ export default function UrlCard({ url }: UrlCardProps) {
     <div className="card p-6">
       <div className="flex items-start gap-4">
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-lg break-words">
-            {url.title}
-          </h3>
+          <h3 className="font-medium text-lg break-words">{url.title}</h3>
           <a
             href={url.url}
             target="_blank"
@@ -34,7 +32,9 @@ export default function UrlCard({ url }: UrlCardProps) {
             <button
               onClick={() => voteForUrl(url.id)}
               className="button-secondary text-sm"
-              disabled={!user || url.votes.some((vote) => vote.userId === user.id)}
+              disabled={
+                !user || url.votes.some((vote) => vote.userId === user.id)
+              }
             >
               {url.votes.length} {fr.urls.votes}
             </button>
@@ -52,9 +52,7 @@ export default function UrlCard({ url }: UrlCardProps) {
                 </Tooltip>
               ))}
               {url.votes.length > 3 && (
-                <Tooltip
-                  content={`${url.votes.length - 3} more`}
-                >
+                <Tooltip content={`${url.votes.length - 3} more`}>
                   <div className="w-6 h-6 rounded-full bg-[var(--primary)]/20 flex items-center justify-center text-xs font-medium">
                     +{url.votes.length - 3}
                   </div>

@@ -1,15 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { LOADING_MESSAGES } from '@/app/constants/avatars';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import AvatarPreloader from './AvatarPreloader';
 
 interface LoadingScreenProps {
   onLoadingComplete: () => void;
 }
 
-export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps) {
+export default function LoadingScreen({
+  onLoadingComplete,
+}: LoadingScreenProps) {
   const [progress, setProgress] = useState(0);
   const [messageIndex, setMessageIndex] = useState(0);
   const [avatarsLoaded, setAvatarsLoaded] = useState(false);
@@ -23,7 +25,7 @@ export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps)
     const increment = 100 / steps;
 
     const progressInterval = setInterval(() => {
-      setProgress(prev => {
+      setProgress((prev) => {
         const next = Math.min(prev + increment, 100);
         if (next >= 100) {
           clearInterval(progressInterval);
@@ -35,7 +37,7 @@ export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps)
     }, interval);
 
     const messageInterval = setInterval(() => {
-      setMessageIndex(prev => (prev + 1) % LOADING_MESSAGES.length);
+      setMessageIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
     }, 400);
 
     return () => {

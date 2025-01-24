@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
+import { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET() {
   try {
     const cookieStore = await cookies();
     const sessionId = cookieStore.get('session_id')?.value;
-    
+
     if (!sessionId) {
       return NextResponse.json({ user: null });
     }
@@ -25,12 +25,12 @@ export async function GET() {
 
     const sessionData = session[0];
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       user: {
         id: sessionData.userId,
         name: sessionData.user.name,
         avatarUrl: sessionData.user.avatarUrl,
-      }
+      },
     });
   } catch (error) {
     console.error('Error fetching session:', error);
@@ -43,7 +43,10 @@ export async function POST(request: NextRequest) {
     const { userId } = await request.json();
 
     if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'User ID is required' },
+        { status: 400 }
+      );
     }
 
     const user = await prisma.user.findUnique({
@@ -64,7 +67,10 @@ export async function POST(request: NextRequest) {
     `;
 
     if (!session || !Array.isArray(session) || session.length === 0) {
-      return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to create session' },
+        { status: 500 }
+      );
     }
 
     const sessionData = session[0];
@@ -78,16 +84,19 @@ export async function POST(request: NextRequest) {
       expires: expiresAt,
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       user: {
         id: user.id,
         name: user.name,
         avatarUrl: user.avatarUrl,
-      }
+      },
     });
   } catch (error) {
     console.error('Error creating session:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
@@ -95,7 +104,7 @@ export async function DELETE() {
   try {
     const cookieStore = await cookies();
     const sessionId = cookieStore.get('session_id')?.value;
-    
+
     if (sessionId) {
       await prisma.$queryRaw`
         UPDATE "Session"
@@ -108,6 +117,9 @@ export async function DELETE() {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error ending session:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

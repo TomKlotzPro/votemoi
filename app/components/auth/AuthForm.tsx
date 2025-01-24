@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { AVATAR_OPTIONS } from '@/app/constants/avatars';
+import { useUsers } from '@/app/hooks/useUsersClient';
 import { fr } from '@/app/translations/fr';
 import { User } from '@/app/types/user';
-import { useUsers } from '@/app/hooks/useUsersClient';
+import { useState } from 'react';
 import ErrorMessage from '../common/ErrorMessage';
 import SafeImage from '../ui/SafeImage';
-import { AVATAR_OPTIONS } from '@/app/constants/avatars';
 
 interface AuthFormProps {
   onSuccess: (user: User) => void;
@@ -30,14 +30,18 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
 
     try {
       const trimmedName = name.trim();
-      
+
       if (!trimmedName) {
         setError(fr.errors.nameRequired);
         setIsSubmitting(false);
         return;
       }
 
-      if (users.some(user => user.name.toLowerCase() === trimmedName.toLowerCase())) {
+      if (
+        users.some(
+          (user) => user.name.toLowerCase() === trimmedName.toLowerCase()
+        )
+      ) {
         setError(fr.errors.nameExists);
         setIsSubmitting(false);
         return;
@@ -54,7 +58,7 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
         votes: [],
         comments: [],
         createdAt: new Date(response.createdAt),
-        updatedAt: new Date(response.updatedAt)
+        updatedAt: new Date(response.updatedAt),
       };
 
       onSuccess(newUser);
@@ -90,9 +94,7 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="w-full max-w-md mx-auto bg-black/80 backdrop-blur-lg rounded-lg border border-white/10 p-6">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-white">
-            {fr.common.welcome}
-          </h2>
+          <h2 className="text-2xl font-bold text-white">{fr.common.welcome}</h2>
           <button
             onClick={onClose}
             className="text-white/60 hover:text-white transition-colors"
@@ -125,9 +127,7 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
           </button>
         </div>
 
-        {error && (
-          <ErrorMessage message={error} className="mb-4" />
-        )}
+        {error && <ErrorMessage message={error} className="mb-4" />}
 
         {mode === 'select' ? (
           <div className="grid gap-4">
@@ -156,7 +156,10 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-white/80 mb-2">
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-white/80 mb-2"
+              >
                 {fr.common.name}
               </label>
               <input
@@ -186,9 +189,10 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
                       group relative aspect-square rounded-lg overflow-hidden
                       transition-all duration-300 ease-out transform
                       hover:scale-105 hover:shadow-lg hover:z-10
-                      ${selectedAvatar === avatar
-                        ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-black scale-105 rotate-3'
-                        : 'ring-1 ring-white/10 hover:ring-white/30'
+                      ${
+                        selectedAvatar === avatar
+                          ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-black scale-105 rotate-3'
+                          : 'ring-1 ring-white/10 hover:ring-white/30'
                       }
                     `}
                   >

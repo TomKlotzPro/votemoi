@@ -1,4 +1,3 @@
-import { Link, Vote, Comment } from './link';
 
 export interface BaseUser {
   id: string;
@@ -12,9 +11,13 @@ export interface User extends BaseUser {
   links: Link[];
   votes: Vote[];
   comments: Comment[];
+  email: string | null;
 }
 
-export interface FormattedUser extends BaseUser {
+export interface FormattedUser {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -25,7 +28,7 @@ export function formatUser(user: User): FormattedUser {
     name: user.name,
     avatarUrl: user.avatarUrl,
     createdAt: user.createdAt.toISOString(),
-    updatedAt: user.updatedAt.toISOString()
+    updatedAt: user.updatedAt.toISOString(),
   };
 }
 

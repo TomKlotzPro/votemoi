@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET() {
   try {
@@ -26,7 +26,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const { name } = await request.json();
-    
+
     if (!name) {
       return NextResponse.json(
         { error: 'Name is required', user: null },

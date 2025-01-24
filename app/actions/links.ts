@@ -1,15 +1,9 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { db } from '@/app/lib/db';
-import { Link, User, Vote, Comment } from '@prisma/client';
 import { fetchUrlMetadata } from '@/lib/url-metadata';
-
-type LinkWithRelations = Link & {
-  createdBy: Pick<User, 'id' | 'name' | 'avatarUrl'>;
-  votes: Array<Vote & { user: Pick<User, 'name' | 'id' | 'avatarUrl'> }>;
-  comments: Array<Comment & { user: Pick<User, 'id' | 'name' | 'avatarUrl'> }>;
-};
+import { revalidatePath } from 'next/cache';
+import { Comment, User} from '@prisma/client';
 
 type FormattedLink = {
   id: string;
@@ -38,7 +32,7 @@ type FormattedLink = {
       id: string;
       name: string;
       avatarUrl: string;
-    }
+    };
   }>;
   comments: Array<{
     id: string;
@@ -49,11 +43,13 @@ type FormattedLink = {
       id: string;
       name: string;
       avatarUrl: string;
-    }
+    };
   }>;
 };
 
-export async function getLinks(userId?: string): Promise<{ links?: FormattedLink[]; error?: string }> {
+export async function getLinks(
+  userId?: string
+): Promise<{ links?: FormattedLink[]; error?: string }> {
   try {
     const links = await db.link.findMany({
       include: {
@@ -119,30 +115,20 @@ export async function getLinks(userId?: string): Promise<{ links?: FormattedLink
         userId: vote.userId,
         userName: vote.user.name,
         createdAt: vote.createdAt.toISOString(),
-        user: {
-          id: vote.user.id,
-          name: vote.user.name,
-          avatarUrl: vote.user.avatarUrl,
-        },
+        user: vote.user,
       })),
       comments: link.comments.map((comment) => ({
         id: comment.id,
         content: comment.content,
         createdAt: comment.createdAt.toISOString(),
         updatedAt: comment.updatedAt.toISOString(),
-        user: {
-          id: comment.user.id,
-          name: comment.user.name,
-          avatarUrl: comment.user.avatarUrl,
-        },
+        user: comment.user,
       })),
     }));
 
     return { links: formattedLinks };
-  } catch (err) {
-    const error = err as Error;
-    console.error('[getLinks] Error:', error.message);
-    return { error: `Failed to load links: ${error.message}` };
+  } catch {
+    throw new Error('Failed to load links');
   }
 }
 
@@ -153,18 +139,18 @@ export async function createLink(data: {
   userId: string;
 }): Promise<{ link?: FormattedLink; error?: string }> {
   if (!data.url || !data.userId) {
-    return { error: 'URL and userId are required' };
+    throw new Error('URL and userId are required');
   }
 
   try {
     // Verify user exists
     const user = await db.user.findUnique({
       where: { id: data.userId },
-      select: { id: true }
+      select: { id: true },
     });
 
     if (!user) {
-      return { error: 'User not found. Please try logging in again.' };
+      throw new Error('User not found. Please try logging in again.');
     }
 
     // Extract metadata from URL
@@ -173,7 +159,7 @@ export async function createLink(data: {
       previewDescription: '',
       previewImage: '',
       previewFavicon: '',
-      previewSiteName: ''
+      previewSiteName: '',
     };
 
     try {
@@ -187,7 +173,8 @@ export async function createLink(data: {
           previewSiteName: extractedMetadata.previewSiteName || '',
         };
       }
-    } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_) {
       // Silently continue with default metadata
     }
 
@@ -195,10 +182,11 @@ export async function createLink(data: {
     let hostname = '';
     try {
       hostname = new URL(data.url).hostname;
-    } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_) {
       hostname = data.url.split('/')[2] || 'unknown site';
     }
-    
+
     const link = await db.link.create({
       data: {
         url: data.url,
@@ -247,7 +235,7 @@ export async function createLink(data: {
     });
 
     if (!link) {
-      return { error: 'Failed to create link in database' };
+      throw new Error('Failed to create link in database');
     }
 
     const formattedLink = {
@@ -270,36 +258,23 @@ export async function createLink(data: {
       },
       votes: link.votes.map((vote) => ({
         userId: vote.userId,
-        userName: vote.user?.name || 'Unknown User',
+        userName: vote.user.name,
         createdAt: vote.createdAt.toISOString(),
-        user: {
-          id: vote.user?.id || 'unknown',
-          name: vote.user?.name || 'Unknown User',
-          avatarUrl: vote.user?.avatarUrl || '/default-avatar.png',
-        },
+        user: vote.user,
       })),
       comments: link.comments.map((comment) => ({
         id: comment.id,
         content: comment.content,
         createdAt: comment.createdAt.toISOString(),
         updatedAt: comment.updatedAt.toISOString(),
-        user: {
-          id: comment.user?.id || 'unknown',
-          name: comment.user?.name || 'Unknown User',
-          avatarUrl: comment.user?.avatarUrl || '/default-avatar.png',
-        },
+        user: comment.user,
       })),
     };
 
     revalidatePath('/');
     return { link: formattedLink };
-  } catch (err) {
-    // Safely handle error without causing source map issues
-    let message = 'Failed to create link';
-    if (err && typeof err === 'object' && 'message' in err) {
-      message = String(err.message);
-    }
-    return { error: message };
+  } catch {
+    throw new Error('Failed to create link');
   }
 }
 
@@ -405,13 +380,15 @@ export async function updateLink(data: {
 
     revalidatePath('/');
     return { link: formattedLink };
-  } catch (error) {
-    console.error('[updateLink] Error:', error);
-    return { error: 'Failed to update link' };
+  } catch {
+    throw new Error('Failed to update link');
   }
 }
 
-export async function deleteLink(data: { id: string; userId: string }): Promise<{ success?: boolean; error?: string }> {
+export async function deleteLink(data: {
+  id: string;
+  userId: string;
+}): Promise<{ success?: boolean; error?: string }> {
   try {
     const link = await db.link.findUnique({
       where: { id: data.id },
@@ -419,11 +396,11 @@ export async function deleteLink(data: { id: string; userId: string }): Promise<
     });
 
     if (!link) {
-      return { error: 'Link not found' };
+      throw new Error('Link not found');
     }
 
     if (link.createdById !== data.userId) {
-      return { error: 'Not authorized' };
+      throw new Error('Not authorized');
     }
 
     // Delete all related records first
@@ -444,13 +421,19 @@ export async function deleteLink(data: { id: string; userId: string }): Promise<
 
     revalidatePath('/');
     return { success: true };
-  } catch (error) {
-    console.error('Error in deleteLink:', error);
-    return { error: 'Failed to delete link' };
+  } catch {
+    throw new Error('Failed to delete link');
   }
 }
 
-export async function vote(data: { linkId: string; userId: string }): Promise<{ success?: boolean; user?: { id: string; name: string; avatarUrl: string }; error?: string }> {
+export async function vote(data: {
+  linkId: string;
+  userId: string;
+}): Promise<{
+  success?: boolean;
+  user?: { id: string; name: string; avatarUrl: string };
+  error?: string;
+}> {
   try {
     const existingVote = await db.vote.findFirst({
       where: {
@@ -460,7 +443,7 @@ export async function vote(data: { linkId: string; userId: string }): Promise<{ 
     });
 
     if (existingVote) {
-      return { error: 'Already voted for this link' };
+      throw new Error('Already voted for this link');
     }
 
     const newVote = await db.vote.create({
@@ -485,13 +468,15 @@ export async function vote(data: { linkId: string; userId: string }): Promise<{ 
 
     revalidatePath('/');
     return { success: true, user: newVote.user };
-  } catch (error) {
-    console.error('Error in vote:', error);
-    return { error: 'Failed to vote for link' };
+  } catch {
+    throw new Error('Failed to vote for link');
   }
 }
 
-export async function unvote(data: { linkId: string; userId: string }): Promise<{ success?: boolean; error?: string }> {
+export async function unvote(data: {
+  linkId: string;
+  userId: string;
+}): Promise<{ success?: boolean; error?: string }> {
   try {
     await db.vote.deleteMany({
       where: {
@@ -502,9 +487,8 @@ export async function unvote(data: { linkId: string; userId: string }): Promise<
 
     revalidatePath('/');
     return { success: true };
-  } catch (error) {
-    console.error('Error in unvote:', error);
-    return { error: 'Failed to remove vote' };
+  } catch {
+    throw new Error('Failed to remove vote');
   }
 }
 
@@ -512,33 +496,76 @@ export async function createComment(data: {
   linkId: string;
   userId: string;
   content: string;
-}): Promise<{ comment?: Comment & { user: Pick<User, 'id' | 'name' | 'avatarUrl'> }; error?: string }> {
+}): Promise<{
+  link?: FormattedLink;
+  error?: string;
+}> {
   try {
-    const comment = await db.comment.create({
-      data: {
-        content: data.content,
-        link: {
-          connect: { id: data.linkId },
-        },
-        user: {
-          connect: { id: data.userId },
-        },
-      },
+
+    // Fetch the updated link with all its relations
+    const link = await db.link.findUnique({
+      where: { id: data.linkId },
       include: {
-        user: {
+        createdBy: {
           select: {
             id: true,
             name: true,
             avatarUrl: true,
           },
         },
+        votes: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+        comments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
       },
     });
 
+    if (!link) {
+      return { error: 'Link not found' };
+    }
+
+    // Format the link to match FormattedLink type
+    const formattedLink: FormattedLink = {
+      ...link,
+      createdAt: link.createdAt.toISOString(),
+      updatedAt: link.updatedAt.toISOString(),
+      votes: link.votes.map((vote) => ({
+        userId: vote.userId,
+        userName: vote.user.name,
+        createdAt: vote.createdAt.toISOString(),
+        user: vote.user,
+      })),
+      comments: link.comments.map((comment) => ({
+        id: comment.id,
+        content: comment.content,
+        createdAt: comment.createdAt.toISOString(),
+        updatedAt: comment.updatedAt.toISOString(),
+        user: comment.user,
+      })),
+    };
+
     revalidatePath('/');
-    return { comment };
-  } catch (error) {
-    console.error('Error in createComment:', error);
+    return { link: formattedLink };
+  } catch {
+    console.error('Failed to create comment:');
     return { error: 'Failed to create comment' };
   }
 }
@@ -547,18 +574,21 @@ export async function updateComment(data: {
   id: string;
   content: string;
   userId: string;
-}): Promise<{ comment?: Comment & { user: Pick<User, 'id' | 'name' | 'avatarUrl'> }; error?: string }> {
+}): Promise<{
+  comment?: Comment & { user: Pick<User, 'id' | 'name' | 'avatarUrl'> };
+  error?: string;
+}> {
   try {
     const comment = await db.comment.findUnique({
       where: { id: data.id },
     });
 
     if (!comment) {
-      return { error: 'Comment not found' };
+      throw new Error('Comment not found');
     }
 
     if (comment.userId !== data.userId) {
-      return { error: 'Not authorized to update this comment' };
+      throw new Error('Not authorized to update this comment');
     }
 
     const updatedComment = await db.comment.update({
@@ -577,24 +607,26 @@ export async function updateComment(data: {
 
     revalidatePath('/');
     return { comment: updatedComment };
-  } catch (error) {
-    console.error('Error in updateComment:', error);
-    return { error: 'Failed to update comment' };
+  } catch {
+    throw new Error('Failed to update comment');
   }
 }
 
-export async function deleteComment(data: { id: string; userId: string }): Promise<{ success?: boolean; error?: string }> {
+export async function deleteComment(data: {
+  id: string;
+  userId: string;
+}): Promise<{ success?: boolean; error?: string }> {
   try {
     const comment = await db.comment.findUnique({
       where: { id: data.id },
     });
 
     if (!comment) {
-      return { error: 'Comment not found' };
+      throw new Error('Comment not found');
     }
 
     if (comment.userId !== data.userId) {
-      return { error: 'Not authorized to delete this comment' };
+      throw new Error('Not authorized to delete this comment');
     }
 
     await db.comment.delete({
@@ -603,13 +635,17 @@ export async function deleteComment(data: { id: string; userId: string }): Promi
 
     revalidatePath('/');
     return { success: true };
-  } catch (error) {
-    console.error('Error in deleteComment:', error);
-    return { error: 'Failed to delete comment' };
+  } catch {
+    throw new Error('Failed to delete comment');
   }
 }
 
-export async function getCommentsByUser(userId: string): Promise<{ comments?: (Comment & { user: Pick<User, 'id' | 'name' | 'avatarUrl'> })[]; error?: string }> {
+export async function getCommentsByUser(
+  userId: string
+): Promise<{
+  comments?: (Comment & { user: Pick<User, 'id' | 'name' | 'avatarUrl'> })[];
+  error?: string;
+}> {
   try {
     const comments = await db.comment.findMany({
       where: {
@@ -631,8 +667,7 @@ export async function getCommentsByUser(userId: string): Promise<{ comments?: (C
     });
 
     return { comments };
-  } catch (error) {
-    console.error('Error in getCommentsByUser:', error);
-    return { error: 'Failed to load comments' };
+  } catch {
+    throw new Error('Failed to load comments');
   }
 }

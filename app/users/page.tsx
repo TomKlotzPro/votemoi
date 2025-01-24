@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { fr } from '../translations/fr';
 import ErrorMessage from '../components/common/ErrorMessage';
 import UserList from '../components/users/UserList';
+import { fr } from '../translations/fr';
 
 type User = {
   id: string;

@@ -1,183 +1,175 @@
-import { useState, useEffect } from 'react';
-import { useUserStore } from '@/app/components/providers/StoreProvider';
-import { addLink, editLink, removeLink, vote as voteForLink, unvote as unvoteForLink, addComment as addCommentToLink } from '@/app/actions/url-actions';
-import { FormattedUser } from '@/app/types/user';
+import { FormattedLink } from '@/app/types/link';
+import { useState } from 'react';
 
-type FormattedLink = {
-  id: string;
-  url: string;
-  title: string;
-  description: string | null;
-  createdAt: string;
-  updatedAt: string;
-  createdById: string;
-  previewDescription: string | null;
-  previewFavicon: string | null;
-  previewImage: string | null;
-  previewSiteName: string | null;
-  previewTitle: string | null;
-  hasVoted?: boolean;
-  createdBy: {
-    id: string;
-    name: string;
-    avatarUrl: string;
-  };
-  votes: Array<{
-    userId: string;
-    userName: string;
-    createdAt: string;
-    user: {
-      id: string;
-      name: string;
-      avatarUrl: string;
-    }
-  }>;
-  comments: Array<{
-    id: string;
-    content: string;
-    createdAt: string;
-    updatedAt: string;
-    user: {
-      id: string;
-      name: string;
-      avatarUrl: string;
-    }
-  }>;
-};
+interface UseLinksClientReturn {
+  links: FormattedLink[];
+  loading: boolean;
+  error: string | null;
+  addLink: (data: {
+    url: string;
+    title?: string;
+    description?: string;
+  }) => Promise<FormattedLink>;
+  updateLink: (
+    id: string,
+    data: { url: string; title?: string; description?: string }
+  ) => Promise<FormattedLink>;
+  deleteLink: (id: string) => Promise<void>;
+  voteForLink: (linkId: string) => Promise<void>;
+  unvoteForLink: (linkId: string) => Promise<void>;
+}
 
-export function useLinks() {
+export function useLinksClient(): UseLinksClientReturn {
   const [links, setLinks] = useState<FormattedLink[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const user = useUserStore(state => state.user);
 
-  useEffect(() => {
-    loadLinks();
-  }, []);
-
-  async function loadLinks() {
+  const addLink = async (data: {
+    url: string;
+    title?: string;
+    description?: string;
+  }) => {
     try {
       setLoading(true);
-      const links = await addLink({ url: '', title: '', description: '' }, user);
-      setLinks(links);
+      const response = await fetch('/api/links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add link');
+      }
+
+      const newLink = await response.json();
+      setLinks((prevLinks) => [...prevLinks, newLink]);
       setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load links');
+      return newLink;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to add link';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  async function addLink(data: { url: string; title?: string; description?: string }) {
-    if (!user) throw new Error('User must be logged in to create a link');
-    
+  const updateLink = async (
+    id: string,
+    data: { url: string; title?: string; description?: string }
+  ) => {
     try {
-      const newLink = await addLink(data, user);
-      setLinks(prev => [newLink, ...prev]);
-      return newLink;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create link');
-      throw err;
-    }
-  }
+      setLoading(true);
+      const response = await fetch(`/api/links/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
 
-  async function deleteLink(linkId: string) {
-    if (!user) throw new Error('User must be logged in to delete a link');
-    
-    try {
-      await removeLink(linkId, user);
-      setLinks(prev => prev.filter(link => link.id !== linkId));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete link');
-      throw err;
-    }
-  }
+      if (!response.ok) {
+        throw new Error('Failed to update link');
+      }
 
-  async function voteLink(linkId: string) {
-    if (!user) throw new Error('User must be logged in to vote');
-    
-    try {
-      await voteForLink(linkId, user);
-      setLinks(prev =>
-        prev.map(link => {
-          if (link.id === linkId) {
-            return {
-              ...link,
-              votes: [
-                ...link.votes,
-                {
-                  userId: user.id,
-                  userName: user.name,
-                  createdAt: new Date().toISOString(),
-                  user: {
-                    id: user.id,
-                    name: user.name,
-                    avatarUrl: user.avatarUrl || ''
-                  }
-                }
-              ],
-              hasVoted: true
-            };
-          }
-          return link;
-        })
+      const updatedLink = await response.json();
+      setLinks((prevLinks) =>
+        prevLinks.map((link) => (link.id === id ? updatedLink : link))
       );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to vote link');
-      throw err;
+      setError(null);
+      return updatedLink;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to update link';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
-  async function unvoteLink(linkId: string) {
-    if (!user) throw new Error('User must be logged in to unvote');
-    
+  const deleteLink = async (id: string) => {
     try {
-      await unvoteForLink(linkId, user);
-      setLinks(prev =>
-        prev.map(link => {
-          if (link.id === linkId) {
-            return {
-              ...link,
-              votes: link.votes.filter(vote => vote.userId !== user.id),
-              hasVoted: false
-            };
-          }
-          return link;
-        })
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to unvote link');
-      throw err;
-    }
-  }
+      setLoading(true);
+      const response = await fetch(`/api/links/${id}`, {
+        method: 'DELETE',
+      });
 
-  async function addComment(linkId: string, content: string) {
-    if (!user) throw new Error('User must be logged in to comment');
-    
-    try {
-      const updatedLink = await addCommentToLink(linkId, content, user);
-      setLinks(prev =>
-        prev.map(link => {
-          if (link.id === linkId) {
-            return updatedLink;
-          }
-          return link;
-        })
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add comment');
-      throw err;
+      if (!response.ok) {
+        throw new Error('Failed to delete link');
+      }
+
+      setLinks((prevLinks) => prevLinks.filter((link) => link.id !== id));
+      setError(null);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to delete link';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
+
+  const voteForLink = async (linkId: string) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/links/${linkId}/vote`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to vote for link');
+      }
+
+      const updatedLink = await response.json();
+      setLinks((prevLinks) =>
+        prevLinks.map((link) => (link.id === linkId ? updatedLink : link))
+      );
+      setError(null);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to vote for link';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const unvoteForLink = async (linkId: string) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/links/${linkId}/unvote`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to unvote for link');
+      }
+
+      const updatedLink = await response.json();
+      setLinks((prevLinks) =>
+        prevLinks.map((link) => (link.id === linkId ? updatedLink : link))
+      );
+      setError(null);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to unvote for link';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return {
     links,
     loading,
     error,
     addLink,
+    updateLink,
     deleteLink,
-    voteLink,
-    unvoteLink,
-    addComment
+    voteForLink,
+    unvoteForLink,
   };
 }

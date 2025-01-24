@@ -1,8 +1,8 @@
 'use client';
 
+import { User } from '@/app/types/user';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User } from '@/app/types/user';
 
 interface UserState {
   user: User | null;
@@ -27,14 +27,14 @@ export const useUserStore = create<UserState & UserActions>()(
       // Actions
       setUser: (user) => set({ user }),
 
-      updateUser: (data) => 
+      updateUser: (data) =>
         set((state) => ({
-          user: state.user ? { ...state.user, ...data } : null
+          user: state.user ? { ...state.user, ...data } : null,
         })),
 
       showAuthForm: () => set({ isAuthFormVisible: true }),
       hideAuthForm: () => set({ isAuthFormVisible: false }),
-      
+
       logout: () => set({ user: null }),
     }),
     {

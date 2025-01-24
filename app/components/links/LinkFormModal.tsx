@@ -1,22 +1,34 @@
 'use client';
 
-import { Fragment, useState, useEffect } from 'react';
+import { Link } from '@/app/types/link';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { Link } from '@/app/types/link';
+import { Fragment, useEffect, useState } from 'react';
 
 interface LinkFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { url: string; title?: string; description?: string }) => Promise<void>;
+  onSubmit: (data: {
+    url: string;
+    title?: string;
+    description?: string;
+  }) => Promise<void>;
   initialData?: Link;
   mode: 'create' | 'edit';
 }
 
-export default function LinkFormModal({ isOpen, onClose, onSubmit, initialData, mode }: LinkFormModalProps) {
+export default function LinkFormModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  initialData,
+  mode,
+}: LinkFormModalProps) {
   const [url, setUrl] = useState(initialData?.url || '');
   const [title, setTitle] = useState(initialData?.title || '');
-  const [description, setDescription] = useState(initialData?.description || '');
+  const [description, setDescription] = useState(
+    initialData?.description || ''
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -94,7 +106,10 @@ export default function LinkFormModal({ isOpen, onClose, onSubmit, initialData, 
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label htmlFor="url" className="block text-sm font-medium text-white/80 mb-1">
+                    <label
+                      htmlFor="url"
+                      className="block text-sm font-medium text-white/80 mb-1"
+                    >
                       URL
                     </label>
                     <input
@@ -109,7 +124,10 @@ export default function LinkFormModal({ isOpen, onClose, onSubmit, initialData, 
                   </div>
 
                   <div>
-                    <label htmlFor="title" className="block text-sm font-medium text-white/80 mb-1">
+                    <label
+                      htmlFor="title"
+                      className="block text-sm font-medium text-white/80 mb-1"
+                    >
                       Titre (optionnel)
                     </label>
                     <input
@@ -123,7 +141,10 @@ export default function LinkFormModal({ isOpen, onClose, onSubmit, initialData, 
                   </div>
 
                   <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-white/80 mb-1">
+                    <label
+                      htmlFor="description"
+                      className="block text-sm font-medium text-white/80 mb-1"
+                    >
                       Description (optionnel)
                     </label>
                     <div className="h-[120px]">
@@ -137,9 +158,7 @@ export default function LinkFormModal({ isOpen, onClose, onSubmit, initialData, 
                     </div>
                   </div>
 
-                  {error && (
-                    <div className="text-red-400 text-sm">{error}</div>
-                  )}
+                  {error && <div className="text-red-400 text-sm">{error}</div>}
 
                   <div className="flex justify-end gap-3">
                     <button
@@ -154,7 +173,11 @@ export default function LinkFormModal({ isOpen, onClose, onSubmit, initialData, 
                       disabled={isLoading}
                       className="px-4 py-2 bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white text-sm transition-colors"
                     >
-                      {isLoading ? 'Chargement...' : mode === 'create' ? 'Ajouter' : 'Modifier'}
+                      {isLoading
+                        ? 'Chargement...'
+                        : mode === 'create'
+                          ? 'Ajouter'
+                          : 'Modifier'}
                     </button>
                   </div>
                 </form>

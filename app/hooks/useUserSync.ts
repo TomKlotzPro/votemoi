@@ -1,28 +1,20 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { useUser } from '@/app/context/user-context';
+import { useUserState } from '@/app/hooks/useUserState';
 import { User } from '@/app/types/user';
+import { useEffect } from 'react';
 
-export function useUserSync(user: User | null) {
-  const { user: currentUser, setUser } = useUser();
-  const prevUserRef = useRef<User | null>(null);
+interface UseUserSyncProps {
+  user: User | null;
+  setUser: (user: User | null) => void;
+}
+
+export function useUserSync({ user, setUser }: UseUserSyncProps) {
+  const { user: currentUser } = useUserState();
 
   useEffect(() => {
-    // Only update if the user data has actually changed
-    if (user && currentUser && user.id === currentUser.id) {
-      const hasChanged = 
-        prevUserRef.current?.name !== user.name || 
-        prevUserRef.current?.avatarUrl !== user.avatarUrl;
-
-      if (hasChanged) {
-        prevUserRef.current = user;
-        setUser({
-          ...currentUser,
-          name: user.name,
-          avatarUrl: user.avatarUrl
-        });
-      }
+    if (currentUser !== user) {
+      setUser(currentUser);
     }
-  }, [user?.name, user?.avatarUrl, currentUser?.id]); // Only depend on specific fields
+  }, [currentUser, user, setUser]);
 }

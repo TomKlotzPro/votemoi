@@ -1,8 +1,8 @@
 'use client';
 
-import { Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { Fragment } from 'react';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -23,7 +23,7 @@ export default function ConfirmDialog({
   message,
   confirmText,
   cancelText,
-  type = 'danger'
+  type = 'danger',
 }: ConfirmDialogProps) {
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -53,16 +53,24 @@ export default function ConfirmDialog({
             >
               <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-black/90 backdrop-blur-xl p-6 text-left align-middle shadow-xl transition-all border border-[var(--border)]">
                 <div className="flex items-center gap-4">
-                  <div className={`p-2 rounded-full ${
-                    type === 'danger' ? 'bg-red-500/10' : 
-                    type === 'warning' ? 'bg-yellow-500/10' : 
-                    'bg-blue-500/10'
-                  }`}>
-                    <ExclamationTriangleIcon className={`h-6 w-6 ${
-                      type === 'danger' ? 'text-red-400' : 
-                      type === 'warning' ? 'text-yellow-400' : 
-                      'text-blue-400'
-                    }`} />
+                  <div
+                    className={`p-2 rounded-full ${
+                      type === 'danger'
+                        ? 'bg-red-500/10'
+                        : type === 'warning'
+                          ? 'bg-yellow-500/10'
+                          : 'bg-blue-500/10'
+                    }`}
+                  >
+                    <ExclamationTriangleIcon
+                      className={`h-6 w-6 ${
+                        type === 'danger'
+                          ? 'text-red-400'
+                          : type === 'warning'
+                            ? 'text-yellow-400'
+                            : 'text-blue-400'
+                      }`}
+                    />
                   </div>
                   <Dialog.Title
                     as="h3"
@@ -89,9 +97,11 @@ export default function ConfirmDialog({
                   <button
                     type="button"
                     className={`inline-flex justify-center rounded-lg px-4 py-2 text-sm font-medium ${
-                      type === 'danger' ? 'bg-red-500 hover:bg-red-600 text-white' : 
-                      type === 'warning' ? 'bg-yellow-500 hover:bg-yellow-600 text-black' : 
-                      'bg-blue-500 hover:bg-blue-600 text-white'
+                      type === 'danger'
+                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                        : type === 'warning'
+                          ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
+                          : 'bg-blue-500 hover:bg-blue-600 text-white'
                     } focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75`}
                     onClick={() => {
                       onConfirm();

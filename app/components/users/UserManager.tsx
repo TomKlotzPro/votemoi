@@ -1,79 +1,61 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import UserList from './UserList';
-import UserForm from '../forms/UserForm';
+import { useUsers } from '@/app/hooks/useUsers';
 import { fr } from '@/app/translations/fr';
-import ErrorMessage from '../common/ErrorMessage';
-import { useUsers } from '@/app/hooks/useUsersClient';
+import { FormattedUser } from '@/app/types/user';
+import { useCallback } from 'react';
+import UserList from './UserList';
 
-type User = {
-  id: string;
-  name: string;
-  avatarUrl?: string;
-  _count?: {
-    votes: number;
-  };
-  votes?: {
-    url: {
-      id: string;
-      title: string;
-    };
-  }[];
-};
+interface UserManagerProps {
+  onUserSelect?: (user: FormattedUser) => void;
+  selectedUserId?: string;
+}
 
-export default function UserManager() {
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const { users, error, addUser } = useUsers();
+export default function UserManager({
+  onUserSelect,
+  selectedUserId,
+}: UserManagerProps) {
+  const { users, isLoading, error, refreshUsers } = useUsers();
 
-  const handleCreateUser = async (_: string | undefined, userData: { name: string; avatarUrl?: string }) => {
-    if (!userData.name || !userData.avatarUrl) {
-      console.error('Missing required fields:', userData);
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      console.log('Creating user with data:', userData);
-      
-      await addUser({
-        name: userData.name,
-        avatarUrl: userData.avatarUrl
-      });
-      
-      console.log('User created successfully');
-      router.refresh();
-    } catch (error) {
-      console.error('Error creating user:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleUserSelect = useCallback((user: FormattedUser) => {
+    onUserSelect?.(user);
+  }, [onUserSelect]);
+
+  if (isLoading && users.length === 0) {
+    return (
+      <div className="flex justify-center items-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-4">
+        <div className="text-red-500 mb-4">{error}</div>
+        <button
+          onClick={() => refreshUsers()}
+          className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors"
+        >
+          {fr.actions.retry}
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8">
-      {error && (
-        <div className="p-4 bg-red-500/10 rounded-lg">
-          <ErrorMessage message={error} />
-        </div>
-      )}
-      
-      <div className="bg-[#1e1e38] p-6 rounded-xl">
-        <h2 className="text-xl font-semibold mb-4 text-white">
-          {fr.users.createUser}
-        </h2>
-        <UserForm onSubmit={handleCreateUser} loading={loading} />
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">{fr.common.title}</h1>
+        {isLoading && (
+          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary" />
+        )}
       </div>
-
-      <div className="bg-[#1e1e38] p-6 rounded-xl">
-        <h2 className="text-xl font-semibold mb-4 text-white">
-          {fr.users.userList}
-        </h2>
-        <UserList users={users || []} />
-      </div>
+      <UserList
+        users={users}
+        selectedUserId={selectedUserId}
+        onUserSelect={handleUserSelect}
+      />
     </div>
   );
 }

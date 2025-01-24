@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { fr } from '@/app/translations/fr';
 import ErrorMessage from '../common/ErrorMessage';
 
 type UrlFormProps = {
@@ -11,16 +10,26 @@ type UrlFormProps = {
     title: string;
     description: string;
   };
-  onSubmit: (id: string, data: { url: string; title: string; description: string }) => Promise<void>;
+  onSubmit: (
+    id: string,
+    data: { url: string; title: string; description: string }
+  ) => Promise<void>;
   onError: (error: string) => void;
   onCancel?: () => void;
 };
 
-export default function UrlForm({ initialData, onSubmit, onError, onCancel }: UrlFormProps) {
+export default function UrlForm({
+  initialData,
+  onSubmit,
+  onError,
+  onCancel,
+}: UrlFormProps) {
   const [loading, setLoading] = useState(false);
   const [url, setUrl] = useState(initialData?.url ?? '');
   const [title, setTitle] = useState(initialData?.title ?? '');
-  const [description, setDescription] = useState(initialData?.description ?? '');
+  const [description, setDescription] = useState(
+    initialData?.description ?? ''
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +51,9 @@ export default function UrlForm({ initialData, onSubmit, onError, onCancel }: Ur
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-      onError(error instanceof Error ? error.message : fr.errors.failedToSaveUrl);
+      onError(
+        error instanceof Error ? error.message : 'Failed to save URL'
+      );
     } finally {
       setLoading(false);
     }
@@ -52,8 +63,11 @@ export default function UrlForm({ initialData, onSubmit, onError, onCancel }: Ur
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid gap-6 sm:grid-cols-2">
         <div>
-          <label htmlFor="url" className="block text-sm font-medium text-gray-300 mb-1">
-            {fr.forms.url}
+          <label
+            htmlFor="url"
+            className="block text-sm font-medium text-gray-300 mb-1"
+          >
+            URL
           </label>
           <input
             type="url"
@@ -61,14 +75,17 @@ export default function UrlForm({ initialData, onSubmit, onError, onCancel }: Ur
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             className="w-full px-4 py-2 bg-[#2a2a4e] border border-purple-500/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-            placeholder={fr.forms.urlPlaceholder}
+            placeholder="Enter URL"
             disabled={loading}
           />
         </div>
 
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-1">
-            {fr.forms.title}
+          <label
+            htmlFor="title"
+            className="block text-sm font-medium text-gray-300 mb-1"
+          >
+            Title
           </label>
           <input
             type="text"
@@ -76,15 +93,18 @@ export default function UrlForm({ initialData, onSubmit, onError, onCancel }: Ur
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full px-4 py-2 bg-[#2a2a4e] border border-purple-500/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-            placeholder={fr.forms.titlePlaceholder}
+            placeholder="Enter title"
             disabled={loading}
           />
         </div>
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">
-          {fr.forms.description}
+        <label
+          htmlFor="description"
+          className="block text-sm font-medium text-gray-300 mb-1"
+        >
+          Description
         </label>
         <textarea
           id="description"
@@ -92,7 +112,7 @@ export default function UrlForm({ initialData, onSubmit, onError, onCancel }: Ur
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
           className="w-full px-4 py-2 bg-[#2a2a4e] border border-purple-500/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-          placeholder={fr.forms.descriptionPlaceholder}
+          placeholder="Enter description"
           disabled={loading}
         />
       </div>
@@ -105,7 +125,7 @@ export default function UrlForm({ initialData, onSubmit, onError, onCancel }: Ur
             className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
             disabled={loading}
           >
-            {fr.common.cancel}
+            Cancel
           </button>
         )}
         <button
@@ -113,7 +133,11 @@ export default function UrlForm({ initialData, onSubmit, onError, onCancel }: Ur
           disabled={!url.trim() || !title.trim() || loading}
           className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
         >
-          {loading ? fr.common.loading : initialData ? fr.common.update : fr.common.create}
+          {loading
+            ? 'Loading'
+            : initialData
+              ? 'Update'
+              : 'Create'}
         </button>
       </div>
     </form>

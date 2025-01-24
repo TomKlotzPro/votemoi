@@ -1,12 +1,16 @@
 'use client';
 
-import { useState } from 'react';
 import { fr } from '@/app/translations/fr';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 import ErrorMessage from '../common/ErrorMessage';
 
 interface CreateLinkFormProps {
-  onSubmit: (data: { url: string; title?: string; description?: string }) => Promise<void>;
+  onSubmit: (data: {
+    url: string;
+    title?: string;
+    description?: string;
+  }) => Promise<void>;
 }
 
 export default function CreateLinkForm({ onSubmit }: CreateLinkFormProps) {
@@ -55,7 +59,10 @@ export default function CreateLinkForm({ onSubmit }: CreateLinkFormProps) {
       <div className="space-y-4">
         {/* URL Input */}
         <div>
-          <label htmlFor="url" className="block text-sm font-medium text-white/80 mb-2">
+          <label
+            htmlFor="url"
+            className="block text-sm font-medium text-white/80 mb-2"
+          >
             {fr.common.url} <span className="text-rose-500">*</span>
           </label>
           <input
@@ -74,7 +81,10 @@ export default function CreateLinkForm({ onSubmit }: CreateLinkFormProps) {
 
         {/* Title Input */}
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-white/80 mb-2">
+          <label
+            htmlFor="title"
+            className="block text-sm font-medium text-white/80 mb-2"
+          >
             {fr.common.title}
           </label>
           <input
@@ -90,7 +100,10 @@ export default function CreateLinkForm({ onSubmit }: CreateLinkFormProps) {
 
         {/* Description Input */}
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-white/80 mb-2">
+          <label
+            htmlFor="description"
+            className="block text-sm font-medium text-white/80 mb-2"
+          >
             {fr.common.description}
           </label>
           <textarea

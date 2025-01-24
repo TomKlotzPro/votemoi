@@ -1,8 +1,8 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
-import { User } from '@/app/types/user';
 import { FormattedLink } from '@/app/types/link';
+import { User } from '@/app/types/user';
+import { prisma } from '@/lib/prisma';
 import { fetchUrlMetadata } from '@/lib/url-metadata';
 import { revalidatePath } from 'next/cache';
 
@@ -45,27 +45,35 @@ export async function getLinks(): Promise<FormattedLink[]> {
       },
     });
 
-    return links.map(link => ({
+    return links.map((link) => ({
       ...link,
       createdAt: link.createdAt.toISOString(),
       updatedAt: link.updatedAt.toISOString(),
-      votes: link.votes.map(vote => ({
+      votes: link.votes.map((vote) => ({
         ...vote,
-        createdAt: vote.createdAt.toISOString()
+        userName: vote.user.name,
+        createdAt: vote.createdAt.toISOString(),
       })),
-      comments: link.comments.map(comment => ({
+      comments: link.comments.map((comment) => ({
         ...comment,
         createdAt: comment.createdAt.toISOString(),
-        updatedAt: comment.updatedAt.toISOString()
-      }))
+        updatedAt: comment.updatedAt.toISOString(),
+      })),
     }));
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
-    console.error('Error fetching links:', error);
-    throw error;
+    throw new Error('Failed to fetch links');
   }
 }
 
-export async function addLink(data: { url: string; title?: string; description?: string }, user: User): Promise<FormattedLink> {
+export async function addLink(
+  data: { url: string; title?: string; description?: string },
+  user: User
+): Promise<FormattedLink> {
+  if (!data.url) {
+    throw new Error('URL is required');
+  }
+
   try {
     const metadata = await fetchUrlMetadata(data.url);
     const link = await prisma.link.create({
@@ -118,19 +126,20 @@ export async function addLink(data: { url: string; title?: string; description?:
       ...link,
       createdAt: link.createdAt.toISOString(),
       updatedAt: link.updatedAt.toISOString(),
-      votes: link.votes.map(vote => ({
+      votes: link.votes.map((vote) => ({
         ...vote,
-        createdAt: vote.createdAt.toISOString()
+        userName: vote.user.name,
+        createdAt: vote.createdAt.toISOString(),
       })),
-      comments: link.comments.map(comment => ({
+      comments: link.comments.map((comment) => ({
         ...comment,
         createdAt: comment.createdAt.toISOString(),
-        updatedAt: comment.updatedAt.toISOString()
-      }))
+        updatedAt: comment.updatedAt.toISOString(),
+      })),
     };
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
-    console.error('Error adding link:', error);
-    throw error;
+    throw new Error('Failed to add link');
   }
 }
 
@@ -138,6 +147,10 @@ export async function editLink(
   data: { id: string; url: string; title?: string; description?: string },
   user: User
 ): Promise<FormattedLink> {
+  if (!data.url) {
+    throw new Error('URL is required');
+  }
+
   try {
     const metadata = await fetchUrlMetadata(data.url);
     const link = await prisma.link.update({
@@ -190,19 +203,19 @@ export async function editLink(
       ...link,
       createdAt: link.createdAt.toISOString(),
       updatedAt: link.updatedAt.toISOString(),
-      votes: link.votes.map(vote => ({
+      votes: link.votes.map((vote) => ({
         ...vote,
-        createdAt: vote.createdAt.toISOString()
+        userName: vote.user.name,
+        createdAt: vote.createdAt.toISOString(),
       })),
-      comments: link.comments.map(comment => ({
+      comments: link.comments.map((comment) => ({
         ...comment,
         createdAt: comment.createdAt.toISOString(),
-        updatedAt: comment.updatedAt.toISOString()
-      }))
+        updatedAt: comment.updatedAt.toISOString(),
+      })),
     };
   } catch (error) {
-    console.error('Error editing link:', error);
-    throw error;
+    throw new Error('Failed to edit link');
   }
 }
 
@@ -213,8 +226,7 @@ export async function removeLink(id: string, user: User): Promise<void> {
     });
     revalidatePath('/');
   } catch (error) {
-    console.error('Error removing link:', error);
-    throw error;
+    throw new Error('Failed to remove link');
   }
 }
 
@@ -228,8 +240,7 @@ export async function vote(linkId: string, user: User): Promise<void> {
     });
     revalidatePath('/');
   } catch (error) {
-    console.error('Error voting:', error);
-    throw error;
+    throw new Error('Failed to vote');
   }
 }
 
@@ -244,13 +255,17 @@ export async function unvote(linkId: string, user: User): Promise<void> {
       },
     });
     revalidatePath('/');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
-    console.error('Error unvoting:', error);
-    throw error;
+    throw new Error('Failed to unvote');
   }
 }
 
-export async function addComment(linkId: string, content: string, user: User): Promise<FormattedLink> {
+export async function addComment(
+  linkId: string,
+  content: string,
+  user: User
+): Promise<FormattedLink> {
   try {
     const link = await prisma.link.update({
       where: { id: linkId },
@@ -300,18 +315,19 @@ export async function addComment(linkId: string, content: string, user: User): P
       ...link,
       createdAt: link.createdAt.toISOString(),
       updatedAt: link.updatedAt.toISOString(),
-      votes: link.votes.map(vote => ({
+      votes: link.votes.map((vote) => ({
         ...vote,
-        createdAt: vote.createdAt.toISOString()
+        userName: vote.user.name,
+        createdAt: vote.createdAt.toISOString(),
       })),
-      comments: link.comments.map(comment => ({
+      comments: link.comments.map((comment) => ({
         ...comment,
         createdAt: comment.createdAt.toISOString(),
-        updatedAt: comment.updatedAt.toISOString()
-      }))
+        updatedAt: comment.updatedAt.toISOString(),
+      })),
     };
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
-    console.error('Error adding comment:', error);
-    throw error;
+    throw new Error('Failed to add comment');
   }
 }

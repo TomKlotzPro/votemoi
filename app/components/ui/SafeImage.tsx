@@ -1,51 +1,45 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 
-interface SafeImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
-  fallback?: string;
+interface SafeImageProps {
+  src: string;
+  alt: string;
+  fallbackSrc?: string;
+  className?: string;
+  width?: number;
+  height?: number;
 }
 
-export default function SafeImage({ 
-  src, 
-  alt, 
-  className = '', 
-  fallback = '/default-avatar.png',
-  ...props 
+export default function SafeImage({
+  src,
+  alt,
+  fallbackSrc = '/default-avatar.png',
+  className = '',
+  width = 32,
+  height = 32,
 }: SafeImageProps) {
   const [error, setError] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  if (error || !src) {
-    return (
-      <img
-        src={fallback}
-        alt={alt}
-        className={className}
-        {...props}
-      />
-    );
-  }
-
   return (
-    <div className={`relative ${className} bg-white/5`}>
-      {!loaded && (
-        <div className="absolute inset-0 animate-pulse">
-          <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/10" />
-        </div>
+    <>
+      {!loaded && !error && (
+        <div
+          className={`${className} bg-gray-200 animate-pulse`}
+          style={{ width, height }}
+        />
       )}
-      <img
-        src={src}
+      <Image
+        src={error ? fallbackSrc : src}
         alt={alt}
-        className={`
-          w-full h-full object-cover
-          transition-all duration-300 ease-out
-          ${loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}
-        `}
-        onLoad={() => setLoaded(true)}
+        width={width}
+        height={height}
+        className={`${className} ${!loaded ? 'hidden' : ''}`}
         onError={() => setError(true)}
-        {...props}
+        onLoad={() => setLoaded(true)}
       />
-    </div>
+    </>
   );
 }

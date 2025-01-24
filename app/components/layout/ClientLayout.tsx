@@ -7,9 +7,5 @@ export default function ClientLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <UserProvider>
-      {children}
-    </UserProvider>
-  );
+  return <UserProvider>{children}</UserProvider>;
 }

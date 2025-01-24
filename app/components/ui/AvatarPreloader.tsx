@@ -1,39 +1,43 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { AVATAR_OPTIONS } from '@/app/constants/avatars';
+import Image from 'next/image';
+import { useEffect, useRef } from 'react';
 
 interface AvatarPreloaderProps {
-  onLoadComplete: () => void;
+  avatars: string[];
+  onLoad?: () => void;
 }
 
-export default function AvatarPreloader({ onLoadComplete }: AvatarPreloaderProps) {
-  const [loadedCount, setLoadedCount] = useState(0);
+export default function AvatarPreloader({
+  avatars,
+  onLoad,
+}: AvatarPreloaderProps) {
+  const loadedRef = useRef(0);
 
   useEffect(() => {
-    const preloadImages = async () => {
-      const loadPromises = AVATAR_OPTIONS.map((url) => {
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.onload = () => {
-            setLoadedCount(prev => prev + 1);
-            resolve(null);
-          };
-          img.onerror = () => {
-            // Still count errors to avoid hanging
-            setLoadedCount(prev => prev + 1);
-            resolve(null);
-          };
-          img.src = url;
-        });
-      });
+    if (avatars.length === 0) {
+      onLoad?.();
+      return;
+    }
 
-      await Promise.all(loadPromises);
-      onLoadComplete();
+    const handleLoad = () => {
+      loadedRef.current += 1;
+      if (loadedRef.current === avatars.length) {
+        onLoad?.();
+      }
     };
 
-    preloadImages();
-  }, [onLoadComplete]);
+    avatars.forEach((avatar) => {
+      const img = new Image();
+      img.src = avatar;
+      img.onload = handleLoad;
+      img.onerror = handleLoad; // Count errors as loaded to avoid blocking
+    });
 
-  return null; // This component doesn't render anything
+    return () => {
+      loadedRef.current = 0;
+    };
+  }, [avatars, onLoad]);
+
+  return null;
 }

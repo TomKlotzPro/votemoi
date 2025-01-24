@@ -12,11 +12,13 @@ interface UserState {
 export const useUserState = create<UserState>((set) => ({
   user: null,
   setUser: (user) => set({ user }),
-  updateUserInfo: (data) => 
+  updateUserInfo: (data) =>
     set((state) => ({
-      user: state.user ? {
-        ...state.user,
-        ...data
-      } : null
+      user: state.user
+        ? {
+            ...state.user,
+            ...data,
+          }
+        : null,
     })),
 }));

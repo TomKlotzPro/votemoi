@@ -9,11 +9,14 @@ const createPrismaClient = () => {
   const client = new PrismaClient({
     log: ['query', 'error', 'warn'],
   });
-  
-  client.$connect()
+
+  client
+    .$connect()
     .then(() => console.log('[DB] Successfully connected to database'))
-    .catch(error => console.error('[DB] Failed to connect to database:', error));
-    
+    .catch((error) =>
+      console.error('[DB] Failed to connect to database:', error)
+    );
+
   return client;
 };
 

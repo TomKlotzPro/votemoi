@@ -1,23 +1,25 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { updateUser } from '@/app/actions/user-actions';
 import { useUserStore } from '@/app/components/providers/StoreProvider';
-import { fr } from '@/app/translations/fr';
 import { AVATAR_OPTIONS } from '@/app/constants/avatars';
 import { useUsers } from '@/app/hooks/useUsersClient';
-import { updateUser } from '@/app/actions/user-actions';
-import SafeImage from '../ui/SafeImage';
+import { fr } from '@/app/translations/fr';
+import { useEffect, useRef, useState } from 'react';
 import ErrorMessage from '../common/ErrorMessage';
+import SafeImage from '../ui/SafeImage';
 
 export default function UserMenu() {
   const { users } = useUsers();
-  const user = useUserStore(state => state.user);
-  const updateStoreUser = useUserStore(state => state.updateUser);
-  const logout = useUserStore(state => state.logout);
+  const user = useUserStore((state) => state.user);
+  const updateStoreUser = useUserStore((state) => state.updateUser);
+  const logout = useUserStore((state) => state.logout);
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(user?.name || '');
-  const [selectedAvatar, setSelectedAvatar] = useState(user?.avatarUrl || AVATAR_OPTIONS[0]);
+  const [selectedAvatar, setSelectedAvatar] = useState(
+    user?.avatarUrl || AVATAR_OPTIONS[0]
+  );
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -44,13 +46,13 @@ export default function UserMenu() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    
+
     setError('');
     setIsSubmitting(true);
 
     try {
       const trimmedName = name.trim();
-      
+
       if (!trimmedName) {
         setError(fr.errors.nameRequired);
         setIsSubmitting(false);
@@ -58,9 +60,9 @@ export default function UserMenu() {
       }
 
       // Check for duplicate names, excluding the current user
-      const nameExists = users.some(u => 
-        u.id !== user.id && 
-        u.name.toLowerCase() === trimmedName.toLowerCase()
+      const nameExists = users.some(
+        (u) =>
+          u.id !== user.id && u.name.toLowerCase() === trimmedName.toLowerCase()
       );
 
       if (nameExists) {
@@ -116,7 +118,10 @@ export default function UserMenu() {
           {isEditing ? (
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-white/80 mb-2">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-white/80 mb-2"
+                >
                   {fr.common.name}
                 </label>
                 <input
@@ -190,7 +195,9 @@ export default function UserMenu() {
                     className="w-10 h-10 rounded-full"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{user.name}</p>
+                    <p className="text-sm font-medium text-white truncate">
+                      {user.name}
+                    </p>
                   </div>
                 </div>
               </div>

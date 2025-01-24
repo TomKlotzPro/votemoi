@@ -1,82 +1,97 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+import { fr } from '@/app/translations/fr';
 import { Url } from '@/app/types/url';
-import { useUser } from '@/app/context/user-context';
+import { useState } from 'react';
 
-const STORAGE_KEY = 'votemoi_urls';
+interface UseUrlsReturn {
+  urls: Url[];
+  loading: boolean;
+  error: string | null;
+  addUrl: (data: { url: string }) => Promise<Url>;
+  updateUrl: (id: string, data: { url: string }) => Promise<Url>;
+  deleteUrl: (id: string) => Promise<void>;
+}
 
-export function useUrls() {
-  const { user } = useUser();
+export function useUrls(): UseUrlsReturn {
   const [urls, setUrls] = useState<Url[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const addUrl = async (data: { url: string }) => {
     try {
-      const storedUrls = localStorage.getItem(STORAGE_KEY);
-      setUrls(storedUrls ? JSON.parse(storedUrls) : []);
-    } catch (err) {
-      setError('Failed to load URLs');
+      setLoading(true);
+      const response = await fetch('/api/urls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(fr.errors.failedToAddUser);
+      }
+
+      const newUrl = await response.json();
+      setUrls((prevUrls) => [...prevUrls, newUrl]);
+      setError(null);
+      return newUrl;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : fr.errors.failedToAddUser;
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  const addUrl = async ({ url }: { url: string }) => {
+  const updateUrl = async (id: string, data: { url: string }) => {
     try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch URL');
-      
-      const html = await response.text();
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      const title = doc.querySelector('title')?.textContent || url;
+      setLoading(true);
+      const response = await fetch(`/api/urls/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
 
-      const newUrl: Url = {
-        id: Math.random().toString(36).substring(7),
-        url,
-        title,
-        votes: [],
-      };
+      if (!response.ok) {
+        throw new Error(fr.errors.failedToUpdateUser);
+      }
 
-      const newUrls = [...urls, newUrl];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newUrls));
-      setUrls(newUrls);
-      return newUrl;
-    } catch (err) {
-      setError('Failed to add URL');
-      throw err;
+      const updatedUrl = await response.json();
+      setUrls((prevUrls) =>
+        prevUrls.map((url) => (url.id === id ? updatedUrl : url))
+      );
+      setError(null);
+      return updatedUrl;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : fr.errors.failedToUpdateUser;
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const voteForUrl = (urlId: string) => {
-    if (!user) return;
-
+  const deleteUrl = async (id: string) => {
     try {
-      const newUrls = urls.map(url => {
-        if (url.id !== urlId) return url;
-
-        const existingVote = url.votes.find(vote => vote.userId === user.id);
-        if (existingVote) return url;
-
-        const newVote = {
-          id: Math.random().toString(36).substring(7),
-          userId: user.id,
-          urlId,
-          user,
-        };
-
-        return {
-          ...url,
-          votes: [...url.votes, newVote],
-        };
+      setLoading(true);
+      const response = await fetch(`/api/urls/${id}`, {
+        method: 'DELETE',
       });
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newUrls));
-      setUrls(newUrls);
-    } catch (err) {
-      setError('Failed to vote');
-      throw err;
+      if (!response.ok) {
+        throw new Error(fr.errors.failedToDeleteUser);
+      }
+
+      setUrls((prevUrls) => prevUrls.filter((url) => url.id !== id));
+      setError(null);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : fr.errors.failedToDeleteUser;
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -85,6 +100,7 @@ export function useUrls() {
     loading,
     error,
     addUrl,
-    voteForUrl,
+    updateUrl,
+    deleteUrl,
   };
 }

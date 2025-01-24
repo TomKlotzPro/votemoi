@@ -1,122 +1,91 @@
 'use server';
 
 import { db } from '@/app/lib/db';
-import { User, FormattedUser } from '../types/user';
+import { fr } from '@/app/translations/fr';
+import { FormattedUser } from '@/app/types/user';
 import { revalidatePath } from 'next/cache';
-import { Prisma } from '@prisma/client';
 
-type ServerActionResponse<T> = {
-  data?: T;
-  error?: string;
-};
-
-type UserSelect = {
-  id: string;
-  name: string;
-  avatarUrl: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-const userSelect = {
-  id: true,
-  name: true,
-  avatarUrl: true,
-  createdAt: true,
-  updatedAt: true,
-} as const;
-
-export async function getUsers(): Promise<ServerActionResponse<FormattedUser[]>> {
+export async function getUsers(): Promise<FormattedUser[]> {
   try {
     const users = await db.user.findMany({
-      select: userSelect,
       orderBy: {
-        createdAt: 'desc'
-      }
+        name: 'asc',
+      },
     });
-    
-    return {
-      data: users.map(formatUser)
-    };
-  } catch (e) {
-    const error = e as Error;
-    return { error: error.message || 'Failed to fetch users' };
+
+    return users.map(user => ({
+      id: user.id,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+    }));
+  } catch {
+    throw new Error(fr.errors.failedToFetchUsers);
   }
 }
 
-export async function createUser(input: { name: string; avatarUrl: string }): Promise<ServerActionResponse<FormattedUser>> {
+export async function createUser(data: { name: string; avatarUrl?: string }): Promise<FormattedUser> {
   try {
-    if (!input?.name || !input?.avatarUrl) {
-      return { error: 'Name and avatar URL are required' };
-    }
-
-    const name = input.name.trim();
-    if (!name) {
-      return { error: 'Name cannot be empty' };
-    }
-
-    // Check if user exists
-    const existing = await db.user.findUnique({
-      where: { name },
-      select: userSelect
-    });
-
-    if (existing) {
-      return { error: 'A user with this name already exists' };
-    }
-
     const user = await db.user.create({
       data: {
-        name,
-        avatarUrl: input.avatarUrl,
+        name: data.name,
+        avatarUrl: data.avatarUrl,
       },
-      select: userSelect,
     });
 
     revalidatePath('/');
-    
     return {
-      data: formatUser(user)
+      id: user.id,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
     };
-  } catch (e) {
-    const error = e as Error;
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      return { error: 'A user with this name already exists' };
-    }
-    return { error: error.message || 'Failed to create user' };
+  } catch {
+    throw new Error(fr.errors.failedToAddUser);
   }
 }
 
-export async function getUserById(id: string): Promise<ServerActionResponse<FormattedUser>> {
+export async function updateUser(id: string, data: { name?: string; avatarUrl?: string }): Promise<FormattedUser> {
   try {
-    if (!id) {
-      return { error: 'User ID is required' };
-    }
-
-    const user = await db.user.findUnique({
+    const user = await db.user.update({
       where: { id },
-      select: userSelect,
+      data,
     });
 
-    if (!user) {
-      return { error: 'User not found' };
-    }
-
+    revalidatePath('/');
     return {
-      data: formatUser(user)
+      id: user.id,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
     };
-  } catch (e) {
-    const error = e as Error;
-    return { error: error.message || 'Failed to get user' };
+  } catch {
+    throw new Error(fr.errors.failedToUpdateUser);
   }
 }
 
-function formatUser(user: UserSelect): FormattedUser {
-  return {
-    id: user.id,
-    name: user.name,
-    avatarUrl: user.avatarUrl,
-    createdAt: user.createdAt.toISOString(),
-    updatedAt: user.updatedAt.toISOString()
-  };
+export async function deleteUser(id: string): Promise<void> {
+  try {
+    await db.user.delete({
+      where: { id },
+    });
+
+    revalidatePath('/');
+  } catch {
+    throw new Error(fr.errors.failedToDeleteUser);
+  }
+}
+
+export async function signOut(): Promise<void> {
+  try {
+    // Implement your sign out logic here
+    // This might involve clearing session, cookies, etc.
+    revalidatePath('/');
+  } catch (error) {
+    console.error('Failed to sign out:', error);
+    throw new Error(fr.errors.failedToSignOut);
+  }
 }

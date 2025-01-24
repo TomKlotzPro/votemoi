@@ -1,9 +1,9 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
-import { XMarkIcon } from '@heroicons/react/24/outline';
-import SafeImage from '../ui/SafeImage';
 import { Vote } from '@/app/types/link';
+import { XMarkIcon } from '@heroicons/react/24/outline';
+import { AnimatePresence, motion } from 'framer-motion';
+import SafeImage from '../ui/SafeImage';
 
 interface VotersModalProps {
   isOpen: boolean;
@@ -11,7 +11,11 @@ interface VotersModalProps {
   votes: Vote[];
 }
 
-export default function VotersModal({ isOpen, onClose, votes }: VotersModalProps) {
+export default function VotersModal({
+  isOpen,
+  onClose,
+  votes,
+}: VotersModalProps) {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -24,13 +28,13 @@ export default function VotersModal({ isOpen, onClose, votes }: VotersModalProps
             onClick={onClose}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
           />
-          
+
           {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-black/80 backdrop-blur-md rounded-xl p-6 z-50 border border-white/10"
           >
             {/* Header */}
@@ -58,7 +62,7 @@ export default function VotersModal({ isOpen, onClose, votes }: VotersModalProps
                 >
                   <motion.div
                     whileHover={{ scale: 1.1 }}
-                    transition={{ type: "spring", stiffness: 400 }}
+                    transition={{ type: 'spring', stiffness: 400 }}
                   >
                     <SafeImage
                       src={vote.user.avatarUrl}
@@ -66,7 +70,7 @@ export default function VotersModal({ isOpen, onClose, votes }: VotersModalProps
                       className="w-10 h-10 rounded-full border-2 border-white/10 group-hover:border-white/20 transition-colors"
                     />
                   </motion.div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <h3 className="text-white font-medium truncate">
                       {vote.user.name}
@@ -77,7 +81,7 @@ export default function VotersModal({ isOpen, onClose, votes }: VotersModalProps
                         month: 'long',
                         day: 'numeric',
                         hour: '2-digit',
-                        minute: '2-digit'
+                        minute: '2-digit',
                       })}
                     </p>
                   </div>

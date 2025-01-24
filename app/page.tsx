@@ -1,10 +1,10 @@
 'use client';
 
-import { useLinks } from './hooks/useLinks';
-import { useUser } from './context/user-context';
-import { fr } from './translations/fr';
-import LinkList from './components/links/LinkList';
 import AddLinkButton from './components/links/AddLinkButton';
+import LinkList from './components/links/LinkList';
+import { useUser } from './context/user-context';
+import { useLinks } from './hooks/useLinks';
+import { fr } from './translations/fr';
 
 export default function Home() {
   const {
@@ -51,7 +51,9 @@ export default function Home() {
                 onUnvote={handleUnvote}
                 onDelete={(linkId) => user && removeLink(linkId, user)}
                 onEdit={(data) => user && editLink(data, user)}
-                onAddComment={(linkId, content) => user && addComment(linkId, content, user)}
+                onAddComment={(linkId, content) =>
+                  user && addComment(linkId, content, user)
+                }
                 user={user}
               />
             )}

@@ -1,16 +1,19 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { User } from '@/app/types/user';
-import { fr } from '@/app/translations/fr';
-import { AVATAR_OPTIONS } from '@/app/constants/avatars';
-import { useUsers } from '@/app/hooks/useUsersClient';
-import { useUser } from '@/app/context/user-context';
 import { updateUser } from '@/app/actions/user-actions';
+import { AVATAR_OPTIONS } from '@/app/constants/avatars';
+import { useUser } from '@/app/context/user-context';
+import { useUsers } from '@/app/hooks/useUsersClient';
+import { fr } from '@/app/translations/fr';
+import { User } from '@/app/types/user';
+import {
+  ArrowRightOnRectangleIcon,
+  PencilIcon,
+} from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
 import ErrorMessage from '../common/ErrorMessage';
 import SafeImage from '../ui/SafeImage';
-import { PencilIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
-import { motion } from 'framer-motion';
 
 interface ProfileMenuProps {
   user: User;
@@ -18,7 +21,11 @@ interface ProfileMenuProps {
   onLogout: () => void;
 }
 
-export default function ProfileMenu({ user, onClose, onLogout }: ProfileMenuProps) {
+export default function ProfileMenu({
+  user,
+  onClose,
+  onLogout,
+}: ProfileMenuProps) {
   const { users } = useUsers();
   const { setUser } = useUser();
   const [isEditing, setIsEditing] = useState(false);
@@ -49,16 +56,16 @@ export default function ProfileMenu({ user, onClose, onLogout }: ProfileMenuProp
 
     try {
       const trimmedName = name.trim();
-      
+
       if (!trimmedName) {
         setError(fr.errors.nameRequired);
         setIsSubmitting(false);
         return;
       }
 
-      const nameExists = users.some(u => 
-        u.id !== user.id && 
-        u.name.toLowerCase() === trimmedName.toLowerCase()
+      const nameExists = users.some(
+        (u) =>
+          u.id !== user.id && u.name.toLowerCase() === trimmedName.toLowerCase()
       );
 
       if (nameExists) {
@@ -93,13 +100,14 @@ export default function ProfileMenu({ user, onClose, onLogout }: ProfileMenuProp
       if (!updatedUser) {
         throw new Error('Failed to update user');
       }
-
     } catch (err) {
       console.error('Error updating user:', err);
       // Revert to previous state on error without reopening menu
       setUser(previousUserRef.current);
       // Show error in a toast or notification instead of reopening menu
-      console.error(err instanceof Error ? err.message : fr.errors.unknownError);
+      console.error(
+        err instanceof Error ? err.message : fr.errors.unknownError
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -118,7 +126,10 @@ export default function ProfileMenu({ user, onClose, onLogout }: ProfileMenuProp
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-white/80 mb-2">
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-white/80 mb-2"
+            >
               {fr.common.name}
             </label>
             <motion.input
@@ -135,11 +146,9 @@ export default function ProfileMenu({ user, onClose, onLogout }: ProfileMenuProp
               required
               initial={false}
               animate={{ scale: name !== user.name ? 1.02 : 1 }}
-              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             />
-            {error && (
-              <ErrorMessage message={error} className="mt-2" />
-            )}
+            {error && <ErrorMessage message={error} className="mt-2" />}
           </div>
 
           <div>
@@ -156,9 +165,10 @@ export default function ProfileMenu({ user, onClose, onLogout }: ProfileMenuProp
                     group relative aspect-square rounded-lg overflow-hidden
                     transition-all duration-300 ease-out transform
                     hover:shadow-lg hover:z-10
-                    ${selectedAvatar === avatar
-                      ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-black scale-105 rotate-3'
-                      : 'ring-1 ring-white/10 hover:ring-white/30'
+                    ${
+                      selectedAvatar === avatar
+                        ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-black scale-105 rotate-3'
+                        : 'ring-1 ring-white/10 hover:ring-white/30'
                     }
                   `}
                   disabled={isSubmitting}

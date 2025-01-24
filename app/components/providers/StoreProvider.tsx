@@ -1,9 +1,9 @@
 'use client';
 
+import { User } from '@/app/types/user';
 import { useRef } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User } from '@/app/types/user';
 
 interface UserState {
   user: User | null;
@@ -29,14 +29,14 @@ export const createUserStore = () =>
         // Actions
         setUser: (user) => set({ user }),
 
-        updateUser: (data) => 
+        updateUser: (data) =>
           set((state) => ({
-            user: state.user ? { ...state.user, ...data } : null
+            user: state.user ? { ...state.user, ...data } : null,
           })),
 
         showAuthForm: () => set({ isAuthFormVisible: true }),
         hideAuthForm: () => set({ isAuthFormVisible: false }),
-        
+
         logout: () => set({ user: null }),
       }),
       {
@@ -57,7 +57,9 @@ function initializeStore() {
   return store;
 }
 
-export function useUserStore<T>(selector: (state: UserState & UserActions) => T): T {
+export function useUserStore<T>(
+  selector: (state: UserState & UserActions) => T
+): T {
   const storeRef = useRef<UserStore>();
   if (!storeRef.current) {
     storeRef.current = initializeStore();

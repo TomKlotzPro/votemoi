@@ -1,53 +1,50 @@
-'use client';
-
+import { fr } from '@/app/translations/fr';
 import { Menu, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
-import { EllipsisVerticalIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { fr } from '@/app/translations/fr';
 
 interface LinkCardMenuProps {
-  onEdit: () => void;
-  onDelete: () => void;
+  onDelete: () => Promise<void>;
 }
 
-export default function LinkCardMenu({ onEdit, onDelete }: LinkCardMenuProps) {
+export default function LinkCardMenu({ onDelete }: LinkCardMenuProps) {
   return (
     <Menu as="div" className="relative">
-      <Menu.Button className="p-1.5 rounded-full hover:bg-white/5 text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors">
-        <EllipsisVerticalIcon className="w-5 h-5" />
+      <Menu.Button className="p-2 hover:bg-white/5 rounded-full">
+        <span className="sr-only">{fr.common.openMenu}</span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
+          stroke="currentColor"
+          className="w-5 h-5"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
+          />
+        </svg>
       </Menu.Button>
+
       <Transition
         as={Fragment}
-        enter="transition ease-out duration-200"
+        enter="transition ease-out duration-100"
         enterFrom="transform opacity-0 scale-95"
         enterTo="transform opacity-100 scale-100"
-        leave="transition ease-in duration-150"
+        leave="transition ease-in duration-75"
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items className="absolute right-0 mt-2 w-40 rounded-xl bg-black/90 backdrop-blur-xl shadow-lg ring-1 ring-black/5 focus:outline-none py-1.5 border border-[var(--border)] divide-y divide-[var(--border)]">
-          <div className="py-0.5">
+        <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+          <div className="py-1">
             <Menu.Item>
-              {({ active }) => (
-                <button
-                  onClick={onEdit}
-                  className={`text-[var(--text-primary)] hover:text-[var(--primary)] group flex w-full items-center justify-between px-3 py-2 text-sm font-medium transition-all duration-200`}
-                >
-                  {fr.actions.edit}
-                  <PencilIcon className="w-4 h-4 ml-2 text-[var(--text-secondary)] group-hover:text-[var(--primary)] transition-colors duration-200" />
-                </button>
-              )}
-            </Menu.Item>
-          </div>
-          <div className="py-0.5">
-            <Menu.Item>
-              {({ active }) => (
+              {() => (
                 <button
                   onClick={onDelete}
-                  className={`text-[var(--text-primary)] hover:text-rose-500 group flex w-full items-center justify-between px-3 py-2 text-sm font-medium transition-all duration-200`}
+                  className="text-red-600 hover:bg-red-50 block w-full px-4 py-2 text-left text-sm"
                 >
-                  {fr.actions.delete}
-                  <TrashIcon className="w-4 h-4 ml-2 text-[var(--text-secondary)] group-hover:text-rose-500 transition-colors duration-200" />
+                  {fr.common.delete}
                 </button>
               )}
             </Menu.Item>

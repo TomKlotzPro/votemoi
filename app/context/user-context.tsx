@@ -1,10 +1,16 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { User } from '../types/user';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import AuthForm from '../components/auth/AuthForm';
 import LoadingScreen from '../components/ui/LoadingScreen';
 import { AVATAR_OPTIONS } from '../constants/avatars';
+import { User } from '../types/user';
 
 interface UserContextType {
   user: User | null;
@@ -31,13 +37,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const preloadAvatars = async () => {
       try {
         await Promise.all(
-          AVATAR_OPTIONS.map(url => 
-            new Promise((resolve, reject) => {
-              const img = new Image();
-              img.onload = resolve;
-              img.onerror = reject;
-              img.src = url;
-            })
+          AVATAR_OPTIONS.map(
+            (url) =>
+              new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = resolve;
+                img.onerror = reject;
+                img.src = url;
+              })
           )
         );
       } catch (error) {
@@ -81,10 +88,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setIsAuthFormVisible(false);
   }, []);
 
-  const handleAuthSuccess = useCallback((authenticatedUser: User) => {
-    handleSetUser(authenticatedUser);
-    hideAuthForm();
-  }, [handleSetUser, hideAuthForm]);
+  const handleAuthSuccess = useCallback(
+    (authenticatedUser: User) => {
+      handleSetUser(authenticatedUser);
+      hideAuthForm();
+    },
+    [handleSetUser, hideAuthForm]
+  );
 
   const logout = useCallback(() => {
     localStorage.removeItem(USER_STORAGE_KEY);
@@ -115,10 +125,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     >
       {children}
       {isAuthFormVisible && (
-        <AuthForm
-          onSuccess={handleAuthSuccess}
-          onClose={hideAuthForm}
-        />
+        <AuthForm onSuccess={handleAuthSuccess} onClose={hideAuthForm} />
       )}
     </UserContext.Provider>
   );

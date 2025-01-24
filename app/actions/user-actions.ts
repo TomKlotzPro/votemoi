@@ -1,18 +1,20 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
-import { revalidatePath } from 'next/cache';
-import { Prisma } from '@prisma/client';
 import { User } from '@/app/types/user';
+import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
 
 interface CreateUserData {
   name: string;
   avatarUrl: string;
+  email: string;
 }
 
 interface UpdateUserData {
   name: string;
   avatarUrl: string;
+  email: string;
 }
 
 export async function getUsers(): Promise<User[]> {
@@ -30,20 +32,21 @@ export async function getUsers(): Promise<User[]> {
       },
     });
 
-    return users.map(user => ({
+    return users.map((user) => ({
       id: user.id,
       name: user.name,
       avatarUrl: user.avatarUrl,
+      email: user.email,
       createdAt: user.createdAt,
       updatedAt: user.createdAt, // Since there's no updatedAt in the schema, we'll use createdAt
-      votes: user.votes.map(vote => ({
+      votes: user.votes.map((vote) => ({
         id: vote.id,
         createdAt: vote.createdAt,
         userId: vote.userId,
-        linkId: vote.linkId
+        linkId: vote.linkId,
       })),
       links: user.links,
-      comments: user.comments
+      comments: user.comments,
     }));
   } catch (error) {
     console.error('Failed to fetch users:', error);
@@ -65,6 +68,7 @@ export async function createUser(data: CreateUserData): Promise<User> {
       data: {
         name: data.name,
         avatarUrl: data.avatarUrl,
+        email: data.email,
       },
       include: {
         votes: true,
@@ -74,21 +78,22 @@ export async function createUser(data: CreateUserData): Promise<User> {
     });
 
     revalidatePath('/');
-    
+
     return {
       id: user.id,
       name: user.name,
       avatarUrl: user.avatarUrl,
+      email: user.email,
       createdAt: user.createdAt,
       updatedAt: user.createdAt,
-      votes: user.votes.map(vote => ({
+      votes: user.votes.map((vote) => ({
         id: vote.id,
         createdAt: vote.createdAt,
         userId: vote.userId,
-        linkId: vote.linkId
+        linkId: vote.linkId,
       })),
       links: user.links,
-      comments: user.comments
+      comments: user.comments,
     };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -101,13 +106,16 @@ export async function createUser(data: CreateUserData): Promise<User> {
   }
 }
 
-export async function updateUser(id: string, data: UpdateUserData): Promise<User> {
+export async function updateUser(
+  id: string,
+  data: UpdateUserData
+): Promise<User> {
   if (!id) {
     throw new Error('User ID is required');
   }
 
-  if (!data?.name || !data?.avatarUrl) {
-    throw new Error('Name and avatar are required');
+  if (!data?.name || !data?.avatarUrl || !data?.email) {
+    throw new Error('Name, avatar and email are required');
   }
 
   const trimmedName = data.name.trim();
@@ -129,6 +137,7 @@ export async function updateUser(id: string, data: UpdateUserData): Promise<User
       data: {
         name: trimmedName,
         avatarUrl: data.avatarUrl,
+        email: data.email,
       },
       include: {
         votes: true,
@@ -143,16 +152,17 @@ export async function updateUser(id: string, data: UpdateUserData): Promise<User
       id: updatedUser.id,
       name: updatedUser.name,
       avatarUrl: updatedUser.avatarUrl,
+      email: updatedUser.email,
       createdAt: updatedUser.createdAt,
       updatedAt: updatedUser.createdAt,
-      votes: updatedUser.votes.map(vote => ({
+      votes: updatedUser.votes.map((vote) => ({
         id: vote.id,
         createdAt: vote.createdAt,
         userId: vote.userId,
-        linkId: vote.linkId
+        linkId: vote.linkId,
       })),
       links: updatedUser.links,
-      comments: updatedUser.comments
+      comments: updatedUser.comments,
     };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -177,7 +187,10 @@ export async function deleteUser(id: string): Promise<void> {
   }
 }
 
-export async function toggleVote(linkId: string, userId: string): Promise<void> {
+export async function toggleVote(
+  linkId: string,
+  userId: string
+): Promise<void> {
   try {
     const existingVote = await prisma.vote.findFirst({
       where: {
