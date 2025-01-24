@@ -1,4 +1,3 @@
-
 export interface BaseUser {
   id: string;
   name: string;
@@ -6,18 +5,14 @@ export interface BaseUser {
 }
 
 export interface User extends BaseUser {
-  createdAt: Date;
-  updatedAt: Date;
-  links: Link[];
-  votes: Vote[];
-  comments: Comment[];
-  email: string | null;
+  createdAt: string;
+  updatedAt: string;
+  links?: Link[];
+  votes?: Vote[];
+  comments?: Comment[];
 }
 
-export interface FormattedUser {
-  id: string;
-  name: string;
-  avatarUrl: string | null;
+export interface FormattedUser extends BaseUser {
   createdAt: string;
   updatedAt: string;
 }
@@ -27,8 +22,8 @@ export function formatUser(user: User): FormattedUser {
     id: user.id,
     name: user.name,
     avatarUrl: user.avatarUrl,
-    createdAt: user.createdAt.toISOString(),
-    updatedAt: user.updatedAt.toISOString(),
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
   };
 }
 
@@ -42,14 +37,14 @@ interface Link {
   previewDescription: string | null;
   previewFavicon: string | null;
   previewSiteName: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   createdById: string;
 }
 
 interface Vote {
   id: string;
-  createdAt: Date;
+  createdAt: string;
   userId: string;
   linkId: string;
 }
@@ -57,8 +52,8 @@ interface Vote {
 interface Comment {
   id: string;
   content: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   userId: string;
   linkId: string;
 }

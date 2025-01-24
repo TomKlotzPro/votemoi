@@ -1,44 +1,49 @@
 'use client';
 
-import { fr } from '@/app/translations/fr';
 import { FormattedLink } from '@/app/types/link';
-import { FormattedUser } from '@/app/types/user';
+import { User } from '@/app/types/user';
 import EmptyLinkList from './EmptyLinkList';
 import LinkCard from './LinkCard';
 
 interface LinkListProps {
   links: FormattedLink[];
-  currentUser: FormattedUser | null;
+  isLoading: boolean;
+  user: User | null;
   onVote: (linkId: string) => Promise<void>;
   onUnvote: (linkId: string) => Promise<void>;
-  onComment: (linkId: string, content: string) => Promise<void>;
-  onEdit: (linkId: string) => void;
   onDelete: (linkId: string) => Promise<void>;
+  onEdit: (data: string) => Promise<void>;
+  onAddComment: (linkId: string, content: string) => Promise<void>;
 }
 
 export default function LinkList({
   links,
-  currentUser,
+  isLoading,
+  user,
   onVote,
   onUnvote,
-  onComment,
-  onEdit,
   onDelete,
+  onEdit,
+  onAddComment,
 }: LinkListProps) {
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   if (!links.length) {
     return <EmptyLinkList />;
   }
 
   return (
     <div className="space-y-4">
-      {links.map(link => (
+      {links.map((link) => (
         <LinkCard
           key={link.id}
           link={link}
-          currentUser={currentUser}
+          currentUser={user}
           onVote={() => onVote(link.id)}
           onUnvote={() => onUnvote(link.id)}
-          onComment={content => onComment(link.id, content)}
+          onComment={(content) => onAddComment(link.id, content)}
           onEdit={() => onEdit(link.id)}
           onDelete={() => onDelete(link.id)}
         />

@@ -1,3 +1,6 @@
+'use client';
+
+import { useUsers } from '@/app/hooks/useUsers';
 import { fr } from '@/app/translations/fr';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -5,6 +8,7 @@ import UserMenu from '../users/UserMenu';
 
 export default function Navigation() {
   const pathname = usePathname();
+  const { currentUser } = useUsers();
 
   const isActive = (path: string) => pathname === path;
 
@@ -17,41 +21,23 @@ export default function Navigation() {
               href="/"
               className="text-xl font-bold text-white hover:text-primary transition-colors"
             >
-              {fr.appName}
+              {fr.common.title}
             </Link>
 
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/"
-                className={`text-sm font-medium transition-colors ${
-                  isActive('/')
-                    ? 'text-primary'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                {fr.nav.home}
-              </Link>
-              <Link
-                href="/links"
-                className={`text-sm font-medium transition-colors ${
-                  isActive('/links')
-                    ? 'text-primary'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                {fr.nav.links}
-              </Link>
-              <Link
-                href="/urls"
-                className={`text-sm font-medium transition-colors ${
-                  isActive('/urls')
-                    ? 'text-primary'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                {fr.nav.urls}
-              </Link>
-            </div>
+            {currentUser && (
+              <div className="flex items-center space-x-4">
+                <Link
+                  href="/urls"
+                  className={`text-sm font-medium transition-colors ${
+                    isActive('/urls')
+                      ? 'text-primary'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {fr.nav.urls}
+                </Link>
+              </div>
+            )}
           </div>
 
           <UserMenu />

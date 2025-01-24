@@ -4,11 +4,14 @@ import { useEffect, useState } from 'react';
 import ErrorMessage from '../components/common/ErrorMessage';
 import UserList from '../components/users/UserList';
 import { fr } from '../translations/fr';
+import { FormattedUser } from '../types/user';
 
-type User = {
+type ApiUser = {
   id: string;
   name: string;
   avatarUrl?: string;
+  createdAt: string;
+  updatedAt: string;
   _count: {
     votes: number;
   };
@@ -20,8 +23,18 @@ type User = {
   }[];
 };
 
+const formatUser = (user: ApiUser): FormattedUser => {
+  return {
+    id: user.id,
+    name: user.name,
+    avatarUrl: user.avatarUrl || '',
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
+};
+
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<FormattedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -33,7 +46,7 @@ export default function UsersPage() {
           throw new Error('Failed to fetch users');
         }
         const data = await response.json();
-        setUsers(data.users || []);
+        setUsers((data.users || []).map(formatUser));
       } catch (error) {
         console.error('Failed to fetch users:', error);
         setError(fr.errors.failedToLoadUsers);

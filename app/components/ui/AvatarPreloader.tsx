@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { useEffect, useRef } from 'react';
 
 interface AvatarPreloaderProps {
@@ -28,7 +27,7 @@ export default function AvatarPreloader({
     };
 
     avatars.forEach((avatar) => {
-      const img = new Image();
+      const img = new window.Image();
       img.src = avatar;
       img.onload = handleLoad;
       img.onerror = handleLoad; // Count errors as loaded to avoid blocking

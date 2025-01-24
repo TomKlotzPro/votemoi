@@ -1,57 +1,19 @@
 'use server';
 
-import { db } from '@/app/lib/db';
+import { FormattedLink, LinkWithRelations } from '@/app/types/link';
+import { prisma } from '@/lib/prisma';
 import { fetchUrlMetadata } from '@/lib/url-metadata';
+import { Comment, User } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
-import { Comment, User} from '@prisma/client';
-
-type FormattedLink = {
-  id: string;
-  url: string;
-  title: string;
-  description: string | null;
-  createdAt: string;
-  updatedAt: string;
-  createdById: string;
-  previewDescription: string | null;
-  previewFavicon: string | null;
-  previewImage: string | null;
-  previewSiteName: string | null;
-  previewTitle: string | null;
-  hasVoted?: boolean;
-  createdBy: {
-    id: string;
-    name: string;
-    avatarUrl: string;
-  };
-  votes: Array<{
-    userId: string;
-    userName: string;
-    createdAt: string;
-    user: {
-      id: string;
-      name: string;
-      avatarUrl: string;
-    };
-  }>;
-  comments: Array<{
-    id: string;
-    content: string;
-    createdAt: string;
-    updatedAt: string;
-    user: {
-      id: string;
-      name: string;
-      avatarUrl: string;
-    };
-  }>;
-};
 
 export async function getLinks(
   userId?: string
 ): Promise<{ links?: FormattedLink[]; error?: string }> {
   try {
-    const links = await db.link.findMany({
+    const links = (await prisma.link.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
       include: {
         createdBy: {
           select: {
@@ -61,7 +23,9 @@ export async function getLinks(
           },
         },
         votes: {
-          include: {
+          select: {
+            id: true,
+            createdAt: true,
             user: {
               select: {
                 id: true,
@@ -72,7 +36,11 @@ export async function getLinks(
           },
         },
         comments: {
-          include: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            updatedAt: true,
             user: {
               select: {
                 id: true,
@@ -83,10 +51,7 @@ export async function getLinks(
           },
         },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    })) as LinkWithRelations[];
 
     if (!links) {
       return { links: [] };
@@ -105,14 +70,14 @@ export async function getLinks(
       previewImage: link.previewImage,
       previewSiteName: link.previewSiteName,
       previewTitle: link.previewTitle,
-      hasVoted: link.votes.some((vote) => vote.userId === userId),
+      hasVoted: link.votes.some((vote) => vote.user.id === userId),
       createdBy: {
         id: link.createdBy.id,
         name: link.createdBy.name,
         avatarUrl: link.createdBy.avatarUrl,
       },
       votes: link.votes.map((vote) => ({
-        userId: vote.userId,
+        userId: vote.user.id,
         userName: vote.user.name,
         createdAt: vote.createdAt.toISOString(),
         user: vote.user,
@@ -123,6 +88,8 @@ export async function getLinks(
         createdAt: comment.createdAt.toISOString(),
         updatedAt: comment.updatedAt.toISOString(),
         user: comment.user,
+        userId: comment.user.id,
+        linkId: link.id,
       })),
     }));
 
@@ -144,7 +111,7 @@ export async function createLink(data: {
 
   try {
     // Verify user exists
-    const user = await db.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: data.userId },
       select: { id: true },
     });
@@ -173,7 +140,7 @@ export async function createLink(data: {
           previewSiteName: extractedMetadata.previewSiteName || '',
         };
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_) {
       // Silently continue with default metadata
     }
@@ -182,12 +149,12 @@ export async function createLink(data: {
     let hostname = '';
     try {
       hostname = new URL(data.url).hostname;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_) {
       hostname = data.url.split('/')[2] || 'unknown site';
     }
 
-    const link = await db.link.create({
+    const link = await prisma.link.create({
       data: {
         url: data.url,
         title: data.title || metadata.previewTitle || hostname,
@@ -257,7 +224,7 @@ export async function createLink(data: {
         avatarUrl: link.createdBy.avatarUrl,
       },
       votes: link.votes.map((vote) => ({
-        userId: vote.userId,
+        userId: vote.user.id,
         userName: vote.user.name,
         createdAt: vote.createdAt.toISOString(),
         user: vote.user,
@@ -268,6 +235,8 @@ export async function createLink(data: {
         createdAt: comment.createdAt.toISOString(),
         updatedAt: comment.updatedAt.toISOString(),
         user: comment.user,
+        userId: comment.user.id,
+        linkId: link.id,
       })),
     };
 
@@ -286,10 +255,8 @@ export async function updateLink(data: {
   userId: string;
 }): Promise<{ link?: FormattedLink; error?: string }> {
   try {
-    console.log('[updateLink] Starting with data:', data);
-
     // Extract metadata from URL if URL has changed
-    const existingLink = await db.link.findUnique({
+    const existingLink = await prisma.link.findUnique({
       where: { id: data.id },
     });
 
@@ -298,7 +265,7 @@ export async function updateLink(data: {
       metadata = await fetchUrlMetadata(data.url);
     }
 
-    const link = await db.link.update({
+    const link = await prisma.link.update({
       where: { id: data.id },
       data: {
         url: data.url,
@@ -364,7 +331,7 @@ export async function updateLink(data: {
         avatarUrl: link.createdBy.avatarUrl,
       },
       votes: link.votes.map((vote) => ({
-        userId: vote.userId,
+        userId: vote.user.id,
         userName: vote.user.name,
         createdAt: vote.createdAt.toISOString(),
         user: vote.user,
@@ -375,6 +342,8 @@ export async function updateLink(data: {
         createdAt: comment.createdAt.toISOString(),
         updatedAt: comment.updatedAt.toISOString(),
         user: comment.user,
+        userId: comment.user.id,
+        linkId: link.id,
       })),
     };
 
@@ -390,7 +359,7 @@ export async function deleteLink(data: {
   userId: string;
 }): Promise<{ success?: boolean; error?: string }> {
   try {
-    const link = await db.link.findUnique({
+    const link = await prisma.link.findUnique({
       where: { id: data.id },
       include: { createdBy: true },
     });
@@ -404,17 +373,17 @@ export async function deleteLink(data: {
     }
 
     // Delete all related records first
-    await db.$transaction([
+    await prisma.$transaction([
       // Delete all votes for this link
-      db.vote.deleteMany({
+      prisma.vote.deleteMany({
         where: { linkId: data.id },
       }),
       // Delete all comments for this link
-      db.comment.deleteMany({
+      prisma.comment.deleteMany({
         where: { linkId: data.id },
       }),
       // Finally delete the link itself
-      db.link.delete({
+      prisma.link.delete({
         where: { id: data.id },
       }),
     ]);
@@ -426,16 +395,13 @@ export async function deleteLink(data: {
   }
 }
 
-export async function vote(data: {
-  linkId: string;
-  userId: string;
-}): Promise<{
+export async function vote(data: { linkId: string; userId: string }): Promise<{
   success?: boolean;
   user?: { id: string; name: string; avatarUrl: string };
   error?: string;
 }> {
   try {
-    const existingVote = await db.vote.findFirst({
+    const existingVote = await prisma.vote.findFirst({
       where: {
         linkId: data.linkId,
         userId: data.userId,
@@ -446,7 +412,7 @@ export async function vote(data: {
       throw new Error('Already voted for this link');
     }
 
-    const newVote = await db.vote.create({
+    const newVote = await prisma.vote.create({
       data: {
         link: {
           connect: { id: data.linkId },
@@ -478,7 +444,7 @@ export async function unvote(data: {
   userId: string;
 }): Promise<{ success?: boolean; error?: string }> {
   try {
-    await db.vote.deleteMany({
+    await prisma.vote.deleteMany({
       where: {
         linkId: data.linkId,
         userId: data.userId,
@@ -501,18 +467,10 @@ export async function createComment(data: {
   error?: string;
 }> {
   try {
-
     // Fetch the updated link with all its relations
-    const link = await db.link.findUnique({
+    const link = await prisma.link.findUnique({
       where: { id: data.linkId },
       include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            avatarUrl: true,
-          },
-        },
         votes: {
           include: {
             user: {
@@ -522,6 +480,13 @@ export async function createComment(data: {
                 avatarUrl: true,
               },
             },
+          },
+        },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
           },
         },
         comments: {
@@ -548,7 +513,7 @@ export async function createComment(data: {
       createdAt: link.createdAt.toISOString(),
       updatedAt: link.updatedAt.toISOString(),
       votes: link.votes.map((vote) => ({
-        userId: vote.userId,
+        userId: vote.user.id,
         userName: vote.user.name,
         createdAt: vote.createdAt.toISOString(),
         user: vote.user,
@@ -559,13 +524,40 @@ export async function createComment(data: {
         createdAt: comment.createdAt.toISOString(),
         updatedAt: comment.updatedAt.toISOString(),
         user: comment.user,
+        userId: comment.user.id,
+        linkId: link.id,
+      })),
+    };
+
+    const comment = await prisma.comment.create({
+      data: {
+        content: data.content,
+        userId: data.userId,
+        linkId: data.linkId,
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    const updatedLink = {
+      ...formattedLink,
+      comments: [...formattedLink.comments, comment].map((comment) => ({
+        ...comment,
+        createdAt:
+          comment.createdAt instanceof Date
+            ? comment.createdAt.toISOString()
+            : comment.createdAt,
+        updatedAt:
+          comment.updatedAt instanceof Date
+            ? comment.updatedAt.toISOString()
+            : comment.updatedAt,
       })),
     };
 
     revalidatePath('/');
-    return { link: formattedLink };
+    return { link: updatedLink };
   } catch {
-    console.error('Failed to create comment:');
     return { error: 'Failed to create comment' };
   }
 }
@@ -579,7 +571,7 @@ export async function updateComment(data: {
   error?: string;
 }> {
   try {
-    const comment = await db.comment.findUnique({
+    const comment = await prisma.comment.findUnique({
       where: { id: data.id },
     });
 
@@ -591,7 +583,7 @@ export async function updateComment(data: {
       throw new Error('Not authorized to update this comment');
     }
 
-    const updatedComment = await db.comment.update({
+    const updatedComment = await prisma.comment.update({
       where: { id: data.id },
       data: { content: data.content },
       include: {
@@ -617,7 +609,7 @@ export async function deleteComment(data: {
   userId: string;
 }): Promise<{ success?: boolean; error?: string }> {
   try {
-    const comment = await db.comment.findUnique({
+    const comment = await prisma.comment.findUnique({
       where: { id: data.id },
     });
 
@@ -629,7 +621,7 @@ export async function deleteComment(data: {
       throw new Error('Not authorized to delete this comment');
     }
 
-    await db.comment.delete({
+    await prisma.comment.delete({
       where: { id: data.id },
     });
 
@@ -640,14 +632,12 @@ export async function deleteComment(data: {
   }
 }
 
-export async function getCommentsByUser(
-  userId: string
-): Promise<{
+export async function getCommentsByUser(userId: string): Promise<{
   comments?: (Comment & { user: Pick<User, 'id' | 'name' | 'avatarUrl'> })[];
   error?: string;
 }> {
   try {
-    const comments = await db.comment.findMany({
+    const comments = await prisma.comment.findMany({
       where: {
         userId,
       },

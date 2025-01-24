@@ -1,11 +1,13 @@
 import nextPlugin from '@next/eslint-plugin-next';
-import tsParser from '@typescript-eslint/parser';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 
+/** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
   {
     files: ['**/*.{ts,tsx}'],
+    ignores: ['node_modules/**', '.next/**', 'dist/**'],
     plugins: {
       '@typescript-eslint': tsPlugin,
       'react-hooks': reactHooksPlugin,
@@ -14,11 +16,20 @@ export default [
     languageOptions: {
       parser: tsParser,
       parserOptions: {
+        project: './tsconfig.json',
         ecmaVersion: 'latest',
         sourceType: 'module',
         ecmaFeatures: {
           jsx: true,
         },
+      },
+    },
+    linterOptions: {
+      reportUnusedDisableDirectives: true,
+    },
+    settings: {
+      react: {
+        version: 'detect',
       },
     },
     rules: {
@@ -27,35 +38,13 @@ export default [
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs['core-web-vitals'].rules,
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': ['error', { 
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-        ignoreRestSiblings: true
-      }],
-      '@typescript-eslint/explicit-function-return-type': 'off',
-      '@typescript-eslint/no-unsafe-function-type': 'off',
-      '@typescript-eslint/no-empty-object-type': 'off',
-      '@typescript-eslint/no-wrapper-object-types': 'off',
-      '@typescript-eslint/no-require-imports': 'warn',
-      'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
-      '@next/next/no-img-element': 'warn',
-      '@typescript-eslint/no-empty-interface': 'warn',
-      '@typescript-eslint/no-empty-function': 'warn'
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+        },
+      ],
     },
   },
-  {
-    files: ['**/.next/**/*.ts'],
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': 'off',
-      '@typescript-eslint/explicit-function-return-type': 'off',
-      '@typescript-eslint/no-empty-interface': 'off',
-      '@typescript-eslint/no-empty-function': 'off',
-      '@typescript-eslint/no-unsafe-function-type': 'off',
-      '@typescript-eslint/no-empty-object-type': 'off',
-      '@typescript-eslint/no-wrapper-object-types': 'off'
-    }
-  }
 ];

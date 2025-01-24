@@ -9,6 +9,7 @@ interface UseUrlsReturn {
   addUrl: (data: { url: string }) => Promise<Url>;
   updateUrl: (id: string, data: { url: string }) => Promise<Url>;
   deleteUrl: (id: string) => Promise<void>;
+  voteForUrl: (id: string) => Promise<void>;
 }
 
 export function useUrls(): UseUrlsReturn {
@@ -95,6 +96,33 @@ export function useUrls(): UseUrlsReturn {
     }
   };
 
+  const voteForUrl = async (id: string) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/urls/${id}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error(fr.errors.failedToVote);
+      }
+
+      const updatedUrl = await response.json();
+      setUrls((prevUrls) =>
+        prevUrls.map((url) => (url.id === id ? updatedUrl : url))
+      );
+      setError(null);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : fr.errors.failedToVote;
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     urls,
     loading,
@@ -102,5 +130,6 @@ export function useUrls(): UseUrlsReturn {
     addUrl,
     updateUrl,
     deleteUrl,
+    voteForUrl,
   };
 }

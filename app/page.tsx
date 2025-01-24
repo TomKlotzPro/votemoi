@@ -12,13 +12,44 @@ export default function Home() {
     isLoading,
     error,
     addLink,
-    removeLink,
-    editLink,
+    updateLink,
+    deleteLink,
+    vote,
+    unvote,
     addComment,
-    handleVote,
-    handleUnvote,
   } = useLinks();
   const { user } = useUser();
+
+  const handleVote = async (linkId: string) => {
+    if (user) {
+      await vote(linkId, user.id);
+    }
+  };
+
+  const handleUnvote = async (linkId: string) => {
+    if (user) {
+      await unvote(linkId, user.id);
+    }
+  };
+
+  const handleDelete = async (linkId: string) => {
+    if (user) {
+      await deleteLink(linkId);
+    }
+  };
+
+  const handleEdit = async (data: string) => {
+    if (user) {
+      const [id, newData] = JSON.parse(data);
+      await updateLink(id, newData);
+    }
+  };
+
+  const handleAddComment = async (linkId: string, content: string) => {
+    if (user) {
+      await addComment(linkId, user.id, content);
+    }
+  };
 
   return (
     <main className="relative min-h-screen pt-32 pb-20">
@@ -36,7 +67,7 @@ export default function Home() {
 
           {/* Add Link Button */}
           <div className="flex justify-center">
-            <AddLinkButton onAdd={(data) => user && addLink(data, user)} />
+            <AddLinkButton onAdd={(data) => user && addLink(data)} />
           </div>
 
           {/* Links Section */}
@@ -49,11 +80,9 @@ export default function Home() {
                 isLoading={isLoading}
                 onVote={handleVote}
                 onUnvote={handleUnvote}
-                onDelete={(linkId) => user && removeLink(linkId, user)}
-                onEdit={(data) => user && editLink(data, user)}
-                onAddComment={(linkId, content) =>
-                  user && addComment(linkId, content, user)
-                }
+                onDelete={handleDelete}
+                onEdit={handleEdit}
+                onAddComment={handleAddComment}
                 user={user}
               />
             )}

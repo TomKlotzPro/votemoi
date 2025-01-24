@@ -1,5 +1,6 @@
 import { fr } from '@/app/translations/fr';
-import { getLinkPreview } from 'link-preview-js';
+import axios from 'axios';
+import { JSDOM } from 'jsdom';
 
 interface URLMetadata {
   title: string | null;
@@ -12,20 +13,23 @@ interface URLMetadata {
 async function fetchWithTimeout(
   url: string,
   timeout = 5000
-): Promise<Response> {
+): Promise<{ data: string }> {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const response = await fetch(url, {
+    const response = await axios.get(url, {
       signal: controller.signal,
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; VoteMoi/1.0;)',
       },
+      timeout,
+      responseType: 'text',
     });
     clearTimeout(id);
     return response;
-  } catch {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error) {
     clearTimeout(id);
     throw new Error(fr.errors.failedToFetchUrl);
   } finally {
@@ -33,101 +37,69 @@ async function fetchWithTimeout(
   }
 }
 
-async function extractMetadataFromHTML(url: string): Promise<URLMetadata> {
-  try {
-    const response = await fetchWithTimeout(url);
-    const html = await response.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-
-    const getMetaContent = (selectors: string[]): string | null => {
-      for (const selector of selectors) {
-        const element = doc.querySelector(selector) as HTMLMetaElement | null;
-        if (element?.content) {
-          return element.content;
-        }
-      }
-      return null;
-    };
-
-    const title =
-      doc.querySelector('title')?.textContent ||
-      getMetaContent([
-        'meta[property="og:title"]',
-        'meta[name="twitter:title"]',
-      ]) ||
-      new URL(url).hostname ||
-      null;
-
-    const description =
-      getMetaContent([
-        'meta[property="og:description"]',
-        'meta[name="twitter:description"]',
-        'meta[name="description"]',
-      ]) || null;
-
-    const image =
-      getMetaContent([
-        'meta[property="og:image"]',
-        'meta[name="twitter:image"]',
-        'meta[name="image"]',
-      ]) || null;
-
-    const siteName =
-      getMetaContent(['meta[property="og:site_name"]']) ||
-      new URL(url).hostname ||
-      null;
-
-    const favicon =
-      doc.querySelector('link[rel="icon"]')?.getAttribute('href') ||
-      doc.querySelector('link[rel="shortcut icon"]')?.getAttribute('href') ||
-      new URL(url).origin + '/favicon.ico';
-
-    return {
-      title: title?.trim() || null,
-      description: description?.trim() || null,
-      image: image?.trim() || null,
-      favicon: favicon ? new URL(favicon, url).href : null,
-      siteName: siteName?.trim() || null,
-    };
-  } catch {
-    throw new Error(fr.errors.failedToFetchMetadata);
-  }
-}
-
 export async function extractURLMetadata(url: string): Promise<URLMetadata> {
   try {
-    // First try using link-preview-js
-    const preview = (await getLinkPreview(url)) as any;
+    const response = await fetchWithTimeout(url);
+    const dom = new JSDOM(response.data);
+    const doc = dom.window.document;
 
-    // Handle both HTML and non-HTML responses
-    const title =
-      typeof preview.title === 'string' ? preview.title : new URL(url).hostname;
-    const description =
-      typeof preview.description === 'string' ? preview.description : null;
-    const images = Array.isArray(preview.images)
-      ? preview.images
-      : typeof preview.image === 'string'
-        ? [preview.image]
-        : [];
-    const siteName =
-      typeof preview.siteName === 'string'
-        ? preview.siteName
-        : new URL(url).hostname;
-
-    return {
-      title,
-      description,
-      image: images.length > 0 ? images[0] : null,
-      favicon: typeof preview.favicon === 'string' ? preview.favicon : null,
-      siteName,
+    const metadata: URLMetadata = {
+      title:
+        doc
+          .querySelector('meta[property="og:title"]')
+          ?.getAttribute('content') ||
+        doc
+          .querySelector('meta[name="twitter:title"]')
+          ?.getAttribute('content') ||
+        doc.querySelector('title')?.textContent ||
+        null,
+      description:
+        doc
+          .querySelector('meta[property="og:description"]')
+          ?.getAttribute('content') ||
+        doc
+          .querySelector('meta[name="twitter:description"]')
+          ?.getAttribute('content') ||
+        doc
+          .querySelector('meta[name="description"]')
+          ?.getAttribute('content') ||
+        null,
+      image:
+        doc
+          .querySelector('meta[property="og:image"]')
+          ?.getAttribute('content') ||
+        doc
+          .querySelector('meta[name="twitter:image"]')
+          ?.getAttribute('content') ||
+        null,
+      favicon:
+        doc.querySelector('link[rel="icon"]')?.getAttribute('href') ||
+        doc.querySelector('link[rel="shortcut icon"]')?.getAttribute('href') ||
+        null,
+      siteName:
+        doc
+          .querySelector('meta[property="og:site_name"]')
+          ?.getAttribute('content') || null,
     };
+
+    // Convert relative URLs to absolute URLs
+    if (metadata.image && !metadata.image.startsWith('http')) {
+      metadata.image = new URL(metadata.image, url).toString();
+    }
+
+    if (metadata.favicon && !metadata.favicon.startsWith('http')) {
+      metadata.favicon = new URL(metadata.favicon, url).toString();
+    }
+
+    return metadata;
   } catch (error) {
-    console.error(
-      'Error using link-preview-js, falling back to HTML extraction:',
-      error
-    );
-    // Fall back to HTML extraction
-    return extractMetadataFromHTML(url);
+    console.error('Error extracting metadata:', error);
+    return {
+      title: null,
+      description: null,
+      image: null,
+      favicon: null,
+      siteName: null,
+    };
   }
 }

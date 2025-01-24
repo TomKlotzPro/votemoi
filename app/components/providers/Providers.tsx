@@ -1,17 +1,24 @@
 'use client';
 
-import { StoreProvider } from './StoreProvider';
-import { ThemeProvider } from './ThemeProvider';
+import { SessionProvider } from 'next-auth/react';
+import { ThemeProvider as NextThemeProvider } from 'next-themes';
+import { type ReactNode } from 'react';
 
-export function Providers({ children }: { children: React.ReactNode }) {
+interface Props {
+  children: ReactNode;
+}
+
+export function Providers({ children }: Props) {
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="dark"
-      enableSystem={false}
-      disableTransitionOnChange
-    >
-      <StoreProvider>{children}</StoreProvider>
-    </ThemeProvider>
+    <SessionProvider>
+      <NextThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        {children}
+      </NextThemeProvider>
+    </SessionProvider>
   );
 }

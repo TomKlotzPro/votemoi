@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -31,8 +31,10 @@ async function main() {
       title: 'Next.js Documentation',
       description: 'Learn how to use Next.js',
       previewTitle: 'Next.js - The React Framework',
-      previewDescription: 'Production grade React applications that scale. Next.js gives you the best developer experience with all the features you need for production.',
-      previewImage: 'https://assets.vercel.com/image/upload/v1662130559/nextjs/twitter-card.png',
+      previewDescription:
+        'Production grade React applications that scale. Next.js gives you the best developer experience with all the features you need for production.',
+      previewImage:
+        'https://assets.vercel.com/image/upload/v1662130559/nextjs/twitter-card.png',
       previewFavicon: 'https://nextjs.org/favicon.ico',
       previewSiteName: 'Next.js',
       createdById: user1.id,
@@ -45,7 +47,8 @@ async function main() {
       title: 'Prisma Documentation',
       description: 'Learn how to use Prisma',
       previewTitle: 'Prisma - Next-generation Node.js and TypeScript ORM',
-      previewDescription: 'Prisma helps app developers build faster and make fewer errors with an open source database toolkit for PostgreSQL, MySQL, SQL Server, SQLite and MongoDB.',
+      previewDescription:
+        'Prisma helps app developers build faster and make fewer errors with an open source database toolkit for PostgreSQL, MySQL, SQL Server, SQLite and MongoDB.',
       previewImage: 'https://website-v9.vercel.app/og-image.png',
       previewFavicon: 'https://prisma.io/favicon.ico',
       previewSiteName: 'Prisma',
@@ -85,13 +88,15 @@ async function main() {
     },
   });
 
-  console.log('Seed data created successfully');
+  return 'Seed data created successfully';
 }
 
 main()
+  .then((message) => {
+    process.stdout.write(`${message}\n`);
+  })
   .catch((e) => {
-    console.error(e);
-    process.exit(1);
+    throw new Error(`Failed to seed database: ${e.message}`);
   })
   .finally(async () => {
     await prisma.$disconnect();

@@ -34,7 +34,7 @@ export default function AvatarLoader({
         src={avatarUrl}
         alt={user?.name || 'User avatar'}
         className="w-full h-full object-cover"
-        fallback={defaultAvatarUrl}
+        fallbackSrc={defaultAvatarUrl}
       />
     </div>
   );

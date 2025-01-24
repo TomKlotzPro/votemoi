@@ -68,3 +68,26 @@ export interface FormattedComment
   updatedAt: string;
   user: Pick<User, 'id' | 'name' | 'avatarUrl'>;
 }
+
+export type UserBasicInfo = Pick<User, 'id' | 'name' | 'avatarUrl'>;
+
+export interface VoteWithUser {
+  id: string;
+  createdAt: Date;
+  user: UserBasicInfo;
+}
+
+export interface CommentWithUser {
+  id: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  user: UserBasicInfo;
+}
+
+export interface LinkWithRelations
+  extends Omit<Link, 'createdBy' | 'votes' | 'comments'> {
+  createdBy: UserBasicInfo;
+  votes: VoteWithUser[];
+  comments: CommentWithUser[];
+}

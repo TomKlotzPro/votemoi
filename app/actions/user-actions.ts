@@ -8,13 +8,35 @@ import { revalidatePath } from 'next/cache';
 interface CreateUserData {
   name: string;
   avatarUrl: string;
-  email: string;
 }
 
 interface UpdateUserData {
   name: string;
   avatarUrl: string;
-  email: string;
+}
+
+interface Link {
+  id: string;
+  url: string;
+  title: string;
+  description: string | null;
+  previewImage: string | null;
+  previewTitle: string | null;
+  previewDescription: string | null;
+  previewFavicon: string | null;
+  previewSiteName: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  createdById: string;
+}
+
+interface Comment {
+  id: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+  linkId: string;
 }
 
 export async function getUsers(): Promise<User[]> {
@@ -36,17 +58,36 @@ export async function getUsers(): Promise<User[]> {
       id: user.id,
       name: user.name,
       avatarUrl: user.avatarUrl,
-      email: user.email,
-      createdAt: user.createdAt,
-      updatedAt: user.createdAt, // Since there's no updatedAt in the schema, we'll use createdAt
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.createdAt.toISOString(), // Since there's no updatedAt in the schema, we'll use createdAt
       votes: user.votes.map((vote) => ({
         id: vote.id,
-        createdAt: vote.createdAt,
+        createdAt: vote.createdAt.toISOString(),
         userId: vote.userId,
         linkId: vote.linkId,
       })),
-      links: user.links,
-      comments: user.comments,
+      links: user.links.map((link: Link) => ({
+        id: link.id,
+        url: link.url,
+        title: link.title,
+        description: link.description,
+        previewImage: link.previewImage,
+        previewTitle: link.previewTitle,
+        previewDescription: link.previewDescription,
+        previewFavicon: link.previewFavicon,
+        previewSiteName: link.previewSiteName,
+        createdAt: link.createdAt.toISOString(),
+        updatedAt: link.updatedAt.toISOString(),
+        createdById: link.createdById,
+      })),
+      comments: user.comments.map((comment: Comment) => ({
+        id: comment.id,
+        content: comment.content,
+        createdAt: comment.createdAt.toISOString(),
+        updatedAt: comment.updatedAt.toISOString(),
+        userId: comment.userId,
+        linkId: comment.linkId,
+      })),
     }));
   } catch (error) {
     console.error('Failed to fetch users:', error);
@@ -68,7 +109,6 @@ export async function createUser(data: CreateUserData): Promise<User> {
       data: {
         name: data.name,
         avatarUrl: data.avatarUrl,
-        email: data.email,
       },
       include: {
         votes: true,
@@ -83,17 +123,36 @@ export async function createUser(data: CreateUserData): Promise<User> {
       id: user.id,
       name: user.name,
       avatarUrl: user.avatarUrl,
-      email: user.email,
-      createdAt: user.createdAt,
-      updatedAt: user.createdAt,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.createdAt.toISOString(),
       votes: user.votes.map((vote) => ({
         id: vote.id,
-        createdAt: vote.createdAt,
+        createdAt: vote.createdAt.toISOString(),
         userId: vote.userId,
         linkId: vote.linkId,
       })),
-      links: user.links,
-      comments: user.comments,
+      links: user.links.map((link: Link) => ({
+        id: link.id,
+        url: link.url,
+        title: link.title,
+        description: link.description,
+        previewImage: link.previewImage,
+        previewTitle: link.previewTitle,
+        previewDescription: link.previewDescription,
+        previewFavicon: link.previewFavicon,
+        previewSiteName: link.previewSiteName,
+        createdAt: link.createdAt.toISOString(),
+        updatedAt: link.updatedAt.toISOString(),
+        createdById: link.createdById,
+      })),
+      comments: user.comments.map((comment: Comment) => ({
+        id: comment.id,
+        content: comment.content,
+        createdAt: comment.createdAt.toISOString(),
+        updatedAt: comment.updatedAt.toISOString(),
+        userId: comment.userId,
+        linkId: comment.linkId,
+      })),
     };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -114,8 +173,8 @@ export async function updateUser(
     throw new Error('User ID is required');
   }
 
-  if (!data?.name || !data?.avatarUrl || !data?.email) {
-    throw new Error('Name, avatar and email are required');
+  if (!data?.name || !data?.avatarUrl) {
+    throw new Error('Name and avatar are required');
   }
 
   const trimmedName = data.name.trim();
@@ -137,7 +196,6 @@ export async function updateUser(
       data: {
         name: trimmedName,
         avatarUrl: data.avatarUrl,
-        email: data.email,
       },
       include: {
         votes: true,
@@ -152,17 +210,36 @@ export async function updateUser(
       id: updatedUser.id,
       name: updatedUser.name,
       avatarUrl: updatedUser.avatarUrl,
-      email: updatedUser.email,
-      createdAt: updatedUser.createdAt,
-      updatedAt: updatedUser.createdAt,
+      createdAt: updatedUser.createdAt.toISOString(),
+      updatedAt: updatedUser.updatedAt.toISOString(),
       votes: updatedUser.votes.map((vote) => ({
         id: vote.id,
-        createdAt: vote.createdAt,
+        createdAt: vote.createdAt.toISOString(),
         userId: vote.userId,
         linkId: vote.linkId,
       })),
-      links: updatedUser.links,
-      comments: updatedUser.comments,
+      links: updatedUser.links.map((link: Link) => ({
+        id: link.id,
+        url: link.url,
+        title: link.title,
+        description: link.description,
+        previewImage: link.previewImage,
+        previewTitle: link.previewTitle,
+        previewDescription: link.previewDescription,
+        previewFavicon: link.previewFavicon,
+        previewSiteName: link.previewSiteName,
+        createdAt: link.createdAt.toISOString(),
+        updatedAt: link.updatedAt.toISOString(),
+        createdById: link.createdById,
+      })),
+      comments: updatedUser.comments.map((comment: Comment) => ({
+        id: comment.id,
+        content: comment.content,
+        createdAt: comment.createdAt.toISOString(),
+        updatedAt: comment.updatedAt.toISOString(),
+        userId: comment.userId,
+        linkId: comment.linkId,
+      })),
     };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

@@ -1,11 +1,18 @@
 import { fr } from '@/app/translations/fr';
 import { FormattedLink } from '@/app/types/link';
+import { FormattedUser } from '@/app/types/user';
+
 import Image from 'next/image';
 import { useState } from 'react';
 import LinkCardMenu from './LinkCardMenu';
 
 interface LinkCardProps {
   link: FormattedLink;
+  currentUser: FormattedUser | null;
+  onVote: () => Promise<void>;
+  onUnvote: () => Promise<void>;
+  onComment: (content: string) => Promise<void>;
+  onEdit: () => void;
   onDelete: (id: string) => Promise<void>;
 }
 
@@ -38,10 +45,10 @@ export default function LinkCard({ link, onDelete }: LinkCardProps) {
         <LinkCardMenu onDelete={handleDelete} />
       </div>
 
-      {link.imageUrl && (
+      {link.previewImage && (
         <div className="relative h-48 rounded-lg overflow-hidden">
           <Image
-            src={link.imageUrl}
+            src={link.previewImage}
             alt={link.title || link.url}
             fill
             className="object-cover"
@@ -54,7 +61,7 @@ export default function LinkCard({ link, onDelete }: LinkCardProps) {
           {fr.links.addedOn} {new Date(link.createdAt).toLocaleDateString()}
         </div>
         <div>
-          {link.votes} {fr.links.votes}
+          {link.votes.length} {fr.links.votes}
         </div>
       </div>
     </div>

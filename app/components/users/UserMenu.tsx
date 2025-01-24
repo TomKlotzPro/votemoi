@@ -4,19 +4,37 @@ import { useUsers } from '@/app/hooks/useUsers';
 import { fr } from '@/app/translations/fr';
 import { Menu, Transition } from '@headlessui/react';
 import Image from 'next/image';
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
+import UserForm from '../forms/UserForm';
 
 export default function UserMenu() {
   const { currentUser, signOut } = useUsers();
+  const [showUserForm, setShowUserForm] = useState(false);
 
   if (!currentUser) {
     return (
-      <button
-        onClick={() => (window.location.href = '/auth/signin')}
-        className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors"
-      >
-        {fr.auth.signIn}
-      </button>
+      <>
+        <button
+          onClick={() => setShowUserForm(true)}
+          className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors"
+        >
+          {fr.auth.signIn}
+        </button>
+
+        {showUserForm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-[#1e1e38] p-6 rounded-lg w-full max-w-md">
+              <UserForm
+                onClose={() => setShowUserForm(false)}
+                onSubmit={(_id) => {
+                  // Handle user creation/update here
+                  setShowUserForm(false);
+                }}
+              />
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
@@ -31,7 +49,9 @@ export default function UserMenu() {
             className="rounded-full object-cover"
           />
         </div>
-        <span className="text-white text-sm hidden sm:block">{currentUser.name}</span>
+        <span className="text-white text-sm hidden sm:block">
+          {currentUser.name}
+        </span>
       </Menu.Button>
 
       <Transition

@@ -3,13 +3,13 @@
 import { AVATAR_OPTIONS } from '@/app/constants/avatars';
 import { useUsers } from '@/app/hooks/useUsersClient';
 import { fr } from '@/app/translations/fr';
-import { User } from '@/app/types/user';
+import { FormattedUser } from '@/app/types/user';
 import { useState } from 'react';
 import ErrorMessage from '../common/ErrorMessage';
 import SafeImage from '../ui/SafeImage';
 
 interface AuthFormProps {
-  onSuccess: (user: User) => void;
+  onSuccess: (user: FormattedUser) => void;
   onClose: () => void;
 }
 
@@ -49,7 +49,7 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
 
       const response = await addUser({
         name: trimmedName,
-        avatarUrl: selectedAvatar,
+        image: selectedAvatar,
       });
 
       const newUser = {
@@ -57,8 +57,8 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
         links: [],
         votes: [],
         comments: [],
-        createdAt: new Date(response.createdAt),
-        updatedAt: new Date(response.updatedAt),
+        createdAt: new Date(response.createdAt).toISOString(),
+        updatedAt: new Date(response.updatedAt).toISOString(),
       };
 
       onSuccess(newUser);
@@ -68,7 +68,7 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
     }
   };
 
-  const handleUserSelect = (user: User) => {
+  const handleUserSelect = (user: FormattedUser) => {
     onSuccess(user);
   };
 

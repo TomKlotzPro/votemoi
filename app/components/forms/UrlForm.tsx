@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import ErrorMessage from '../common/ErrorMessage';
 
 type UrlFormProps = {
   initialData?: {
@@ -51,9 +50,7 @@ export default function UrlForm({
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-      onError(
-        error instanceof Error ? error.message : 'Failed to save URL'
-      );
+      onError(error instanceof Error ? error.message : 'Failed to save URL');
     } finally {
       setLoading(false);
     }
@@ -133,11 +130,7 @@ export default function UrlForm({
           disabled={!url.trim() || !title.trim() || loading}
           className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
         >
-          {loading
-            ? 'Loading'
-            : initialData
-              ? 'Update'
-              : 'Create'}
+          {loading ? 'Loading' : initialData ? 'Update' : 'Create'}
         </button>
       </div>
     </form>

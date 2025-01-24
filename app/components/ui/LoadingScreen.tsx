@@ -1,6 +1,6 @@
 'use client';
 
-import { LOADING_MESSAGES } from '@/app/constants/avatars';
+import { AVATAR_OPTIONS, LOADING_MESSAGES } from '@/app/constants/avatars';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import AvatarPreloader from './AvatarPreloader';
@@ -53,7 +53,10 @@ export default function LoadingScreen({
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black"
     >
-      <AvatarPreloader onLoadComplete={() => setAvatarsLoaded(true)} />
+      <AvatarPreloader
+        avatars={AVATAR_OPTIONS}
+        onLoad={() => setAvatarsLoaded(true)}
+      />
       <div className="w-full max-w-md p-8 space-y-8">
         <div className="relative h-2 bg-white/10 rounded-full overflow-hidden">
           <motion.div

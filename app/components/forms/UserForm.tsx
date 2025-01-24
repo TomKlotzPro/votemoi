@@ -22,12 +22,14 @@ type UserFormProps = {
     id: string | undefined,
     data: { name: string; avatarUrl?: string }
   ) => void;
+  onClose: () => void;
   loading?: boolean;
 };
 
 export default function UserForm({
   initialData,
   onSubmit,
+  onClose,
   loading,
 }: UserFormProps) {
   const [name, setName] = useState(initialData?.name || '');
@@ -113,7 +115,14 @@ export default function UserForm({
         </div>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end space-x-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all transform hover:scale-105 shadow-lg shadow-gray-500/30"
+        >
+          {fr.common.cancel}
+        </button>
         <button
           type="submit"
           disabled={!name.trim() || loading}

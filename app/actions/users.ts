@@ -1,19 +1,20 @@
 'use server';
 
-import { db } from '@/app/lib/db';
 import { fr } from '@/app/translations/fr';
 import { FormattedUser } from '@/app/types/user';
+import { prisma } from '@/lib/prisma';
+import { User } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 export async function getUsers(): Promise<FormattedUser[]> {
   try {
-    const users = await db.user.findMany({
+    const users = await prisma.user.findMany({
       orderBy: {
         name: 'asc',
       },
     });
 
-    return users.map(user => ({
+    return users.map((user: User) => ({
       id: user.id,
       name: user.name,
       avatarUrl: user.avatarUrl,
@@ -25,9 +26,12 @@ export async function getUsers(): Promise<FormattedUser[]> {
   }
 }
 
-export async function createUser(data: { name: string; avatarUrl?: string }): Promise<FormattedUser> {
+export async function createUser(data: {
+  name: string;
+  avatarUrl?: string;
+}): Promise<FormattedUser> {
   try {
-    const user = await db.user.create({
+    const user = await prisma.user.create({
       data: {
         name: data.name,
         avatarUrl: data.avatarUrl,
@@ -47,9 +51,12 @@ export async function createUser(data: { name: string; avatarUrl?: string }): Pr
   }
 }
 
-export async function updateUser(id: string, data: { name?: string; avatarUrl?: string }): Promise<FormattedUser> {
+export async function updateUser(
+  id: string,
+  data: { name?: string; avatarUrl?: string }
+): Promise<FormattedUser> {
   try {
-    const user = await db.user.update({
+    const user = await prisma.user.update({
       where: { id },
       data,
     });
@@ -69,7 +76,7 @@ export async function updateUser(id: string, data: { name?: string; avatarUrl?: 
 
 export async function deleteUser(id: string): Promise<void> {
   try {
-    await db.user.delete({
+    await prisma.user.delete({
       where: { id },
     });
 
