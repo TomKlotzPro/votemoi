@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { fr } from '@/app/translations/fr';
 import ErrorMessage from '../common/ErrorMessage';
 
@@ -11,9 +10,8 @@ type UrlFormProps = {
     url: string;
     title: string;
     description: string;
-    imageUrl?: string;
   };
-  onSubmit: (id: string, data: { url: string; title: string; description: string; imageUrl?: string }) => Promise<void>;
+  onSubmit: (id: string, data: { url: string; title: string; description: string }) => Promise<void>;
   onError: (error: string) => void;
   onCancel?: () => void;
 };
@@ -23,7 +21,6 @@ export default function UrlForm({ initialData, onSubmit, onError, onCancel }: Ur
   const [url, setUrl] = useState(initialData?.url ?? '');
   const [title, setTitle] = useState(initialData?.title ?? '');
   const [description, setDescription] = useState(initialData?.description ?? '');
-  const [imageUrl, setImageUrl] = useState(initialData?.imageUrl ?? '');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +32,6 @@ export default function UrlForm({ initialData, onSubmit, onError, onCancel }: Ur
         url: url.trim(),
         title: title.trim(),
         description: description.trim(),
-        imageUrl: imageUrl.trim() || undefined,
       });
 
       // Only clear form if it's a new submission
@@ -43,7 +39,6 @@ export default function UrlForm({ initialData, onSubmit, onError, onCancel }: Ur
         setUrl('');
         setTitle('');
         setDescription('');
-        setImageUrl('');
       }
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -98,21 +93,6 @@ export default function UrlForm({ initialData, onSubmit, onError, onCancel }: Ur
           rows={3}
           className="w-full px-4 py-2 bg-[#2a2a4e] border border-purple-500/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
           placeholder={fr.form.descriptionPlaceholder}
-          disabled={loading}
-        />
-      </div>
-
-      <div>
-        <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-300 mb-1">
-          {fr.form.imageUrl}
-        </label>
-        <input
-          type="url"
-          id="imageUrl"
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          className="w-full px-4 py-2 bg-[#2a2a4e] border border-purple-500/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-          placeholder={fr.form.imageUrlPlaceholder}
           disabled={loading}
         />
       </div>

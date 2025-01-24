@@ -1,13 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { User } from '@/app/types/user';
 import { fr } from '@/app/translations/fr';
 import { AVATAR_OPTIONS } from '@/app/constants/avatars';
 import { useUsers } from '@/app/hooks/useUsersClient';
 import { useUser } from '@/app/context/user-context';
+import { updateUser } from '@/app/actions/user-actions';
 import ErrorMessage from '../common/ErrorMessage';
 import SafeImage from '../ui/SafeImage';
+import { PencilIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
 
 interface ProfileMenuProps {
   user: User;
@@ -23,6 +26,21 @@ export default function ProfileMenu({ user, onClose, onLogout }: ProfileMenuProp
   const [selectedAvatar, setSelectedAvatar] = useState(user.avatarUrl);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const previousUserRef = useRef<User>(user);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,51 +50,78 @@ export default function ProfileMenu({ user, onClose, onLogout }: ProfileMenuProp
     try {
       const trimmedName = name.trim();
       
-      // Only check for duplicate names if the name has changed
-      if (trimmedName !== user.name) {
-        if (!trimmedName) {
-          setError(fr.errors.nameRequired);
-          setIsSubmitting(false);
-          return;
-        }
-
-        // Check for duplicate names, excluding the current user
-        const nameExists = users.some(u => 
-          u.id !== user.id && 
-          u.name.toLowerCase() === trimmedName.toLowerCase()
-        );
-
-        if (nameExists) {
-          setError(fr.errors.nameExists);
-          setIsSubmitting(false);
-          return;
-        }
+      if (!trimmedName) {
+        setError(fr.errors.nameRequired);
+        setIsSubmitting(false);
+        return;
       }
 
-      const updatedUser: User = {
+      const nameExists = users.some(u => 
+        u.id !== user.id && 
+        u.name.toLowerCase() === trimmedName.toLowerCase()
+      );
+
+      if (nameExists) {
+        setError(fr.errors.nameExists);
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!user.id) {
+        throw new Error('User ID is required');
+      }
+
+      // Store the previous user state
+      previousUserRef.current = user;
+
+      // Optimistically update the UI
+      const optimisticUser = {
         ...user,
         name: trimmedName,
-        avatarUrl: selectedAvatar,
+        avatarUrl: selectedAvatar || user.avatarUrl,
       };
-
-      setUser(updatedUser);
+      setUser(optimisticUser);
       setIsEditing(false);
+      onClose();
+
+      // Make the actual update
+      const updatedUser = await updateUser(user.id, {
+        name: trimmedName,
+        avatarUrl: selectedAvatar || user.avatarUrl,
+      });
+
+      if (!updatedUser) {
+        throw new Error('Failed to update user');
+      }
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : fr.errors.unknownError);
+      console.error('Error updating user:', err);
+      // Revert to previous state on error without reopening menu
+      setUser(previousUserRef.current);
+      // Show error in a toast or notification instead of reopening menu
+      console.error(err instanceof Error ? err.message : fr.errors.unknownError);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleLogout = () => {
+    onClose();
+    onLogout();
+  };
+
   if (isEditing) {
     return (
-      <div className="absolute right-0 mt-2 w-80 bg-black/80 backdrop-blur-lg rounded-lg shadow-lg border border-white/10 p-4">
+      <div
+        ref={menuRef}
+        className="absolute right-0 mt-2 w-80 bg-black/80 backdrop-blur-lg rounded-lg shadow-lg border border-white/10 p-4"
+      >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-white/80 mb-2">
               {fr.common.name}
             </label>
-            <input
+            <motion.input
               type="text"
               id="name"
               value={name}
@@ -84,8 +129,13 @@ export default function ProfileMenu({ user, onClose, onLogout }: ProfileMenuProp
                 setName(e.target.value);
                 setError('');
               }}
-              className={`input ${error ? 'error' : ''}`}
+              className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder={fr.placeholders.enterName}
+              disabled={isSubmitting}
               required
+              initial={false}
+              animate={{ scale: name !== user.name ? 1.02 : 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
             />
             {error && (
               <ErrorMessage message={error} className="mt-2" />
@@ -105,39 +155,19 @@ export default function ProfileMenu({ user, onClose, onLogout }: ProfileMenuProp
                   className={`
                     group relative aspect-square rounded-lg overflow-hidden
                     transition-all duration-300 ease-out transform
-                    hover:scale-105 hover:shadow-lg hover:z-10
+                    hover:shadow-lg hover:z-10
                     ${selectedAvatar === avatar
                       ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-black scale-105 rotate-3'
                       : 'ring-1 ring-white/10 hover:ring-white/30'
                     }
                   `}
+                  disabled={isSubmitting}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <SafeImage
                     src={avatar}
                     alt={fr.common.avatarOption}
-                    className={`
-                      w-full h-full object-cover transform transition-transform duration-300
-                      ${selectedAvatar === avatar ? 'scale-110' : 'group-hover:scale-110'}
-                    `}
+                    className="w-full h-full object-cover"
                   />
-                  {selectedAvatar === avatar && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-purple-500/20 backdrop-blur-sm">
-                      <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center">
-                        <svg
-                          className="w-4 h-4 text-white"
-                          fill="none"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    </div>
-                  )}
                 </button>
               ))}
             </div>
@@ -147,17 +177,17 @@ export default function ProfileMenu({ user, onClose, onLogout }: ProfileMenuProp
             <button
               type="button"
               onClick={() => setIsEditing(false)}
-              className="button-secondary"
+              className="px-4 py-2 text-sm font-medium text-white/80 hover:text-white transition-colors"
               disabled={isSubmitting}
             >
-              {fr.profile.cancel}
+              {fr.common.cancel}
             </button>
             <button
               type="submit"
-              className="button-primary"
+              className="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors disabled:opacity-50"
               disabled={isSubmitting}
             >
-              {isSubmitting ? fr.common.saving : fr.profile.save}
+              {isSubmitting ? fr.common.saving : fr.common.save}
             </button>
           </div>
         </form>
@@ -166,20 +196,24 @@ export default function ProfileMenu({ user, onClose, onLogout }: ProfileMenuProp
   }
 
   return (
-    <div className="absolute right-0 mt-2 w-48 bg-black/80 backdrop-blur-lg rounded-lg shadow-lg border border-white/10">
-      <div className="p-2">
-        <div className="px-2 py-1.5 text-sm text-white/60">{user.name}</div>
+    <div
+      ref={menuRef}
+      className="absolute right-0 mt-2 w-48 bg-black/80 backdrop-blur-lg rounded-lg shadow-lg border border-white/10"
+    >
+      <div className="p-2 space-y-1">
         <button
           onClick={() => setIsEditing(true)}
-          className="w-full px-2 py-1.5 text-left text-sm hover:text-[var(--primary)] transition-colors"
+          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-white/60 hover:text-white transition-colors group"
         >
-          {fr.profile.edit}
+          <span className="flex-1">{fr.profile.edit}</span>
+          <PencilIcon className="w-4 h-4" />
         </button>
         <button
-          onClick={onLogout}
-          className="w-full px-2 py-1.5 text-left text-sm text-red-500 hover:text-red-400 transition-colors"
+          onClick={handleLogout}
+          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-red-500 hover:text-red-400 transition-colors group"
         >
-          {fr.auth.logout}
+          <span className="flex-1">Se Déconnecter</span>
+          <ArrowRightOnRectangleIcon className="w-4 h-4" />
         </button>
       </div>
     </div>

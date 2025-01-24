@@ -1,8 +1,15 @@
 'use server';
 
 import { db } from '@/app/lib/db';
+import { User } from '../types/user';
+import { revalidatePath } from 'next/cache';
 
-export async function getUsers() {
+type ServerActionResponse<T> = {
+  data?: T;
+  error?: string;
+};
+
+export async function getUsers(): Promise<ServerActionResponse<User[]>> {
   try {
     const users = await db.user.findMany({
       select: {
@@ -11,25 +18,47 @@ export async function getUsers() {
         avatarUrl: true,
         createdAt: true,
       },
+      orderBy: {
+        createdAt: 'desc'
+      }
     });
-    console.log('[getUsers] Found users:', users.length);
-    return users;
-  } catch (error) {
-    console.error('Failed to fetch users:', error);
-    return [];
+    
+    return {
+      data: users.map(user => ({
+        ...user,
+        createdAt: user.createdAt.toISOString(),
+      }))
+    };
+  } catch (e) {
+    const error = e as Error;
+    return { error: error.message || 'Failed to fetch users' };
   }
 }
 
-export async function createUser(data: {
-  name: string;
-  avatarUrl: string;
-}) {
-  console.log('[createUser] Creating user:', data);
+export async function createUser(input: { name: string; avatarUrl: string }): Promise<ServerActionResponse<User>> {
   try {
+    if (!input?.name || !input?.avatarUrl) {
+      return { error: 'Name and avatar URL are required' };
+    }
+
+    const name = input.name.trim();
+    if (!name) {
+      return { error: 'Name cannot be empty' };
+    }
+
+    // Check if user exists
+    const existing = await db.user.findUnique({
+      where: { name }
+    });
+
+    if (existing) {
+      return { error: 'A user with this name already exists' };
+    }
+
     const user = await db.user.create({
       data: {
-        name: data.name,
-        avatarUrl: data.avatarUrl,
+        name,
+        avatarUrl: input.avatarUrl,
       },
       select: {
         id: true,
@@ -38,17 +67,30 @@ export async function createUser(data: {
         createdAt: true,
       },
     });
-    console.log('[createUser] User created:', user.id);
-    return user;
-  } catch (error) {
-    console.error('Failed to create user:', error);
-    throw new Error('Failed to create user');
+
+    revalidatePath('/');
+    
+    return {
+      data: {
+        ...user,
+        createdAt: user.createdAt.toISOString(),
+      }
+    };
+  } catch (e) {
+    const error = e as Error;
+    if ((error as any)?.code === 'P2002') {
+      return { error: 'A user with this name already exists' };
+    }
+    return { error: error.message || 'Failed to create user' };
   }
 }
 
-export async function getUserById(id: string) {
-  console.log('[getUserById] Finding user:', id);
+export async function getUserById(id: string): Promise<ServerActionResponse<User>> {
   try {
+    if (!id) {
+      return { error: 'User ID is required' };
+    }
+
     const user = await db.user.findUnique({
       where: { id },
       select: {
@@ -58,10 +100,19 @@ export async function getUserById(id: string) {
         createdAt: true,
       },
     });
-    console.log('[getUserById] User found:', user?.id);
-    return user;
-  } catch (error) {
-    console.error('Failed to get user:', error);
-    return null;
+
+    if (!user) {
+      return { error: 'User not found' };
+    }
+
+    return {
+      data: {
+        ...user,
+        createdAt: user.createdAt.toISOString(),
+      }
+    };
+  } catch (e) {
+    const error = e as Error;
+    return { error: error.message || 'Failed to get user' };
   }
 }

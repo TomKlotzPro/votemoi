@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { db } from '@/app/lib/db';
 import { Link, User, Vote, Comment } from '@prisma/client';
-import { extractURLMetadata } from './url-metadata';
+import { extractURLMetadata } from '@/lib/url-metadata';
 
 type LinkWithRelations = Link & {
   createdBy: Pick<User, 'id' | 'name' | 'avatarUrl'>;
@@ -24,10 +24,8 @@ type FormattedLink = Omit<LinkWithRelations, 'votes'> & {
   }>;
 };
 
-export async function getLinks(): Promise<{ links?: FormattedLink[]; error?: string }> {
+export async function getLinks(userId?: string): Promise<{ links?: FormattedLink[]; error?: string }> {
   try {
-    console.log('[getLinks] Starting...');
-    
     const links = await db.link.findMany({
       include: {
         createdBy: {
@@ -58,9 +56,6 @@ export async function getLinks(): Promise<{ links?: FormattedLink[]; error?: str
               },
             },
           },
-          orderBy: {
-            createdAt: 'desc',
-          },
         },
       },
       orderBy: {
@@ -68,55 +63,42 @@ export async function getLinks(): Promise<{ links?: FormattedLink[]; error?: str
       },
     });
 
-    console.log('[getLinks] Raw links fetched:', JSON.stringify({ count: links?.length }));
-
     if (!links) {
-      console.log('[getLinks] No links found');
       return { links: [] };
     }
 
-    const formattedLinks = links.map(link => {
-      try {
-        return {
-          ...link,
-          createdAt: link.createdAt.toISOString(),
-          updatedAt: link.updatedAt.toISOString(),
-          votes: (link.votes || []).map(vote => ({
-            userId: vote.userId,
-            userName: vote.user?.name || 'Unknown User',
-            createdAt: vote.createdAt.toISOString(),
-            user: {
-              id: vote.user?.id || 'unknown',
-              name: vote.user?.name || 'Unknown User',
-              avatarUrl: vote.user?.avatarUrl || '/default-avatar.png',
-            }
-          })),
-          comments: (link.comments || []).map(comment => ({
-            ...comment,
-            createdAt: comment.createdAt.toISOString(),
-            updatedAt: comment.updatedAt.toISOString(),
-            user: {
-              id: comment.user?.id || 'unknown',
-              name: comment.user?.name || 'Unknown User',
-              avatarUrl: comment.user?.avatarUrl || '/default-avatar.png',
-            },
-          })),
-        };
-      } catch (formatError) {
-        console.log('[getLinks] Error formatting link:', link.id, formatError);
-        return null;
-      }
-    }).filter(Boolean) as FormattedLink[];
+    const formattedLinks = links.map((link) => ({
+      ...link,
+      createdAt: link.createdAt.toISOString(),
+      updatedAt: link.updatedAt.toISOString(),
+      hasVoted: userId ? link.votes.some(vote => vote.userId === userId) : false,
+      votes: link.votes.map((vote) => ({
+        userId: vote.userId,
+        userName: vote.user?.name || 'Unknown User',
+        createdAt: vote.createdAt.toISOString(),
+        user: {
+          id: vote.user?.id || 'unknown',
+          name: vote.user?.name || 'Unknown User',
+          avatarUrl: vote.user?.avatarUrl || '/default-avatar.png',
+        },
+      })),
+      comments: link.comments.map((comment) => ({
+        ...comment,
+        createdAt: comment.createdAt.toISOString(),
+        updatedAt: comment.updatedAt.toISOString(),
+        user: {
+          id: comment.user?.id || 'unknown',
+          name: comment.user?.name || 'Unknown User',
+          avatarUrl: comment.user?.avatarUrl || '/default-avatar.png',
+        },
+      })),
+    }));
 
-    console.log('[getLinks] Successfully formatted links:', JSON.stringify({ count: formattedLinks.length }));
     return { links: formattedLinks };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.log('[getLinks] Error:', errorMessage);
-    return { 
-      error: `Failed to load links: ${errorMessage}`,
-      links: [] 
-    };
+  } catch (err) {
+    const error = err as Error;
+    console.error('[getLinks] Error:', error.message);
+    return { error: `Failed to load links: ${error.message}` };
   }
 }
 
@@ -124,20 +106,13 @@ export async function createLink(data: {
   url: string;
   title?: string;
   description?: string;
-  imageUrl?: string;
   userId: string;
 }): Promise<{ link?: FormattedLink; error?: string }> {
-  if (!data?.url) {
-    return { error: 'URL is required' };
-  }
-
-  if (!data?.userId) {
-    return { error: 'User ID is required' };
+  if (!data.url || !data.userId) {
+    return { error: 'URL and userId are required' };
   }
 
   try {
-    console.log('[createLink] Starting with data:', JSON.stringify(data));
-    
     // Verify user exists
     const user = await db.user.findUnique({
       where: { id: data.userId },
@@ -145,31 +120,45 @@ export async function createLink(data: {
     });
 
     if (!user) {
-      console.error('[createLink] User not found:', data.userId);
-      return { error: 'User not found' };
+      return { error: 'User not found. Please try logging in again.' };
     }
-    
-    console.log('[createLink] Extracting metadata...');
-    let metadata;
+
+    // Extract metadata from URL
+    let metadata = {
+      previewTitle: '',
+      previewDescription: '',
+      previewImage: '',
+      previewFavicon: '',
+      previewSiteName: ''
+    };
+
     try {
-      metadata = await extractURLMetadata(data.url);
-      console.log('[createLink] Metadata extracted:', JSON.stringify(metadata));
-    } catch (metadataError) {
-      console.error('[createLink] Failed to extract metadata:', metadataError);
-      metadata = {
-        title: data.url,
-        description: null,
-        imageUrl: null
-      };
+      const extractedMetadata = await extractURLMetadata(data.url);
+      if (extractedMetadata) {
+        metadata = extractedMetadata;
+      }
+    } catch (err) {
+      // Silently continue with default metadata
+    }
+
+    // Get hostname for fallback values
+    let hostname = '';
+    try {
+      hostname = new URL(data.url).hostname;
+    } catch (err) {
+      hostname = data.url.split('/')[2] || 'unknown site';
     }
     
-    console.log('[createLink] Creating link in database...');
     const link = await db.link.create({
       data: {
         url: data.url,
-        title: data.title || metadata.title || data.url,
-        description: data.description || metadata.description || null,
-        imageUrl: data.imageUrl || metadata.imageUrl || null,
+        title: data.title || metadata.previewTitle || hostname,
+        description: data.description || metadata.previewDescription || '',
+        previewTitle: metadata.previewTitle || '',
+        previewDescription: metadata.previewDescription || '',
+        previewImage: metadata.previewImage || '',
+        previewFavicon: metadata.previewFavicon || '',
+        previewSiteName: metadata.previewSiteName || hostname,
         createdBy: {
           connect: { id: data.userId },
         },
@@ -206,14 +195,16 @@ export async function createLink(data: {
         },
       },
     });
-    console.log('[createLink] Link created:', JSON.stringify({ id: link.id }));
 
-    console.log('[createLink] Formatting link data...');
+    if (!link) {
+      return { error: 'Failed to create link in database' };
+    }
+
     const formattedLink = {
       ...link,
       createdAt: link.createdAt.toISOString(),
       updatedAt: link.updatedAt.toISOString(),
-      votes: link.votes.map(vote => ({
+      votes: link.votes.map((vote) => ({
         userId: vote.userId,
         userName: vote.user?.name || 'Unknown User',
         createdAt: vote.createdAt.toISOString(),
@@ -221,9 +212,9 @@ export async function createLink(data: {
           id: vote.user?.id || 'unknown',
           name: vote.user?.name || 'Unknown User',
           avatarUrl: vote.user?.avatarUrl || '/default-avatar.png',
-        }
+        },
       })),
-      comments: link.comments.map(comment => ({
+      comments: link.comments.map((comment) => ({
         ...comment,
         createdAt: comment.createdAt.toISOString(),
         updatedAt: comment.updatedAt.toISOString(),
@@ -234,23 +225,16 @@ export async function createLink(data: {
         },
       })),
     };
-    console.log('[createLink] Link formatted successfully');
 
     revalidatePath('/');
     return { link: formattedLink };
-  } catch (error) {
-    console.error('[createLink] Error details:', {
-      name: error?.name,
-      message: error?.message,
-      stack: error?.stack,
-      data: JSON.stringify(data)
-    });
-    
-    if (error instanceof Error) {
-      return { error: `Failed to create link: ${error.message}` };
+  } catch (err) {
+    // Safely handle error without causing source map issues
+    let message = 'Failed to create link';
+    if (err && typeof err === 'object' && 'message' in err) {
+      message = String(err.message);
     }
-    
-    return { error: 'Failed to create link' };
+    return { error: message };
   }
 }
 
@@ -259,30 +243,34 @@ export async function updateLink(data: {
   url: string;
   title: string;
   description?: string;
-  imageUrl?: string;
   userId: string;
 }): Promise<{ link?: FormattedLink; error?: string }> {
   try {
-    const link = await db.link.findUnique({
+    console.log('[updateLink] Starting with data:', data);
+
+    // Extract metadata from URL if URL has changed
+    const existingLink = await db.link.findUnique({
       where: { id: data.id },
-      include: { createdBy: true },
     });
 
-    if (!link) {
-      return { error: 'Link not found' };
+    let metadata = null;
+    if (existingLink && existingLink.url !== data.url) {
+      metadata = await extractURLMetadata(data.url);
     }
 
-    if (link.createdById !== data.userId) {
-      return { error: 'Not authorized' };
-    }
-
-    const updatedLink = await db.link.update({
+    const link = await db.link.update({
       where: { id: data.id },
       data: {
         url: data.url,
         title: data.title,
         description: data.description,
-        imageUrl: data.imageUrl,
+        ...(metadata && {
+          previewTitle: metadata.previewTitle,
+          previewDescription: metadata.previewDescription,
+          previewImage: metadata.previewImage,
+          previewFavicon: metadata.previewFavicon,
+          previewSiteName: metadata.previewSiteName,
+        }),
       },
       include: {
         createdBy: {
@@ -293,12 +281,11 @@ export async function updateLink(data: {
           },
         },
         votes: {
-          select: {
-            userId: true,
+          include: {
             user: {
               select: {
-                name: true,
                 id: true,
+                name: true,
                 avatarUrl: true,
               },
             },
@@ -319,23 +306,19 @@ export async function updateLink(data: {
     });
 
     const formattedLink = {
-      ...updatedLink,
-      votes: updatedLink.votes.map(vote => ({
+      ...link,
+      votes: link.votes.map((vote) => ({
         userId: vote.userId,
         userName: vote.user.name,
-        createdAt: new Date().toISOString(),
-        user: {
-          id: vote.user.id,
-          name: vote.user.name,
-          avatarUrl: vote.user.avatarUrl,
-        }
+        createdAt: vote.createdAt.toISOString(),
+        user: vote.user,
       })),
     };
 
     revalidatePath('/');
     return { link: formattedLink };
   } catch (error) {
-    console.error('Error in updateLink:', error);
+    console.error('[updateLink] Error:', error);
     return { error: 'Failed to update link' };
   }
 }

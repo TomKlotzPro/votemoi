@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { fr } from '@/app/translations/fr';
+import { motion } from 'framer-motion';
 
 const AVATAR_OPTIONS = [
   'https://api.dicebear.com/7.x/fun-emoji/svg?seed=monkey1&backgroundColor=b6e3f4',
@@ -57,15 +58,35 @@ export default function UserForm({ initialData, onSubmit, loading }: UserFormPro
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {AVATAR_OPTIONS.map((avatar) => (
-            <button
+            <motion.button
               key={avatar}
               type="button"
               onClick={() => setSelectedAvatar(avatar)}
-              className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+              className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
                 selectedAvatar === avatar
-                  ? 'border-purple-500 scale-105 shadow-lg shadow-purple-500/30'
+                  ? 'border-purple-500'
                   : 'border-transparent hover:border-purple-500/50'
               }`}
+              initial={{ scale: 1 }}
+              whileHover={{ 
+                scale: 1.05,
+                transition: { duration: 0.2 }
+              }}
+              whileTap={{ 
+                scale: 0.95,
+                transition: { duration: 0.1 }
+              }}
+              animate={{ 
+                scale: selectedAvatar === avatar ? 1.05 : 1,
+                boxShadow: selectedAvatar === avatar 
+                  ? '0 10px 30px -10px rgba(168, 85, 247, 0.5)' 
+                  : 'none',
+                transition: { 
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 20
+                }
+              }}
               disabled={loading}
             >
               <Image
@@ -74,7 +95,7 @@ export default function UserForm({ initialData, onSubmit, loading }: UserFormPro
                 fill
                 className="object-cover"
               />
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>

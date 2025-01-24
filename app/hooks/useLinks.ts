@@ -4,17 +4,19 @@ import { useState, useEffect } from 'react';
 import { Link } from '../types/link';
 import { User } from '../types/user';
 import { getLinks, createLink, updateLink, deleteLink, vote, unvote, createComment } from '../actions/links';
+import { useUser } from '../context/user-context';
 
 export function useLinks() {
   const [links, setLinks] = useState<Link[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useUser();
 
   const fetchLinks = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await getLinks();
+      const response = await getLinks(user?.id);
       
       if (response.error) {
         setError(response.error);
@@ -31,7 +33,7 @@ export function useLinks() {
 
   useEffect(() => {
     fetchLinks();
-  }, []);
+  }, [user?.id]);
 
   const addLink = async (data: { url: string; title?: string; description?: string }, user: User) => {
     try {
@@ -105,22 +107,34 @@ export function useLinks() {
     try {
       setError(null);
       
-      // Optimistically update the UI with complete user data
+      // Store previous state for rollback
+      const previousLinks = links;
+      
+      // Check if user has already voted
+      const targetLink = links.find(link => link.id === linkId);
+      if (targetLink?.hasVoted) {
+        setError('Already voted for this link');
+        return;
+      }
+
+      // Optimistically update the UI
       setLinks(currentLinks => 
         currentLinks.map(link => {
           if (link.id === linkId) {
+            const newVote = {
+              userId: user.id,
+              userName: user.name,
+              createdAt: new Date().toISOString(),
+              user: {
+                id: user.id,
+                name: user.name,
+                avatarUrl: user.avatarUrl,
+              }
+            };
             return {
               ...link,
-              votes: [...link.votes, {
-                userId: user.id,
-                userName: user.name,
-                createdAt: new Date().toISOString(),
-                user: {
-                  id: user.id,
-                  name: user.name,
-                  avatarUrl: user.avatarUrl,
-                }
-              }]
+              votes: [...link.votes, newVote],
+              hasVoted: true
             };
           }
           return link;
@@ -132,13 +146,13 @@ export function useLinks() {
       if (response.error) {
         // Revert optimistic update on error
         setError(response.error);
-        await fetchLinks();
+        setLinks(previousLinks);
         return;
       }
     } catch (err) {
       // Revert optimistic update on error
       setError(err instanceof Error ? err.message : 'Failed to vote');
-      await fetchLinks();
+      setLinks(previousLinks);
     }
   };
 
@@ -146,13 +160,24 @@ export function useLinks() {
     try {
       setError(null);
 
+      // Store previous state for rollback
+      const previousLinks = links;
+
+      // Check if user hasn't voted
+      const targetLink = links.find(link => link.id === linkId);
+      if (!targetLink?.hasVoted) {
+        setError('Haven\'t voted for this link');
+        return;
+      }
+
       // Optimistically update the UI
       setLinks(currentLinks => 
         currentLinks.map(link => {
           if (link.id === linkId) {
             return {
               ...link,
-              votes: link.votes.filter(vote => vote.userId !== user.id)
+              votes: link.votes.filter(vote => vote.userId !== user.id),
+              hasVoted: false
             };
           }
           return link;
@@ -164,13 +189,13 @@ export function useLinks() {
       if (response.error) {
         // Revert optimistic update on error
         setError(response.error);
-        await fetchLinks();
+        setLinks(previousLinks);
         return;
       }
     } catch (err) {
       // Revert optimistic update on error
       setError(err instanceof Error ? err.message : 'Failed to unvote');
-      await fetchLinks();
+      setLinks(previousLinks);
     }
   };
 

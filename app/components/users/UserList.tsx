@@ -3,10 +3,13 @@
 import { fr } from '@/app/translations/fr';
 import { useUsers } from '@/app/hooks/useUsers';
 import UserCard from './UserCard';
+import { User } from '@/app/types/user';
 
-export default function UserList() {
-  const { users } = useUsers();
+interface UserListProps {
+  users: User[];
+}
 
+export default function UserList({ users }: UserListProps) {
   if (!users?.length) {
     return (
       <div className="text-center py-8">

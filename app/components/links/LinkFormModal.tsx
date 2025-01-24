@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useState } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Link } from '@/app/types/link';
@@ -20,6 +20,19 @@ export default function LinkFormModal({ isOpen, onClose, onSubmit, initialData, 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Reset form when modal opens/closes or mode changes
+  useEffect(() => {
+    if (mode === 'create') {
+      setUrl('');
+      setTitle('');
+      setDescription('');
+    } else {
+      setUrl(initialData?.url || '');
+      setTitle(initialData?.title || '');
+      setDescription(initialData?.description || '');
+    }
+  }, [isOpen, mode, initialData]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -27,6 +40,11 @@ export default function LinkFormModal({ isOpen, onClose, onSubmit, initialData, 
 
     try {
       await onSubmit({ url, title, description });
+      if (mode === 'create') {
+        setUrl('');
+        setTitle('');
+        setDescription('');
+      }
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -108,13 +126,15 @@ export default function LinkFormModal({ isOpen, onClose, onSubmit, initialData, 
                     <label htmlFor="description" className="block text-sm font-medium text-white/80 mb-1">
                       Description (optionnel)
                     </label>
-                    <textarea
-                      id="description"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-white/20 min-h-[100px]"
-                      placeholder="Une description de votre lien..."
-                    />
+                    <div className="h-[120px]">
+                      <textarea
+                        id="description"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className="w-full h-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-white/20 resize-none overflow-auto"
+                        placeholder="Une description de votre lien..."
+                      />
+                    </div>
                   </div>
 
                   {error && (

@@ -26,7 +26,7 @@ export async function getUrls() {
   }
 }
 
-export async function createUrl(data: { url: string }) {
+export async function createUrl(data: { url: string; title: string; description: string; userId: string }) {
   try {
     const metadata = await fetchUrlMetadata(data.url);
     
@@ -37,15 +37,26 @@ export async function createUrl(data: { url: string }) {
     const url = await prisma.url.create({
       data: {
         url: data.url,
-        title: metadata.title,
-        description: metadata.description,
-        imageUrl: metadata.imageUrl,
-        metaFetched: true,
+        title: data.title,
+        description: data.description,
+        previewImage: metadata.previewImage,
+        previewTitle: metadata.previewTitle,
+        previewDescription: metadata.previewDescription,
+        previewFavicon: metadata.previewFavicon,
+        previewSiteName: metadata.previewSiteName,
+        createdById: data.userId,
       },
       include: {
         votes: {
           include: {
             user: true,
+          },
+        },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
           },
         },
       },
@@ -59,7 +70,7 @@ export async function createUrl(data: { url: string }) {
   }
 }
 
-export async function updateUrl(id: string, data: { url: string }) {
+export async function updateUrl(id: string, data: { url: string; title: string; description: string; userId: string }) {
   try {
     const metadata = await fetchUrlMetadata(data.url);
     
@@ -68,18 +79,28 @@ export async function updateUrl(id: string, data: { url: string }) {
     }
 
     const url = await prisma.url.update({
-      where: { id },
+      where: { id, createdById: data.userId },
       data: {
         url: data.url,
-        title: metadata.title,
-        description: metadata.description,
-        imageUrl: metadata.imageUrl,
-        metaFetched: true,
+        title: data.title,
+        description: data.description,
+        previewImage: metadata.previewImage,
+        previewTitle: metadata.previewTitle,
+        previewDescription: metadata.previewDescription,
+        previewFavicon: metadata.previewFavicon,
+        previewSiteName: metadata.previewSiteName,
       },
       include: {
         votes: {
           include: {
             user: true,
+          },
+        },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
           },
         },
       },

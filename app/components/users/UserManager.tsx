@@ -6,7 +6,7 @@ import UserList from './UserList';
 import UserForm from '../forms/UserForm';
 import { fr } from '@/app/translations/fr';
 import ErrorMessage from '../common/ErrorMessage';
-import { createUser, updateUser, deleteUser } from '@/app/actions/user-actions';
+import { useUsers } from '@/app/hooks/useUsersClient';
 
 type User = {
   id: string;
@@ -24,53 +24,30 @@ type User = {
 };
 
 export default function UserManager() {
-  const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { users, error, addUser } = useUsers();
 
-  const handleCreateUser = async (userData: { name: string; avatarUrl?: string }) => {
+  const handleCreateUser = async (_: string | undefined, userData: { name: string; avatarUrl?: string }) => {
+    if (!userData.name || !userData.avatarUrl) {
+      console.error('Missing required fields:', userData);
+      return;
+    }
+    
     try {
       setLoading(true);
-      setError('');
-      const newUser = await createUser(userData);
-      setUsers((prev) => [...prev, newUser]);
+      console.log('Creating user with data:', userData);
+      
+      await addUser({
+        name: userData.name,
+        avatarUrl: userData.avatarUrl
+      });
+      
+      console.log('User created successfully');
       router.refresh();
     } catch (error) {
       console.error('Error creating user:', error);
-      setError(error instanceof Error ? error.message : fr.errors.createUserFailed);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUpdateUser = async (id: string, userData: { name: string; avatarUrl?: string }) => {
-    try {
-      setLoading(true);
-      setError('');
-      const updatedUser = await updateUser(id, userData);
-      setUsers((prev) => prev.map((user) => (user.id === id ? updatedUser : user)));
-      setSelectedUser(null);
-      router.refresh();
-    } catch (error) {
-      console.error('Error updating user:', error);
-      setError(error instanceof Error ? error.message : fr.errors.updateUserFailed);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteUser = async (id: string) => {
-    try {
-      setLoading(true);
-      setError('');
-      await deleteUser(id);
-      setUsers((prev) => prev.filter((user) => user.id !== id));
-      router.refresh();
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      setError(error instanceof Error ? error.message : fr.errors.deleteUserFailed);
     } finally {
       setLoading(false);
     }
@@ -78,27 +55,25 @@ export default function UserManager() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-purple-400 glow-text mb-4">
-          {fr.users.manageUsers}
-        </h1>
-        <p className="text-gray-400">{fr.users.manageUsersDesc}</p>
+      {error && (
+        <div className="p-4 bg-red-500/10 rounded-lg">
+          <ErrorMessage message={error} />
+        </div>
+      )}
+      
+      <div className="bg-[#1e1e38] p-6 rounded-xl">
+        <h2 className="text-xl font-semibold mb-4 text-white">
+          {fr.users.createUser}
+        </h2>
+        <UserForm onSubmit={handleCreateUser} loading={loading} />
       </div>
 
-      {error && <ErrorMessage message={error} />}
-
-      <UserForm
-        onSubmit={selectedUser ? handleUpdateUser : handleCreateUser}
-        initialData={selectedUser}
-        loading={loading}
-      />
-
-      <UserList
-        users={users}
-        onEdit={setSelectedUser}
-        onDelete={handleDeleteUser}
-        disabled={loading}
-      />
+      <div className="bg-[#1e1e38] p-6 rounded-xl">
+        <h2 className="text-xl font-semibold mb-4 text-white">
+          {fr.users.userList}
+        </h2>
+        <UserList users={users || []} />
+      </div>
     </div>
   );
 }

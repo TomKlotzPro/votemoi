@@ -20,7 +20,11 @@ export interface Link {
   url: string;
   title: string;
   description?: string | null;
-  imageUrl?: string | null;
+  previewTitle?: string | null;
+  previewDescription?: string | null;
+  previewImage?: string | null;
+  previewFavicon?: string | null;
+  previewSiteName?: string | null;
   createdAt: string;
   updatedAt: string;
   createdBy: User;

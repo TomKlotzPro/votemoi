@@ -41,21 +41,20 @@ export default function Home() {
 
           {/* Links Section */}
           <section className="space-y-8">
-            <div className="bg-black/30 rounded-xl backdrop-blur-sm border border-white/10 shadow-xl">
-              {error ? (
-                <div className="text-red-500 text-center py-4">{error}</div>
-              ) : (
-                <LinkList
-                  links={links}
-                  isLoading={isLoading}
-                  onVote={handleVote}
-                  onUnvote={handleUnvote}
-                  onAddComment={(linkId, content) => user && addComment(linkId, content, user)}
-                  onDeleteLink={(linkId) => user && removeLink(linkId, user)}
-                  onUpdateLink={(data) => user && editLink(data, user)}
-                />
-              )}
-            </div>
+            {error ? (
+              <div className="text-red-500 text-center py-4">{error}</div>
+            ) : (
+              <LinkList
+                links={links}
+                isLoading={isLoading}
+                onVote={handleVote}
+                onUnvote={handleUnvote}
+                onDelete={(linkId) => user && removeLink(linkId, user)}
+                onEdit={(data) => user && editLink(data, user)}
+                onAddComment={(linkId, content) => user && addComment(linkId, content, user)}
+                user={user}
+              />
+            )}
           </section>
         </div>
       </div>

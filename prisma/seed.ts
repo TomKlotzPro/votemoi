@@ -28,9 +28,13 @@ async function main() {
   const link1 = await prisma.link.create({
     data: {
       url: 'https://nextjs.org',
-      title: 'Next.js - The React Framework',
-      description: 'Production grade React applications that scale.',
-      imageUrl: 'https://assets.vercel.com/image/upload/v1662130559/nextjs/twitter-card.png',
+      title: 'Next.js Documentation',
+      description: 'Learn how to use Next.js',
+      previewTitle: 'Next.js - The React Framework',
+      previewDescription: 'Production grade React applications that scale. Next.js gives you the best developer experience with all the features you need for production.',
+      previewImage: 'https://assets.vercel.com/image/upload/v1662130559/nextjs/twitter-card.png',
+      previewFavicon: 'https://nextjs.org/favicon.ico',
+      previewSiteName: 'Next.js',
       createdById: user1.id,
     },
   });
@@ -38,9 +42,13 @@ async function main() {
   const link2 = await prisma.link.create({
     data: {
       url: 'https://prisma.io',
-      title: 'Prisma - Next-generation Node.js and TypeScript ORM',
-      description: 'Build data-driven JavaScript & TypeScript apps in less time.',
-      imageUrl: 'https://website-v9.vercel.app/og-image.png',
+      title: 'Prisma Documentation',
+      description: 'Learn how to use Prisma',
+      previewTitle: 'Prisma - Next-generation Node.js and TypeScript ORM',
+      previewDescription: 'Prisma helps app developers build faster and make fewer errors with an open source database toolkit for PostgreSQL, MySQL, SQL Server, SQLite and MongoDB.',
+      previewImage: 'https://website-v9.vercel.app/og-image.png',
+      previewFavicon: 'https://prisma.io/favicon.ico',
+      previewSiteName: 'Prisma',
       createdById: user2.id,
     },
   });
@@ -63,7 +71,7 @@ async function main() {
   // Create sample comments
   await prisma.comment.create({
     data: {
-      content: 'Great framework for building modern web apps!',
+      content: 'This is a great resource for learning Next.js!',
       userId: user2.id,
       linkId: link1.id,
     },
@@ -71,13 +79,13 @@ async function main() {
 
   await prisma.comment.create({
     data: {
-      content: 'Love using Prisma in my projects!',
+      content: 'Prisma makes database work so much easier.',
       userId: user1.id,
       linkId: link2.id,
     },
   });
 
-  console.log('Database has been seeded! 🌱');
+  console.log('Seed data created successfully');
 }
 
 main()
