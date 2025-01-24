@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "prisma:seed": "npx ts-node prisma/seed.ts"
+    "prisma:seed": "npx ts-node prisma/seed.ts",
+    "postinstall": "prisma generate"
   },
   "prisma": {
     "seed": "npx ts-node prisma/seed.ts"
