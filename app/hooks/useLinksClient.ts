@@ -1,11 +1,22 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { useUserStore } from '@/app/components/providers/StoreProvider';
-import * as linkActions from '@/app/actions/links';
-import { Link } from '@prisma/client';
+import { addLink, editLink, removeLink, vote as voteForLink, unvote as unvoteForLink, addComment as addCommentToLink } from '@/app/actions/url-actions';
+import { FormattedUser } from '@/app/types/user';
 
-type FormattedLink = Link & {
+type FormattedLink = {
+  id: string;
+  url: string;
+  title: string;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+  createdById: string;
+  previewDescription: string | null;
+  previewFavicon: string | null;
+  previewImage: string | null;
+  previewSiteName: string | null;
+  previewTitle: string | null;
+  hasVoted?: boolean;
   createdBy: {
     id: string;
     name: string;
@@ -47,9 +58,8 @@ export function useLinks() {
   async function loadLinks() {
     try {
       setLoading(true);
-      const result = await linkActions.getLinks();
-      if (result.error) throw new Error(result.error);
-      if (result.links) setLinks(result.links);
+      const links = await addLink({ url: '', title: '', description: '' }, user);
+      setLinks(links);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load links');
@@ -62,16 +72,9 @@ export function useLinks() {
     if (!user) throw new Error('User must be logged in to create a link');
     
     try {
-      const result = await linkActions.createLink({
-        ...data,
-        userId: user.id,
-      });
-      
-      if (result.error) throw new Error(result.error);
-      if (result.link) {
-        setLinks(prev => [result.link, ...prev]);
-        return result.link;
-      }
+      const newLink = await addLink(data, user);
+      setLinks(prev => [newLink, ...prev]);
+      return newLink;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create link');
       throw err;
@@ -82,15 +85,8 @@ export function useLinks() {
     if (!user) throw new Error('User must be logged in to delete a link');
     
     try {
-      const result = await linkActions.deleteLink({
-        id: linkId,
-        userId: user.id,
-      });
-      
-      if (result.error) throw new Error(result.error);
-      if (result.success) {
-        setLinks(prev => prev.filter(link => link.id !== linkId));
-      }
+      await removeLink(linkId, user);
+      setLinks(prev => prev.filter(link => link.id !== linkId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete link');
       throw err;
@@ -101,33 +97,31 @@ export function useLinks() {
     if (!user) throw new Error('User must be logged in to vote');
     
     try {
-      const result = await linkActions.vote({
-        linkId,
-        userId: user.id,
-      });
-      
-      if (result.error) throw new Error(result.error);
-      if (result.success && result.user) {
-        setLinks(prev =>
-          prev.map(link => {
-            if (link.id === linkId) {
-              return {
-                ...link,
-                votes: [
-                  ...link.votes,
-                  {
-                    userId: user.id,
-                    userName: user.name,
-                    createdAt: new Date().toISOString(),
-                    user: result.user,
-                  },
-                ],
-              };
-            }
-            return link;
-          })
-        );
-      }
+      await voteForLink(linkId, user);
+      setLinks(prev =>
+        prev.map(link => {
+          if (link.id === linkId) {
+            return {
+              ...link,
+              votes: [
+                ...link.votes,
+                {
+                  userId: user.id,
+                  userName: user.name,
+                  createdAt: new Date().toISOString(),
+                  user: {
+                    id: user.id,
+                    name: user.name,
+                    avatarUrl: user.avatarUrl || ''
+                  }
+                }
+              ],
+              hasVoted: true
+            };
+          }
+          return link;
+        })
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to vote link');
       throw err;
@@ -138,27 +132,40 @@ export function useLinks() {
     if (!user) throw new Error('User must be logged in to unvote');
     
     try {
-      const result = await linkActions.unvote({
-        linkId,
-        userId: user.id,
-      });
-      
-      if (result.error) throw new Error(result.error);
-      if (result.success) {
-        setLinks(prev =>
-          prev.map(link => {
-            if (link.id === linkId) {
-              return {
-                ...link,
-                votes: link.votes.filter(vote => vote.userId !== user.id),
-              };
-            }
-            return link;
-          })
-        );
-      }
+      await unvoteForLink(linkId, user);
+      setLinks(prev =>
+        prev.map(link => {
+          if (link.id === linkId) {
+            return {
+              ...link,
+              votes: link.votes.filter(vote => vote.userId !== user.id),
+              hasVoted: false
+            };
+          }
+          return link;
+        })
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to unvote link');
+      throw err;
+    }
+  }
+
+  async function addComment(linkId: string, content: string) {
+    if (!user) throw new Error('User must be logged in to comment');
+    
+    try {
+      const updatedLink = await addCommentToLink(linkId, content, user);
+      setLinks(prev =>
+        prev.map(link => {
+          if (link.id === linkId) {
+            return updatedLink;
+          }
+          return link;
+        })
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add comment');
       throw err;
     }
   }
@@ -171,5 +178,6 @@ export function useLinks() {
     deleteLink,
     voteLink,
     unvoteLink,
+    addComment
   };
 }
