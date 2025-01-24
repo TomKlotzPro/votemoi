@@ -12,10 +12,12 @@ model User {
   id        String    @id @default(cuid())
   name      String    @unique
   createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   avatarUrl String    @default("/default-avatar.png")
   links     Link[]    @relation("CreatedBy")
   votes     Vote[]
   comments  Comment[]
+  sessions  Session[]
 }
 
 model Link {
@@ -41,8 +43,8 @@ model Link {
 model Vote {
   id        String   @id @default(cuid())
   userId    String
-  createdAt DateTime @default(now())
   linkId    String
+  createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   link      Link     @relation(fields: [linkId], references: [id], onDelete: Cascade)
 
@@ -63,4 +65,15 @@ model Comment {
 
   @@index([userId])
   @@index([linkId])
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  active    Boolean  @default(true)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

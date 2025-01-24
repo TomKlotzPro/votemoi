@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment } from 'react';
+import { Fragment, Dispatch, SetStateAction } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { fr } from '@/app/translations/fr';
 
@@ -9,7 +9,8 @@ interface CommentModalProps {
   onClose: () => void;
   onSubmit: () => void;
   comment: string;
-  onChange: (value: string) => void;
+  onChange: Dispatch<SetStateAction<string>>;
+  showAuthForm: () => void;
 }
 
 export default function CommentModal({
@@ -18,6 +19,7 @@ export default function CommentModal({
   onSubmit,
   comment,
   onChange,
+  showAuthForm,
 }: CommentModalProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,89 +1,79 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { User } from '@/app/types/user';
+import { FormattedLink } from '@/app/types/link';
 import { fetchUrlMetadata } from '@/lib/url-metadata';
 import { revalidatePath } from 'next/cache';
 
-export async function getUrls() {
+export async function getLinks(): Promise<FormattedLink[]> {
   try {
-    return await prisma.url.findMany({
+    const links = await prisma.link.findMany({
       include: {
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
+          },
+        },
         votes: {
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+        comments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatarUrl: true,
+              },
+            },
           },
         },
       },
       orderBy: {
-        votes: {
-          _count: 'desc',
-        },
-      },
-    });
-  } catch (error) {
-    console.error('Failed to fetch URLs:', error);
-    throw new Error('Failed to fetch URLs');
-  }
-}
-
-export async function createUrl(data: { url: string; title: string; description: string; userId: string }) {
-  try {
-    const metadata = await fetchUrlMetadata(data.url);
-    
-    if (!metadata) {
-      throw new Error('Could not fetch URL metadata');
-    }
-
-    const url = await prisma.url.create({
-      data: {
-        url: data.url,
-        title: data.title,
-        description: data.description,
-        previewImage: metadata.previewImage,
-        previewTitle: metadata.previewTitle,
-        previewDescription: metadata.previewDescription,
-        previewFavicon: metadata.previewFavicon,
-        previewSiteName: metadata.previewSiteName,
-        createdById: data.userId,
-      },
-      include: {
-        votes: {
-          include: {
-            user: true,
-          },
-        },
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            avatarUrl: true,
-          },
-        },
+        createdAt: 'desc',
       },
     });
 
-    revalidatePath('/');
-    return url;
+    return links.map(link => ({
+      ...link,
+      createdAt: link.createdAt.toISOString(),
+      updatedAt: link.updatedAt.toISOString(),
+      votes: link.votes.map(vote => ({
+        ...vote,
+        createdAt: vote.createdAt.toISOString()
+      })),
+      comments: link.comments.map(comment => ({
+        ...comment,
+        createdAt: comment.createdAt.toISOString(),
+        updatedAt: comment.updatedAt.toISOString()
+      }))
+    }));
   } catch (error) {
-    console.error('Error creating URL:', error);
+    console.error('Error fetching links:', error);
     throw error;
   }
 }
 
-export async function updateUrl(id: string, data: { url: string; title: string; description: string; userId: string }) {
+export async function addLink(data: { url: string; title?: string; description?: string }, user: User): Promise<FormattedLink> {
   try {
     const metadata = await fetchUrlMetadata(data.url);
-    
-    if (!metadata) {
-      throw new Error('Could not fetch URL metadata');
-    }
-
-    const url = await prisma.url.update({
-      where: { id, createdById: data.userId },
+    const link = await prisma.link.create({
       data: {
         url: data.url,
-        title: data.title,
-        description: data.description,
+        title: data.title || metadata.previewTitle || data.url,
+        description: data.description || metadata.previewDescription,
+        createdById: user.id,
         previewImage: metadata.previewImage,
         previewTitle: metadata.previewTitle,
         previewDescription: metadata.previewDescription,
@@ -91,11 +81,6 @@ export async function updateUrl(id: string, data: { url: string; title: string; 
         previewSiteName: metadata.previewSiteName,
       },
       include: {
-        votes: {
-          include: {
-            user: true,
-          },
-        },
         createdBy: {
           select: {
             id: true,
@@ -103,63 +88,230 @@ export async function updateUrl(id: string, data: { url: string; title: string; 
             avatarUrl: true,
           },
         },
+        votes: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+        comments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
       },
     });
 
     revalidatePath('/');
-    return url;
+    return {
+      ...link,
+      createdAt: link.createdAt.toISOString(),
+      updatedAt: link.updatedAt.toISOString(),
+      votes: link.votes.map(vote => ({
+        ...vote,
+        createdAt: vote.createdAt.toISOString()
+      })),
+      comments: link.comments.map(comment => ({
+        ...comment,
+        createdAt: comment.createdAt.toISOString(),
+        updatedAt: comment.updatedAt.toISOString()
+      }))
+    };
   } catch (error) {
-    console.error('Error updating URL:', error);
+    console.error('Error adding link:', error);
     throw error;
   }
 }
 
-export async function deleteUrl(id: string) {
+export async function editLink(
+  data: { id: string; url: string; title?: string; description?: string },
+  user: User
+): Promise<FormattedLink> {
   try {
-    await prisma.url.delete({
+    const metadata = await fetchUrlMetadata(data.url);
+    const link = await prisma.link.update({
+      where: { id: data.id },
+      data: {
+        url: data.url,
+        title: data.title || metadata.previewTitle || data.url,
+        description: data.description || metadata.previewDescription,
+        previewImage: metadata.previewImage,
+        previewTitle: metadata.previewTitle,
+        previewDescription: metadata.previewDescription,
+        previewFavicon: metadata.previewFavicon,
+        previewSiteName: metadata.previewSiteName,
+      },
+      include: {
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
+          },
+        },
+        votes: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+        comments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    revalidatePath('/');
+    return {
+      ...link,
+      createdAt: link.createdAt.toISOString(),
+      updatedAt: link.updatedAt.toISOString(),
+      votes: link.votes.map(vote => ({
+        ...vote,
+        createdAt: vote.createdAt.toISOString()
+      })),
+      comments: link.comments.map(comment => ({
+        ...comment,
+        createdAt: comment.createdAt.toISOString(),
+        updatedAt: comment.updatedAt.toISOString()
+      }))
+    };
+  } catch (error) {
+    console.error('Error editing link:', error);
+    throw error;
+  }
+}
+
+export async function removeLink(id: string, user: User): Promise<void> {
+  try {
+    await prisma.link.delete({
       where: { id },
     });
     revalidatePath('/');
-    return true;
   } catch (error) {
-    console.error('Error deleting URL:', error);
+    console.error('Error removing link:', error);
     throw error;
   }
 }
 
-export async function voteForUrl(urlId: string, userId: string) {
+export async function vote(linkId: string, user: User): Promise<void> {
   try {
-    const vote = await prisma.vote.create({
+    await prisma.vote.create({
       data: {
-        urlId,
-        userId,
-      },
-      include: {
-        user: true,
+        linkId,
+        userId: user.id,
       },
     });
     revalidatePath('/');
-    return vote;
   } catch (error) {
-    console.error('Error voting for URL:', error);
+    console.error('Error voting:', error);
     throw error;
   }
 }
 
-export async function unvoteForUrl(urlId: string, userId: string) {
+export async function unvote(linkId: string, user: User): Promise<void> {
   try {
     await prisma.vote.delete({
       where: {
-        urlId_userId: {
-          urlId,
-          userId,
+        userId_linkId: {
+          userId: user.id,
+          linkId,
         },
       },
     });
     revalidatePath('/');
-    return true;
   } catch (error) {
-    console.error('Error removing vote:', error);
+    console.error('Error unvoting:', error);
+    throw error;
+  }
+}
+
+export async function addComment(linkId: string, content: string, user: User): Promise<FormattedLink> {
+  try {
+    const link = await prisma.link.update({
+      where: { id: linkId },
+      data: {
+        comments: {
+          create: {
+            content,
+            userId: user.id,
+          },
+        },
+      },
+      include: {
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
+          },
+        },
+        votes: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+        comments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    revalidatePath('/');
+    return {
+      ...link,
+      createdAt: link.createdAt.toISOString(),
+      updatedAt: link.updatedAt.toISOString(),
+      votes: link.votes.map(vote => ({
+        ...vote,
+        createdAt: vote.createdAt.toISOString()
+      })),
+      comments: link.comments.map(comment => ({
+        ...comment,
+        createdAt: comment.createdAt.toISOString(),
+        updatedAt: comment.updatedAt.toISOString()
+      }))
+    };
+  } catch (error) {
+    console.error('Error adding comment:', error);
     throw error;
   }
 }

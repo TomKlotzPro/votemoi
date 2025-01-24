@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { fr } from '@/app/translations/fr';
-import { User } from '@/app/types/user';
+import { User, BaseUser } from '@/app/types/user';
 import ErrorMessage from '../common/ErrorMessage';
 import { useUsers } from '@/app/hooks/useUsers';
 
@@ -15,7 +15,7 @@ const AVATAR_OPTIONS = [
 ];
 
 interface UserSelectorProps {
-  onSelect: (user: User) => void;
+  onSelect: (user: BaseUser) => void;
   onClose: () => void;
   currentUser?: User;
 }

@@ -4,34 +4,32 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const sessionId = cookies().get('session_id')?.value;
+    const cookieStore = await cookies();
+    const sessionId = cookieStore.get('session_id')?.value;
     
     if (!sessionId) {
       return NextResponse.json({ user: null });
     }
 
-    const session = await prisma.session.findFirst({
-      where: {
-        id: sessionId,
-        active: true,
-        expiresAt: {
-          gt: new Date(),
-        },
-      },
-      include: {
-        user: true,
-      },
-    });
+    const session = await prisma.$queryRaw`
+      SELECT * FROM "session"
+      WHERE id = ${sessionId}
+      AND active = true
+      AND "expiresAt" > NOW()
+      LIMIT 1
+    `;
 
-    if (!session) {
+    if (!session || !Array.isArray(session) || session.length === 0) {
       return NextResponse.json({ user: null });
     }
 
+    const sessionData = session[0];
+
     return NextResponse.json({ 
       user: {
-        id: session.user.id,
-        name: session.user.name,
-        avatarUrl: session.user.avatarUrl,
+        id: sessionData.userId,
+        name: sessionData.user.name,
+        avatarUrl: sessionData.user.avatarUrl,
       }
     });
   } catch (error) {
@@ -57,22 +55,27 @@ export async function POST(request: NextRequest) {
     }
 
     // Create a new session
-    const session = await prisma.session.create({
-      data: {
-        userId,
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-      },
-      include: {
-        user: true,
-      },
-    });
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+    const sessionId = crypto.randomUUID();
+    const session = await prisma.$queryRaw`
+      INSERT INTO "Session" (id, "userId", active, "expiresAt", "createdAt")
+      VALUES (${sessionId}, ${userId}, true, ${expiresAt}, NOW())
+      RETURNING *
+    `;
+
+    if (!session || !Array.isArray(session) || session.length === 0) {
+      return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
+    }
+
+    const sessionData = session[0];
 
     // Set session cookie
-    cookies().set('session_id', session.id, {
+    const cookieStore = await cookies();
+    cookieStore.set('session_id', sessionId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      expires: session.expiresAt,
+      expires: expiresAt,
     });
 
     return NextResponse.json({ 
@@ -90,16 +93,18 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE() {
   try {
-    const sessionId = cookies().get('session_id')?.value;
+    const cookieStore = await cookies();
+    const sessionId = cookieStore.get('session_id')?.value;
     
     if (sessionId) {
-      await prisma.session.update({
-        where: { id: sessionId },
-        data: { active: false },
-      });
+      await prisma.$queryRaw`
+        UPDATE "Session"
+        SET active = false
+        WHERE id = ${sessionId}
+      `;
     }
 
-    cookies().delete('session_id');
+    cookieStore.delete('session_id');
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error ending session:', error);

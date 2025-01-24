@@ -130,7 +130,7 @@ export default function ProfileMenu({ user, onClose, onLogout }: ProfileMenuProp
                 setError('');
               }}
               className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder={fr.placeholders.enterName}
+              placeholder={fr.common.enterName}
               disabled={isSubmitting}
               required
               initial={false}
@@ -144,7 +144,7 @@ export default function ProfileMenu({ user, onClose, onLogout }: ProfileMenuProp
 
           <div>
             <label className="block text-sm font-medium text-white/80 mb-2">
-              {fr.common.avatar}
+              {fr.common.selectAvatar}
             </label>
             <div className="grid grid-cols-4 gap-3 max-h-[300px] overflow-y-auto p-2">
               {AVATAR_OPTIONS.map((avatar) => (
@@ -205,7 +205,7 @@ export default function ProfileMenu({ user, onClose, onLogout }: ProfileMenuProp
           onClick={() => setIsEditing(true)}
           className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-white/60 hover:text-white transition-colors group"
         >
-          <span className="flex-1">{fr.profile.edit}</span>
+          <span className="flex-1">{fr.actions.editProfile}</span>
           <PencilIcon className="w-4 h-4" />
         </button>
         <button

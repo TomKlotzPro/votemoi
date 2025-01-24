@@ -1,64 +1,69 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { Link } from '../types/link';
+import { useState, useCallback } from 'react';
+import { Link, Vote, Comment } from '../types/link';
 import { User } from '../types/user';
 import { getLinks, createLink, updateLink, deleteLink, vote, unvote, createComment } from '../actions/links';
-import { useUser } from '../context/user-context';
+
+function convertToLink(formattedLink: any): Link {
+  return {
+    ...formattedLink,
+    createdAt: new Date(formattedLink.createdAt),
+    updatedAt: new Date(formattedLink.updatedAt),
+    votes: formattedLink.votes.map((v: any) => ({
+      ...v,
+      createdAt: new Date(v.createdAt)
+    })),
+    comments: formattedLink.comments.map((c: any) => ({
+      ...c,
+      createdAt: new Date(c.createdAt),
+      updatedAt: new Date(c.updatedAt)
+    }))
+  };
+}
 
 export function useLinks() {
   const [links, setLinks] = useState<Link[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useUser();
 
-  const fetchLinks = async () => {
+  const fetchLinks = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
     try {
-      setIsLoading(true);
-      setError(null);
-      const response = await getLinks(user?.id);
-      
+      const response = await getLinks();
       if (response.error) {
         setError(response.error);
         return;
       }
-      
-      setLinks(response.links || []);
+      setLinks((response.links || []).map(convertToLink));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load links');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => {
-    fetchLinks();
-  }, [user?.id]);
-
-  const addLink = async (data: { url: string; title?: string; description?: string }, user: User) => {
+  const add = useCallback(async (data: { url: string; title?: string; description?: string }, user: User) => {
+    setIsLoading(true);
+    setError(null);
     try {
-      setError(null);
-      const response = await createLink({
+      const newLink = await createLink({
         url: data.url,
         title: data.title,
         description: data.description,
         userId: user.id
       });
-      
-      if (response.error) {
-        setError(response.error);
-        return;
-      }
-      
-      await fetchLinks();
+      setLinks(currentLinks => [convertToLink(newLink), ...currentLinks]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add link');
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, []);
 
-  const editLink = async (data: { id: string; url: string; title?: string; description?: string }, user: User) => {
+  const edit = useCallback(async (data: { id: string; url: string; title?: string; description?: string }, user: User) => {
+    setIsLoading(true);
+    setError(null);
     try {
-      setError(null);
       const response = await updateLink({
         id: data.id,
         url: data.url,
@@ -72,136 +77,103 @@ export function useLinks() {
         return;
       }
       
-      await fetchLinks();
+      if (response.link) {
+        setLinks(currentLinks =>
+          currentLinks.map(link => (link.id === response.link!.id ? convertToLink(response.link!) : link))
+        );
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update link');
+      setError(err instanceof Error ? err.message : 'Failed to edit link');
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, []);
 
-  const removeLink = async (id: string, user: User) => {
+  const remove = useCallback(async (id: string, user: User) => {
+    setIsLoading(true);
+    setError(null);
     try {
-      setError(null);
-      
-      // Store the current links state for potential rollback
-      const previousLinks = links;
-      
-      // Optimistically remove the link
-      setLinks(currentLinks => currentLinks.filter(link => link.id !== id));
-
       const response = await deleteLink({ id, userId: user.id });
-      
       if (response.error) {
         setError(response.error);
-        // Revert optimistic update on error
-        setLinks(previousLinks);
         return;
+      }
+      if (response.success) {
+        setLinks(currentLinks => currentLinks.filter(link => link.id !== id));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete link');
-      // Revert optimistic update on error
-      setLinks(previousLinks);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, []);
 
-  const handleVote = async (linkId: string, user: User) => {
+  const voteLink = useCallback(async (linkId: string, user: User) => {
+    setError(null);
     try {
-      setError(null);
-      
-      // Store previous state for rollback
-      const previousLinks = links;
-      
-      // Check if user has already voted
-      const targetLink = links.find(link => link.id === linkId);
-      if (targetLink?.hasVoted) {
-        setError('Already voted for this link');
-        return;
-      }
-
-      // Optimistically update the UI
-      setLinks(currentLinks => 
-        currentLinks.map(link => {
-          if (link.id === linkId) {
-            const newVote = {
-              userId: user.id,
-              userName: user.name,
-              createdAt: new Date().toISOString(),
-              user: {
-                id: user.id,
-                name: user.name,
-                avatarUrl: user.avatarUrl,
-              }
-            };
-            return {
-              ...link,
-              votes: [...link.votes, newVote],
-              hasVoted: true
-            };
-          }
-          return link;
-        })
-      );
-
       const response = await vote({ linkId, userId: user.id });
-      
       if (response.error) {
-        // Revert optimistic update on error
         setError(response.error);
-        setLinks(previousLinks);
         return;
       }
+      if (response.success && response.user) {
+        setLinks(currentLinks =>
+          currentLinks.map(link => {
+            if (link.id === linkId) {
+              return {
+                ...link,
+                votes: [...link.votes, {
+                  id: Math.random().toString(),
+                  createdAt: new Date(),
+                  userId: user.id,
+                  linkId,
+                  user: response.user!,
+                  link: {
+                    id: link.id,
+                    url: link.url,
+                    title: link.title
+                  }
+                }]
+              };
+            }
+            return link;
+          })
+        );
+      }
     } catch (err) {
-      // Revert optimistic update on error
       setError(err instanceof Error ? err.message : 'Failed to vote');
-      setLinks(previousLinks);
     }
-  };
+  }, []);
 
-  const handleUnvote = async (linkId: string, user: User) => {
+  const unvoteLink = useCallback(async (linkId: string, user: User) => {
+    setError(null);
     try {
-      setError(null);
-
-      // Store previous state for rollback
-      const previousLinks = links;
-
-      // Check if user hasn't voted
-      const targetLink = links.find(link => link.id === linkId);
-      if (!targetLink?.hasVoted) {
-        setError('Haven\'t voted for this link');
+      const response = await unvote({ linkId, userId: user.id });
+      if (response.error) {
+        setError(response.error);
         return;
       }
-
-      // Optimistically update the UI
-      setLinks(currentLinks => 
-        currentLinks.map(link => {
-          if (link.id === linkId) {
-            return {
-              ...link,
-              votes: link.votes.filter(vote => vote.userId !== user.id),
-              hasVoted: false
-            };
-          }
-          return link;
-        })
-      );
-
-      const response = await unvote({ linkId, userId: user.id });
-      
-      if (response.error) {
-        // Revert optimistic update on error
-        setError(response.error);
-        setLinks(previousLinks);
-        return;
+      if (response.success) {
+        setLinks(currentLinks =>
+          currentLinks.map(link => {
+            if (link.id === linkId) {
+              return {
+                ...link,
+                votes: link.votes.filter(vote => vote.userId !== user.id)
+              };
+            }
+            return link;
+          })
+        );
       }
     } catch (err) {
-      // Revert optimistic update on error
       setError(err instanceof Error ? err.message : 'Failed to unvote');
-      setLinks(previousLinks);
     }
-  };
+  }, []);
 
-  const addComment = async (linkId: string, content: string, user: User) => {
+  const addComment = useCallback(async (linkId: string, content: string, user: User) => {
+    setError(null);
     try {
-      setError(null);
       const response = await createComment({
         linkId,
         content,
@@ -213,45 +185,42 @@ export function useLinks() {
         return;
       }
       
-      // Optimistically update UI
-      const updatedLinks = links.map(link => {
-        if (link.id === linkId) {
-          return {
-            ...link,
-            comments: [...link.comments, {
-              id: 'temp-' + Date.now(),
-              content,
-              createdAt: new Date().toISOString(),
-              userId: user.id,
-              linkId,
-              user: {
-                id: user.id,
-                name: user.name,
-                avatarUrl: user.avatarUrl,
-              }
-            }]
-          };
-        }
-        return link;
-      });
-      setLinks(updatedLinks);
-      
-      // Fetch fresh data to ensure consistency
-      await fetchLinks();
+      if (response.comment) {
+        setLinks(currentLinks =>
+          currentLinks.map(link => {
+            if (link.id === linkId) {
+              return {
+                ...link,
+                comments: [...link.comments, {
+                  ...response.comment!,
+                  createdAt: new Date(response.comment!.createdAt),
+                  updatedAt: new Date(response.comment!.updatedAt),
+                  link: {
+                    id: link.id,
+                    url: link.url,
+                    title: link.title
+                  }
+                }]
+              };
+            }
+            return link;
+          })
+        );
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add comment');
     }
-  };
+  }, []);
 
   return {
     links,
     isLoading,
     error,
-    addLink,
-    editLink,
-    removeLink,
-    handleVote,
-    handleUnvote,
+    add,
+    edit,
+    remove,
+    voteLink,
+    unvoteLink,
     addComment,
   };
 }

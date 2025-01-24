@@ -22,12 +22,29 @@ export async function getUsers(): Promise<User[]> {
       include: {
         votes: {
           include: {
-            url: true,
+            link: true,
           },
         },
+        links: true,
+        comments: true,
       },
     });
-    return users;
+
+    return users.map(user => ({
+      id: user.id,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+      createdAt: user.createdAt,
+      updatedAt: user.createdAt, // Since there's no updatedAt in the schema, we'll use createdAt
+      votes: user.votes.map(vote => ({
+        id: vote.id,
+        createdAt: vote.createdAt,
+        userId: vote.userId,
+        linkId: vote.linkId
+      })),
+      links: user.links,
+      comments: user.comments
+    }));
   } catch (error) {
     console.error('Failed to fetch users:', error);
     throw new Error('Failed to fetch users');
@@ -49,10 +66,30 @@ export async function createUser(data: CreateUserData): Promise<User> {
         name: data.name,
         avatarUrl: data.avatarUrl,
       },
+      include: {
+        votes: true,
+        links: true,
+        comments: true,
+      },
     });
 
     revalidatePath('/');
-    return user;
+    
+    return {
+      id: user.id,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+      createdAt: user.createdAt,
+      updatedAt: user.createdAt,
+      votes: user.votes.map(vote => ({
+        id: vote.id,
+        createdAt: vote.createdAt,
+        userId: vote.userId,
+        linkId: vote.linkId
+      })),
+      links: user.links,
+      comments: user.comments
+    };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
@@ -79,7 +116,6 @@ export async function updateUser(id: string, data: UpdateUserData): Promise<User
   }
 
   try {
-    // First check if user exists
     const existingUser = await prisma.user.findUnique({
       where: { id },
     });
@@ -88,48 +124,42 @@ export async function updateUser(id: string, data: UpdateUserData): Promise<User
       throw new Error('User not found');
     }
 
-    // Then check for duplicate names
-    const duplicateUser = await prisma.user.findFirst({
-      where: { 
-        name: trimmedName,
-        NOT: { id },
-      },
-    });
-
-    if (duplicateUser) {
-      throw new Error('User with this name already exists');
-    }
-
-    // If all checks pass, update the user
-    const user = await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id },
       data: {
         name: trimmedName,
         avatarUrl: data.avatarUrl,
       },
+      include: {
+        votes: true,
+        links: true,
+        comments: true,
+      },
     });
 
-    if (!user) {
-      throw new Error('Failed to update user');
-    }
-
     revalidatePath('/');
-    return user;
+
+    return {
+      id: updatedUser.id,
+      name: updatedUser.name,
+      avatarUrl: updatedUser.avatarUrl,
+      createdAt: updatedUser.createdAt,
+      updatedAt: updatedUser.createdAt,
+      votes: updatedUser.votes.map(vote => ({
+        id: vote.id,
+        createdAt: vote.createdAt,
+        userId: vote.userId,
+        linkId: vote.linkId
+      })),
+      links: updatedUser.links,
+      comments: updatedUser.comments
+    };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
         throw new Error('User with this name already exists');
       }
-      if (error.code === 'P2025') {
-        throw new Error('User not found');
-      }
     }
-    
-    if (error instanceof Error) {
-      console.error('Failed to update user:', error.message);
-      throw error;
-    }
-    
     console.error('Failed to update user:', error);
     throw new Error('Failed to update user');
   }
@@ -147,11 +177,11 @@ export async function deleteUser(id: string): Promise<void> {
   }
 }
 
-export async function toggleVote(urlId: string, userId: string): Promise<void> {
+export async function toggleVote(linkId: string, userId: string): Promise<void> {
   try {
     const existingVote = await prisma.vote.findFirst({
       where: {
-        urlId,
+        linkId,
         userId,
       },
     });
@@ -165,7 +195,7 @@ export async function toggleVote(urlId: string, userId: string): Promise<void> {
     } else {
       await prisma.vote.create({
         data: {
-          urlId,
+          linkId,
           userId,
         },
       });

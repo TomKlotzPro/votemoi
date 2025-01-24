@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 
 export async function GET() {
   try {
-    const userId = cookies().get('userId')?.value;
+    const userId = (await cookies()).get('userId')?.value;
     if (!userId) {
       return NextResponse.json({ user: null });
     }
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Set a cookie with the user ID
-    cookies().set('userId', user.id, {
+    (await cookies()).set('userId', user.id, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

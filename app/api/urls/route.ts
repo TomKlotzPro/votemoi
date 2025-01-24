@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const urls = await prisma.url.findMany({
+    const urls = await prisma.link.findMany({
       include: {
         votes: {
           include: {
@@ -27,7 +27,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
-    const url = await prisma.url.create({
+    const url = await prisma.link.create({
       data,
       include: {
         votes: {
@@ -48,7 +48,7 @@ export async function PUT(request: NextRequest) {
   try {
     const data = await request.json();
     const { id, ...updateData } = data;
-    const url = await prisma.url.update({
+    const url = await prisma.link.update({
       where: { id },
       data: updateData,
       include: {
@@ -73,7 +73,7 @@ export async function DELETE(request: NextRequest) {
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-    await prisma.url.delete({ where: { id } });
+    await prisma.link.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to delete URL:', error);

@@ -43,10 +43,19 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
         return;
       }
 
-      const newUser = await addUser({
+      const response = await addUser({
         name: trimmedName,
         avatarUrl: selectedAvatar,
       });
+
+      const newUser = {
+        ...response,
+        links: [],
+        votes: [],
+        comments: [],
+        createdAt: new Date(response.createdAt),
+        updatedAt: new Date(response.updatedAt)
+      };
 
       onSuccess(newUser);
     } catch (err) {
@@ -82,7 +91,7 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
       <div className="w-full max-w-md mx-auto bg-black/80 backdrop-blur-lg rounded-lg border border-white/10 p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-white">
-            {fr.auth.welcome}
+            {fr.common.welcome}
           </h2>
           <button
             onClick={onClose}
@@ -165,7 +174,7 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
 
             <div>
               <label className="block text-sm font-medium text-white/80 mb-2">
-                {fr.common.avatar}
+                {fr.common.selectAvatar}
               </label>
               <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 max-h-[400px] overflow-y-auto p-2">
                 {AVATAR_OPTIONS.map((avatar) => (

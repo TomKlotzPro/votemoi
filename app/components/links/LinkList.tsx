@@ -69,10 +69,14 @@ export default function LinkList({
             user={user}
             onVote={(linkId) => onVote(linkId, user)}
             onUnvote={(linkId) => onUnvote(linkId, user)}
-            onEdit={(data) => {
+            onEdit={async (data) => {
               setEditingLink(link);
+              return onEdit({ ...data, id: link.id });
             }}
-            onDelete={(linkId) => setDeleteLink(link)}
+            onDelete={async (linkId) => {
+              setDeleteLink(link);
+              return Promise.resolve();
+            }}
             onComment={(link) => setCommentingLink(link)}
             showAuthForm={showAuthForm}
           />
@@ -83,9 +87,9 @@ export default function LinkList({
       <LinkFormModal
         isOpen={!!editingLink}
         onClose={() => setEditingLink(null)}
-        onSubmit={(data) => {
+        onSubmit={async (data) => {
           if (editingLink) {
-            onEdit({ id: editingLink.id, ...data });
+            await onEdit({ id: editingLink.id, ...data });
             setEditingLink(null);
           }
         }}

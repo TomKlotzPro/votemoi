@@ -25,7 +25,7 @@ export default function LinkComments({ comments }: LinkCommentsProps) {
                 </span>
                 <span className="text-[var(--text-secondary)]">•</span>
                 <time
-                  dateTime={comment.createdAt}
+                  dateTime={new Date(comment.createdAt).toISOString()}
                   className="text-[var(--text-secondary)]"
                 >
                   {new Date(comment.createdAt).toLocaleDateString()}

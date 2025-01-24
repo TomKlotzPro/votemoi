@@ -53,7 +53,7 @@ export default function UrlForm({ initialData, onSubmit, onError, onCancel }: Ur
       <div className="grid gap-6 sm:grid-cols-2">
         <div>
           <label htmlFor="url" className="block text-sm font-medium text-gray-300 mb-1">
-            {fr.form.url}
+            {fr.forms.url}
           </label>
           <input
             type="url"
@@ -61,14 +61,14 @@ export default function UrlForm({ initialData, onSubmit, onError, onCancel }: Ur
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             className="w-full px-4 py-2 bg-[#2a2a4e] border border-purple-500/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-            placeholder={fr.form.urlPlaceholder}
+            placeholder={fr.forms.urlPlaceholder}
             disabled={loading}
           />
         </div>
 
         <div>
           <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-1">
-            {fr.form.title}
+            {fr.forms.title}
           </label>
           <input
             type="text"
@@ -76,7 +76,7 @@ export default function UrlForm({ initialData, onSubmit, onError, onCancel }: Ur
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full px-4 py-2 bg-[#2a2a4e] border border-purple-500/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-            placeholder={fr.form.titlePlaceholder}
+            placeholder={fr.forms.titlePlaceholder}
             disabled={loading}
           />
         </div>
@@ -84,7 +84,7 @@ export default function UrlForm({ initialData, onSubmit, onError, onCancel }: Ur
 
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">
-          {fr.form.description}
+          {fr.forms.description}
         </label>
         <textarea
           id="description"
@@ -92,7 +92,7 @@ export default function UrlForm({ initialData, onSubmit, onError, onCancel }: Ur
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
           className="w-full px-4 py-2 bg-[#2a2a4e] border border-purple-500/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-          placeholder={fr.form.descriptionPlaceholder}
+          placeholder={fr.forms.descriptionPlaceholder}
           disabled={loading}
         />
       </div>

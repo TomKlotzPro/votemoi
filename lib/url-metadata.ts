@@ -1,41 +1,56 @@
 import axios from 'axios';
-import { load } from 'cheerio';
+import * as cheerio from 'cheerio';
 
-interface URLMetadata {
-  title?: string;
-  description?: string;
-  previewImage?: string;
-  previewTitle?: string;
-  previewDescription?: string;
-  previewFavicon?: string;
-  previewSiteName?: string;
+export interface URLMetadata {
+  previewImage: string | null;
+  previewTitle: string | null;
+  previewDescription: string | null;
+  previewFavicon: string | null;
+  previewSiteName: string | null;
 }
 
-export async function extractURLMetadata(url: string): Promise<URLMetadata> {
+/**
+ * Extracts metadata from a URL using axios
+ * @param url The URL to extract metadata from
+ * @returns A promise that resolves to the URL metadata
+ */
+export async function fetchUrlMetadata(url: string): Promise<URLMetadata> {
   try {
-    const response = await axios.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-      }
-    });
-    
-    const html = response.data;
-    const $ = load(html);
+    const response = await axios.get(url);
+    const $ = cheerio.load(response.data);
 
-    // Extract metadata
     const metadata: URLMetadata = {
-      title: $('title').text() || $('meta[property="og:title"]').attr('content'),
-      description: $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content'),
-      previewImage: $('meta[property="og:image"]').attr('content'),
-      previewTitle: $('meta[property="og:title"]').attr('content'),
-      previewDescription: $('meta[property="og:description"]').attr('content'),
-      previewFavicon: $('link[rel="icon"]').attr('href') || $('link[rel="shortcut icon"]').attr('href'),
-      previewSiteName: $('meta[property="og:site_name"]').attr('content')
+      previewImage: $('meta[property="og:image"]').attr('content') || 
+                   $('meta[name="twitter:image"]').attr('content') || null,
+      previewTitle: $('meta[property="og:title"]').attr('content') || 
+                   $('meta[name="twitter:title"]').attr('content') || 
+                   $('title').text() || null,
+      previewDescription: $('meta[property="og:description"]').attr('content') || 
+                         $('meta[name="twitter:description"]').attr('content') || 
+                         $('meta[name="description"]').attr('content') || null,
+      previewFavicon: $('link[rel="icon"]').attr('href') || 
+                     $('link[rel="shortcut icon"]').attr('href') || null,
+      previewSiteName: $('meta[property="og:site_name"]').attr('content') || null
     };
+
+    // Convert relative URLs to absolute URLs
+    if (metadata.previewImage && !metadata.previewImage.startsWith('http')) {
+      metadata.previewImage = new URL(metadata.previewImage, url).toString();
+    }
+
+    if (metadata.previewFavicon && !metadata.previewFavicon.startsWith('http')) {
+      metadata.previewFavicon = new URL(metadata.previewFavicon, url).toString();
+    }
 
     return metadata;
   } catch (error) {
-    console.error('Error extracting URL metadata:', error);
-    return {};
+    console.error('Error fetching URL metadata:', error);
+    return {
+      previewImage: null,
+      previewTitle: null,
+      previewDescription: null,
+      previewFavicon: null,
+      previewSiteName: null,
+    };
   }
 }

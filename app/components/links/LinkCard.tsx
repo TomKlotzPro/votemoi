@@ -74,7 +74,7 @@ export default function LinkCard({
                 <span>{link.createdBy.name}</span>
               </div>
               <span>•</span>
-              <time dateTime={link.createdAt}>
+              <time dateTime={new Date(link.createdAt).toISOString()}>
                 {new Date(link.createdAt).toLocaleDateString()}
               </time>
             </div>
@@ -98,7 +98,15 @@ export default function LinkCard({
           {/* Actions Menu */}
           {user && user.id === link.createdBy.id && (
             <div className="relative z-50">
-              <LinkCardMenu onEdit={() => onEdit(link)} onDelete={() => onDelete(link.id)} />
+              <LinkCardMenu 
+                onEdit={() => onEdit({ 
+                  id: link.id, 
+                  url: link.url, 
+                  title: link.title || undefined,
+                  description: link.description || undefined 
+                })} 
+                onDelete={() => onDelete(link.id)} 
+              />
             </div>
           )}
         </div>

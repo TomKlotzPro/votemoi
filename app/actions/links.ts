@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { db } from '@/app/lib/db';
 import { Link, User, Vote, Comment } from '@prisma/client';
-import { extractURLMetadata } from '@/lib/url-metadata';
+import { fetchUrlMetadata } from '@/lib/url-metadata';
 
 type LinkWithRelations = Link & {
   createdBy: Pick<User, 'id' | 'name' | 'avatarUrl'>;
@@ -11,11 +11,40 @@ type LinkWithRelations = Link & {
   comments: Array<Comment & { user: Pick<User, 'id' | 'name' | 'avatarUrl'> }>;
 };
 
-type FormattedLink = Omit<LinkWithRelations, 'votes'> & {
+type FormattedLink = {
+  id: string;
+  url: string;
+  title: string;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+  createdById: string;
+  previewDescription: string | null;
+  previewFavicon: string | null;
+  previewImage: string | null;
+  previewSiteName: string | null;
+  previewTitle: string | null;
+  hasVoted?: boolean;
+  createdBy: {
+    id: string;
+    name: string;
+    avatarUrl: string;
+  };
   votes: Array<{
     userId: string;
     userName: string;
     createdAt: string;
+    user: {
+      id: string;
+      name: string;
+      avatarUrl: string;
+    }
+  }>;
+  comments: Array<{
+    id: string;
+    content: string;
+    createdAt: string;
+    updatedAt: string;
     user: {
       id: string;
       name: string;
@@ -68,28 +97,43 @@ export async function getLinks(userId?: string): Promise<{ links?: FormattedLink
     }
 
     const formattedLinks = links.map((link) => ({
-      ...link,
+      id: link.id,
+      url: link.url,
+      title: link.title,
+      description: link.description,
       createdAt: link.createdAt.toISOString(),
       updatedAt: link.updatedAt.toISOString(),
-      hasVoted: userId ? link.votes.some(vote => vote.userId === userId) : false,
+      createdById: link.createdById,
+      previewDescription: link.previewDescription,
+      previewFavicon: link.previewFavicon,
+      previewImage: link.previewImage,
+      previewSiteName: link.previewSiteName,
+      previewTitle: link.previewTitle,
+      hasVoted: link.votes.some((vote) => vote.userId === userId),
+      createdBy: {
+        id: link.createdBy.id,
+        name: link.createdBy.name,
+        avatarUrl: link.createdBy.avatarUrl,
+      },
       votes: link.votes.map((vote) => ({
         userId: vote.userId,
-        userName: vote.user?.name || 'Unknown User',
+        userName: vote.user.name,
         createdAt: vote.createdAt.toISOString(),
         user: {
-          id: vote.user?.id || 'unknown',
-          name: vote.user?.name || 'Unknown User',
-          avatarUrl: vote.user?.avatarUrl || '/default-avatar.png',
+          id: vote.user.id,
+          name: vote.user.name,
+          avatarUrl: vote.user.avatarUrl,
         },
       })),
       comments: link.comments.map((comment) => ({
-        ...comment,
+        id: comment.id,
+        content: comment.content,
         createdAt: comment.createdAt.toISOString(),
         updatedAt: comment.updatedAt.toISOString(),
         user: {
-          id: comment.user?.id || 'unknown',
-          name: comment.user?.name || 'Unknown User',
-          avatarUrl: comment.user?.avatarUrl || '/default-avatar.png',
+          id: comment.user.id,
+          name: comment.user.name,
+          avatarUrl: comment.user.avatarUrl,
         },
       })),
     }));
@@ -133,9 +177,15 @@ export async function createLink(data: {
     };
 
     try {
-      const extractedMetadata = await extractURLMetadata(data.url);
+      const extractedMetadata = await fetchUrlMetadata(data.url);
       if (extractedMetadata) {
-        metadata = extractedMetadata;
+        metadata = {
+          previewTitle: extractedMetadata.previewTitle || '',
+          previewDescription: extractedMetadata.previewDescription || '',
+          previewImage: extractedMetadata.previewImage || '',
+          previewFavicon: extractedMetadata.previewFavicon || '',
+          previewSiteName: extractedMetadata.previewSiteName || '',
+        };
       }
     } catch (err) {
       // Silently continue with default metadata
@@ -201,9 +251,23 @@ export async function createLink(data: {
     }
 
     const formattedLink = {
-      ...link,
+      id: link.id,
+      url: link.url,
+      title: link.title,
+      description: link.description,
       createdAt: link.createdAt.toISOString(),
       updatedAt: link.updatedAt.toISOString(),
+      createdById: link.createdById,
+      previewDescription: link.previewDescription,
+      previewFavicon: link.previewFavicon,
+      previewImage: link.previewImage,
+      previewSiteName: link.previewSiteName,
+      previewTitle: link.previewTitle,
+      createdBy: {
+        id: link.createdBy.id,
+        name: link.createdBy.name,
+        avatarUrl: link.createdBy.avatarUrl,
+      },
       votes: link.votes.map((vote) => ({
         userId: vote.userId,
         userName: vote.user?.name || 'Unknown User',
@@ -215,7 +279,8 @@ export async function createLink(data: {
         },
       })),
       comments: link.comments.map((comment) => ({
-        ...comment,
+        id: comment.id,
+        content: comment.content,
         createdAt: comment.createdAt.toISOString(),
         updatedAt: comment.updatedAt.toISOString(),
         user: {
@@ -255,7 +320,7 @@ export async function updateLink(data: {
 
     let metadata = null;
     if (existingLink && existingLink.url !== data.url) {
-      metadata = await extractURLMetadata(data.url);
+      metadata = await fetchUrlMetadata(data.url);
     }
 
     const link = await db.link.update({
@@ -306,12 +371,35 @@ export async function updateLink(data: {
     });
 
     const formattedLink = {
-      ...link,
+      id: link.id,
+      url: link.url,
+      title: link.title,
+      description: link.description,
+      createdAt: link.createdAt.toISOString(),
+      updatedAt: link.updatedAt.toISOString(),
+      createdById: link.createdById,
+      previewDescription: link.previewDescription,
+      previewFavicon: link.previewFavicon,
+      previewImage: link.previewImage,
+      previewSiteName: link.previewSiteName,
+      previewTitle: link.previewTitle,
+      createdBy: {
+        id: link.createdBy.id,
+        name: link.createdBy.name,
+        avatarUrl: link.createdBy.avatarUrl,
+      },
       votes: link.votes.map((vote) => ({
         userId: vote.userId,
         userName: vote.user.name,
         createdAt: vote.createdAt.toISOString(),
         user: vote.user,
+      })),
+      comments: link.comments.map((comment) => ({
+        id: comment.id,
+        content: comment.content,
+        createdAt: comment.createdAt.toISOString(),
+        updatedAt: comment.updatedAt.toISOString(),
+        user: comment.user,
       })),
     };
 

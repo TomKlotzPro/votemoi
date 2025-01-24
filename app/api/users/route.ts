@@ -13,7 +13,7 @@ export async function GET() {
         },
         votes: {
           include: {
-            url: {
+            link: {
               select: {
                 id: true,
                 title: true,
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: fr.errors.userNameExists },
+        { error: fr.errors.nameExists },
         { status: 400 }
       );
     }

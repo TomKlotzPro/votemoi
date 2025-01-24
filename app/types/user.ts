@@ -1,13 +1,61 @@
-export interface User {
+import { Link, Vote, Comment } from './link';
+
+export interface BaseUser {
   id: string;
   name: string;
   avatarUrl: string;
-  createdAt: string;
 }
 
-export interface Vote {
-  id: string;
-  urlId: string;
-  user: User;
+export interface User extends BaseUser {
   createdAt: Date;
+  updatedAt: Date;
+  links: Link[];
+  votes: Vote[];
+  comments: Comment[];
+}
+
+export interface FormattedUser extends BaseUser {
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function formatUser(user: User): FormattedUser {
+  return {
+    id: user.id,
+    name: user.name,
+    avatarUrl: user.avatarUrl,
+    createdAt: user.createdAt.toISOString(),
+    updatedAt: user.updatedAt.toISOString()
+  };
+}
+
+interface Link {
+  id: string;
+  url: string;
+  title: string;
+  description: string | null;
+  previewImage: string | null;
+  previewTitle: string | null;
+  previewDescription: string | null;
+  previewFavicon: string | null;
+  previewSiteName: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  createdById: string;
+}
+
+interface Vote {
+  id: string;
+  createdAt: Date;
+  userId: string;
+  linkId: string;
+}
+
+interface Comment {
+  id: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+  linkId: string;
 }

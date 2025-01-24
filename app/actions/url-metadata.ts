@@ -78,18 +78,25 @@ async function extractMetadataFromHTML(url: string): Promise<URLMetadata> {
 export async function extractURLMetadata(url: string): Promise<URLMetadata> {
   try {
     // First try using link-preview-js
-    const preview = await getLinkPreview(url);
+    const preview = await getLinkPreview(url) as any;
+    
+    // Handle both HTML and non-HTML responses
+    const title = typeof preview.title === 'string' ? preview.title : new URL(url).hostname;
+    const description = typeof preview.description === 'string' ? preview.description : null;
+    const images = Array.isArray(preview.images) ? preview.images : 
+                  (typeof preview.image === 'string' ? [preview.image] : []);
+    const siteName = typeof preview.siteName === 'string' ? preview.siteName : new URL(url).hostname;
     
     return {
-      title: preview.title || new URL(url).hostname,
-      description: preview.description || null,
-      image: Array.isArray(preview.images) && preview.images.length > 0 ? preview.images[0] : null,
-      favicon: preview.favicon || null,
-      siteName: preview.siteName || new URL(url).hostname,
+      title,
+      description,
+      image: images.length > 0 ? images[0] : null,
+      favicon: typeof preview.favicon === 'string' ? preview.favicon : null,
+      siteName,
     };
   } catch (error) {
     console.error('Error using link-preview-js, falling back to HTML extraction:', error);
-    // Fall back to HTML extraction if link-preview-js fails
+    // Fall back to HTML extraction
     return extractMetadataFromHTML(url);
   }
 }

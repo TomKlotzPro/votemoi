@@ -4,7 +4,8 @@ import { cookies } from 'next/headers';
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = cookies().get('userId')?.value;
+    const cookieStore = await cookies();
+    const userId = cookieStore.get('userId')?.value;
     if (!userId) {
       return NextResponse.json(
         { error: 'User not authenticated', vote: null },
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
     const existingVote = await prisma.vote.findFirst({
       where: {
         userId,
-        urlId,
+        linkId: urlId,
       },
     });
 
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
     const vote = await prisma.vote.create({
       data: {
         userId,
-        urlId,
+        linkId: urlId,
       },
     });
 

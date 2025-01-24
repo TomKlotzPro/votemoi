@@ -128,14 +128,14 @@ export default function UserMenu() {
                     setError('');
                   }}
                   className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder={fr.placeholders.enterName}
+                  placeholder={fr.common.enterName}
                   disabled={isSubmitting}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-2">
-                  {fr.common.avatar}
+                  {fr.common.selectAvatar}
                 </label>
                 <div className="grid grid-cols-4 gap-2">
                   {AVATAR_OPTIONS.map((avatar) => (
@@ -152,7 +152,7 @@ export default function UserMenu() {
                     >
                       <SafeImage
                         src={avatar}
-                        alt={fr.common.avatar}
+                        alt={fr.common.avatarOption}
                         className="w-full h-full object-cover"
                       />
                     </button>
@@ -169,14 +169,14 @@ export default function UserMenu() {
                   className="px-4 py-2 text-sm font-medium text-white/80 hover:text-white transition-colors"
                   disabled={isSubmitting}
                 >
-                  {fr.actions.cancel}
+                  {fr.common.cancel}
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors disabled:opacity-50"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? fr.common.saving : fr.actions.save}
+                  {isSubmitting ? fr.common.saving : fr.common.save}
                 </button>
               </div>
             </form>
