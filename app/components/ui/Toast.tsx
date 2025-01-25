@@ -7,11 +7,6 @@ import { toast } from 'react-hot-toast';
 
 type ToastType = 'success' | 'error';
 
-interface ToastProps {
-  message: string;
-  type: ToastType;
-}
-
 export const showToast = (message: string, type: ToastType = 'success') => {
   toast.custom(
     (t) => (

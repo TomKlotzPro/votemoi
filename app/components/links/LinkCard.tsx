@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { fr } from '@/app/translations/fr';
 import { FormattedLink } from '@/app/types/link';
 import {
@@ -10,7 +11,6 @@ import {
   TrashIcon,
   UserGroupIcon,
 } from '@heroicons/react/24/outline';
-import { useState } from 'react';
 import SafeImage from '../ui/SafeImage';
 import CommentModal from './CommentModal';
 import EditLinkModal from './EditLinkModal';
@@ -36,8 +36,8 @@ export default function LinkCard({
   onEdit,
   onDelete,
 }: LinkCardProps) {
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [showEditModal, setShowEditModal] = React.useState(false);
+  const [showCommentModal, setShowCommentModal] = React.useState(false);
 
   const formatDate = (date: Date | string) => {
     const dateString = date instanceof Date ? date.toISOString() : date;
@@ -57,7 +57,7 @@ export default function LinkCard({
     return `${diffInDays} ${fr.common.daysAgo}`;
   };
 
-  const handleVote = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleVote = async (_e: React.MouseEvent<HTMLButtonElement>) => {
     if (isVoted) {
       await onUnvote();
     } else {

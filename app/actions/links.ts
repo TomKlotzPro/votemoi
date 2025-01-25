@@ -162,7 +162,6 @@ export async function createLink(data: {
           previewSiteName: extractedMetadata.previewSiteName || '',
         };
       }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_) {
       // Silently continue with default metadata
     }
@@ -171,7 +170,6 @@ export async function createLink(data: {
     let hostname = '';
     try {
       hostname = new URL(data.url).hostname;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_) {
       hostname = data.url.split('/')[2] || 'unknown site';
     }

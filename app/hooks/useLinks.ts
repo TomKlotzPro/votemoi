@@ -173,9 +173,10 @@ export function useLinks() {
         setError(null);
         await deleteLink({ id, userId: user.id });
         setLinks((prev) => prev.filter((link) => link.id !== id));
-      } catch {
+      } catch (err) {
+        console.error('Error deleting link:', err);
         setError(fr.errors.failedToDeleteLink);
-        throw new Error(fr.errors.failedToDeleteLink);
+        throw err;
       } finally {
         setIsLoading(false);
       }
@@ -211,7 +212,8 @@ export function useLinks() {
           );
           showToast(fr.common.voteAdded, 'success');
         }
-      } catch (error) {
+      } catch (err) {
+        console.error('Error voting link:', err);
         showToast(fr.errors.failedToVote, 'error');
       }
     },
@@ -246,7 +248,8 @@ export function useLinks() {
           );
           showToast(fr.common.voteRemoved, 'success');
         }
-      } catch (error) {
+      } catch (err) {
+        console.error('Error unvoting link:', err);
         showToast(fr.errors.failedToUnvote, 'error');
       }
     },
@@ -295,9 +298,10 @@ export function useLinks() {
             return link;
           })
         );
-      } catch {
+      } catch (err) {
+        console.error('Error adding comment:', err);
         setError(fr.errors.failedToAddComment);
-        throw new Error(fr.errors.failedToAddComment);
+        throw err;
       } finally {
         setIsLoading(false);
       }
