@@ -1,42 +1,46 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { AVATAR_OPTIONS } from '@/app/constants/avatars';
 
-type AvatarPreloaderProps = {
-  avatars: string[];
-  onLoad?: () => void;
-};
-
-export default function AvatarPreloader({
-  avatars,
-  onLoad,
-}: AvatarPreloaderProps) {
-  const loadedRef = useRef(0);
+export default function AvatarPreloader() {
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    if (avatars.length === 0) {
-      onLoad?.();
-      return;
-    }
+    // Create an array to track loaded images
+    const loadedImages = new Set<string>();
 
-    const handleLoad = () => {
-      loadedRef.current += 1;
-      if (loadedRef.current === avatars.length) {
-        onLoad?.();
+    // Function to mark an image as loaded
+    const handleImageLoad = (src: string) => {
+      loadedImages.add(src);
+      if (loadedImages.size === AVATAR_OPTIONS.length) {
+        setLoaded(true);
       }
     };
 
-    avatars.forEach((avatar) => {
+    // Preload all avatar images
+    AVATAR_OPTIONS.forEach((avatar) => {
       const img = new window.Image();
       img.src = avatar;
-      img.onload = handleLoad;
-      img.onerror = handleLoad; // Count errors as loaded to avoid blocking
+      img.onload = () => handleImageLoad(avatar);
+      img.onerror = () => handleImageLoad(avatar); // Count errors as loaded to prevent hanging
     });
+  }, []);
 
-    return () => {
-      loadedRef.current = 0;
-    };
-  }, [avatars, onLoad]);
-
-  return null;
+  // Hidden container to hold preloaded images for Next.js optimization
+  return (
+    <div className="hidden" aria-hidden="true">
+      {AVATAR_OPTIONS.map((avatar) => (
+        <Image
+          key={avatar}
+          src={avatar}
+          alt=""
+          width={1}
+          height={1}
+          priority
+        />
+      ))}
+    </div>
+  );
 }

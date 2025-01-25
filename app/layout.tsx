@@ -5,6 +5,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { preloadAvatars } from './utils/image-preloader';
+import AvatarPreloader from './components/ui/AvatarPreloader';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,6 +24,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <html lang="fr" suppressHydrationWarning>
       <body className={`${inter.className} bg-black`} suppressHydrationWarning>
         <Providers>
+          <AvatarPreloader />
           <ClientLayout>
             {/* Synthwave sun */}
             <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gradient-radial from-purple-500 via-transparent to-transparent opacity-20 blur-3xl" />

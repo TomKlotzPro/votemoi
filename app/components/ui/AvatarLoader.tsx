@@ -7,12 +7,14 @@ type AvatarLoaderProps = {
   user?: User;
   size?: 'xs' | 'sm' | 'md' | 'lg';
   className?: string;
+  isLoading?: boolean;
 };
 
 export default function AvatarLoader({
   user,
   size = 'md',
   className = '',
+  isLoading = false,
 }: AvatarLoaderProps) {
   const sizeClasses = {
     xs: 'w-6 h-6',
@@ -25,6 +27,17 @@ export default function AvatarLoader({
   const avatarUrl =
     user?.avatarUrl ||
     `https://api.dicebear.com/7.x/adventurer/svg?seed=${user?.name || 'default'}`;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-4">
+        <div className="relative w-8 h-8">
+          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 animate-spin" style={{ clipPath: 'inset(0 0 0 50%)' }} />
+          <div className="absolute inset-1 rounded-full bg-[#1e1e38]" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
