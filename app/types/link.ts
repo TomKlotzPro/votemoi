@@ -65,6 +65,11 @@ export type FormattedLink = {
   comments: FormattedComment[];
   votes: number;
   hasVoted?: boolean;
+  voters?: {
+    id: string;
+    name: string | null;
+    avatarUrl: string | null;
+  }[];
   user: {
     id: string;
     name: string | null;

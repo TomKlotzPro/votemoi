@@ -1,24 +1,16 @@
-const nextPlugin = require('@next/eslint-plugin-next');
-const js = require('@eslint/js');
-const globals = require('globals');
+import globals from 'globals';
+import js from '@eslint/js';
+import typescript from '@typescript-eslint/eslint-plugin';
+import typescriptParser from '@typescript-eslint/parser';
+import react from 'eslint-plugin-react';
+import nextPlugin from '@next/eslint-plugin-next';
+import hooks from 'eslint-plugin-react-hooks';
 
-module.exports = [
-const nextPlugin = require('@next/eslint-plugin-next');
-const js = require('@eslint/js');
-const globals = require('globals');
-
-module.exports = [
-  js.configs.recommended,
+export default [
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
-    plugins: {
-      '@next/next': nextPlugin,
-    },
     languageOptions: {
-      globals: {
-        ...globals.browser,
-        ...globals.node,
-      },
+      parser: typescriptParser,
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
@@ -26,10 +18,32 @@ module.exports = [
           jsx: true,
         },
       },
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        ...globals.es2021,
+      },
+    },
+    plugins: {
+      '@typescript-eslint': typescript,
+      'react': react,
+      '@next/next': nextPlugin,
+      'react-hooks': hooks,
     },
     rules: {
-      'no-unused-vars': 'warn',
-      '@next/next/no-html-link-for-pages': 'error',
+      ...js.configs.recommended.rules,
+      ...typescript.configs.recommended.rules,
+      ...react.configs.recommended.rules,
+      ...nextPlugin.configs.recommended.rules,
+      ...hooks.configs.recommended.rules,
+      'react/react-in-jsx-scope': 'off',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      'react/prop-types': 'off',
+    },
+    settings: {
+      react: {
+        version: 'detect',
+      },
     },
   },
 ];

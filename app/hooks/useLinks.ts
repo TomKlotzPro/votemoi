@@ -13,6 +13,7 @@ import { useUser } from '@/app/context/user-context';
 import { fr } from '@/app/translations/fr';
 import { FormattedLink } from '@/app/types/link';
 import { useCallback, useEffect, useState } from 'react';
+import { showToast } from '../components/ui/Toast';
 
 export function useLinks() {
   const { user } = useUser();
@@ -186,44 +187,32 @@ export function useLinks() {
     async (linkId: string, userId: string) => {
       try {
         if (!user?.id) {
-          setError('You must be logged in to vote');
+          showToast(fr.errors.loginRequired, 'error');
           return;
         }
 
-        setIsLoading(true);
-        setError(null);
         const result = await vote({ linkId, userId });
         if (result.error) {
-          setError(result.error);
+          showToast(result.error, 'error');
           return;
         }
-        if (result.success && result.user) {
+
+        if (result.success) {
           setLinks((prev) =>
-            prev.map((link) => {
-              if (link.id === linkId) {
-                return {
-                  ...link,
-                  votes: [
-                    ...link.votes,
-                    {
-                      userId: result.user!.id,
-                      userName: result.user!.name,
-                      createdAt: new Date().toISOString(),
-                      user: result.user!,
-                    },
-                  ],
-                  hasVoted: true,
-                };
-              }
-              return link;
-            })
+            prev.map((link) =>
+              link.id === linkId
+                ? {
+                    ...link,
+                    votes: link.votes + 1,
+                    hasVoted: true,
+                  }
+                : link
+            )
           );
+          showToast(fr.common.voteAdded, 'success');
         }
-      } catch {
-        setError(fr.errors.failedToVote);
-        throw new Error(fr.errors.failedToVote);
-      } finally {
-        setIsLoading(false);
+      } catch (error) {
+        showToast(fr.errors.failedToVote, 'error');
       }
     },
     [user]
@@ -233,36 +222,32 @@ export function useLinks() {
     async (linkId: string, userId: string) => {
       try {
         if (!user?.id) {
-          setError('You must be logged in to unvote');
+          showToast(fr.errors.loginRequired, 'error');
           return;
         }
 
-        setIsLoading(true);
-        setError(null);
         const result = await unvote({ linkId, userId });
         if (result.error) {
-          setError(result.error);
+          showToast(result.error, 'error');
           return;
         }
+
         if (result.success) {
           setLinks((prev) =>
-            prev.map((link) => {
-              if (link.id === linkId) {
-                return {
-                  ...link,
-                  votes: link.votes.filter((vote) => vote.userId !== userId),
-                  hasVoted: false,
-                };
-              }
-              return link;
-            })
+            prev.map((link) =>
+              link.id === linkId
+                ? {
+                    ...link,
+                    votes: Math.max(0, link.votes - 1),
+                    hasVoted: false,
+                  }
+                : link
+            )
           );
+          showToast(fr.common.voteRemoved, 'success');
         }
-      } catch {
-        setError(fr.errors.failedToUnvote);
-        throw new Error(fr.errors.failedToUnvote);
-      } finally {
-        setIsLoading(false);
+      } catch (error) {
+        showToast(fr.errors.failedToUnvote, 'error');
       }
     },
     [user]

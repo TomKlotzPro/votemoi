@@ -22,7 +22,7 @@ const formatComment = (comment: Comment & { user: User }): FormattedComment => (
 
 const formatLink = (link: Link & { 
   createdBy?: User; 
-  votes?: Vote[]; 
+  votes?: (Vote & { user: User })[]; 
   comments?: (Comment & { user?: User })[];
   hasVoted?: boolean;
 }): FormattedLink => ({
@@ -49,18 +49,23 @@ const formatLink = (link: Link & {
     updatedAt: comment.updatedAt instanceof Date 
       ? comment.updatedAt.toISOString() 
       : comment.updatedAt,
-    user: {
-      id: comment.user?.id || comment.userId,
-      name: comment.user?.name || null,
-      avatarUrl: comment.user?.avatarUrl || null,
-    },
+    user: comment.user ? {
+      id: comment.user.id,
+      name: comment.user.name,
+      avatarUrl: comment.user.avatarUrl,
+    } : null,
   })),
-  votes: (link.votes || []).length,
+  votes: link.votes?.length ?? 0,
   hasVoted: link.hasVoted ?? false,
+  voters: link.votes?.map(vote => ({
+    id: vote.user.id,
+    name: vote.user.name,
+    avatarUrl: vote.user.avatarUrl,
+  })),
   user: {
-    id: link.createdById,
-    name: link.createdBy?.name || null,
-    avatarUrl: link.createdBy?.avatarUrl || null,
+    id: link.createdBy?.id ?? '',
+    name: link.createdBy?.name ?? null,
+    avatarUrl: link.createdBy?.avatarUrl ?? null,
   },
   createdBy: link.createdBy ? {
     id: link.createdBy.id,
@@ -85,58 +90,34 @@ export async function getLinks(
   userId?: string
 ): Promise<{ links?: FormattedLink[]; error?: string }> {
   try {
-    const links = (await prisma.link.findMany({
+    const links = await prisma.link.findMany({
       orderBy: {
         createdAt: 'desc',
       },
       include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            avatarUrl: true,
+        createdBy: true,
+        comments: {
+          include: {
+            user: true,
           },
         },
         votes: {
-          select: {
-            id: true,
-            createdAt: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                avatarUrl: true,
-              },
-            },
-          },
-        },
-        comments: {
-          select: {
-            id: true,
-            content: true,
-            createdAt: true,
-            updatedAt: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                avatarUrl: true,
-              },
-            },
+          include: {
+            user: true,
           },
         },
       },
-    })) as (Link & { createdBy: User; votes: Vote[]; comments: Comment[] })[];
+    });
 
-    if (!links) {
-      return { links: [] };
-    }
-
-    const formattedLinks = links.map(formatLink);
+    const formattedLinks = links.map((link) => formatLink({
+      ...link,
+      hasVoted: link.votes?.some((vote) => vote.userId === userId),
+    }));
 
     return { links: formattedLinks };
-  } catch {
-    throw new Error('Failed to load links');
+  } catch (error) {
+    console.error('Failed to fetch links:', error);
+    return { error: 'Failed to fetch links' };
   }
 }
 
@@ -250,7 +231,8 @@ export async function createLink(data: {
 
     revalidatePath('/');
     return { link: formattedLink };
-  } catch {
+  } catch (err) {
+    console.error('Error creating link:', err);
     throw new Error('Failed to create link');
   }
 }
@@ -324,7 +306,8 @@ export async function updateLink(data: {
 
     revalidatePath('/');
     return { link: formattedLink };
-  } catch {
+  } catch (err) {
+    console.error('Error updating link:', err);
     throw new Error('Failed to update link');
   }
 }
@@ -365,7 +348,8 @@ export async function deleteLink(data: {
 
     revalidatePath('/');
     return { success: true };
-  } catch {
+  } catch (err) {
+    console.error('Error deleting link:', err);
     throw new Error('Failed to delete link');
   }
 }
@@ -384,7 +368,7 @@ export async function vote(data: { linkId: string; userId: string }): Promise<{
     });
 
     if (existingVote) {
-      throw new Error('Already voted for this link');
+      return { error: 'Already voted for this link' };
     }
 
     const newVote = await prisma.vote.create({
@@ -409,8 +393,8 @@ export async function vote(data: { linkId: string; userId: string }): Promise<{
 
     revalidatePath('/');
     return { success: true, user: newVote.user };
-  } catch {
-    throw new Error('Failed to vote for link');
+  } catch (error) {
+    return { error: 'Failed to vote for link' };
   }
 }
 
@@ -419,17 +403,27 @@ export async function unvote(data: {
   userId: string;
 }): Promise<{ success?: boolean; error?: string }> {
   try {
-    await prisma.vote.deleteMany({
+    const existingVote = await prisma.vote.findFirst({
       where: {
         linkId: data.linkId,
         userId: data.userId,
       },
     });
 
+    if (!existingVote) {
+      return { error: 'No vote found for this link' };
+    }
+
+    await prisma.vote.delete({
+      where: {
+        id: existingVote.id,
+      },
+    });
+
     revalidatePath('/');
     return { success: true };
-  } catch {
-    throw new Error('Failed to remove vote');
+  } catch (error) {
+    return { error: 'Failed to unvote link' };
   }
 }
 

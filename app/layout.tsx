@@ -1,3 +1,4 @@
+import React from 'react';
 import ClientLayout from '@/app/components/layout/ClientLayout';
 import Navigation from '@/app/components/layout/Navigation';
 import { Providers } from '@/app/components/providers/Providers';
@@ -6,6 +7,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { preloadAvatars } from './utils/image-preloader';
 import AvatarPreloader from './components/ui/AvatarPreloader';
+import { Toaster } from 'react-hot-toast';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -40,7 +42,47 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {/* Content */}
             <div className="relative">
               <Navigation />
-              {children}
+              <Providers>
+                <AvatarPreloader />
+                <Toaster
+                  position="bottom-right"
+                  toastOptions={{
+                    duration: 2000,
+                    style: {
+                      background: 'rgba(30, 30, 56, 0.8)',
+                      color: '#fff',
+                      border: '1px solid rgba(139, 92, 246, 0.2)',
+                      borderRadius: '0.75rem',
+                      padding: '0.75rem 1rem',
+                      backdropFilter: 'blur(8px)',
+                      fontSize: '0.875rem',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                      maxWidth: '380px',
+                    },
+                    success: {
+                      style: {
+                        background: 'rgba(30, 30, 56, 0.8)',
+                        border: '1px solid rgba(139, 92, 246, 0.3)',
+                      },
+                      iconTheme: {
+                        primary: '#8B5CF6',
+                        secondary: '#fff',
+                      },
+                    },
+                    error: {
+                      style: {
+                        background: 'rgba(30, 30, 56, 0.8)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                      },
+                      iconTheme: {
+                        primary: '#EF4444',
+                        secondary: '#fff',
+                      },
+                    },
+                  }}
+                />
+                {children}
+              </Providers>
             </div>
           </ClientLayout>
         </Providers>

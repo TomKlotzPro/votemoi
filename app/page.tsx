@@ -31,15 +31,19 @@ export default function Home() {
   }, []);
 
   const handleVote = async (linkId: string) => {
-    if (user) {
-      await vote(linkId, user.id);
+    if (!user) {
+      setShowAuthForm(true);
+      return;
     }
+    await vote(linkId, user.id);
   };
 
   const handleUnvote = async (linkId: string) => {
-    if (user) {
-      await unvote(linkId, user.id);
+    if (!user) {
+      setShowAuthForm(true);
+      return;
     }
+    await unvote(linkId, user.id);
   };
 
   const handleDelete = async (linkId: string) => {
