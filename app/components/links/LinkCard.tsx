@@ -77,7 +77,7 @@ export default function LinkCard({
       >
         <motion.div
           className="relative"
-          whileHover={!isRemoving && { scale: 1.01 }}
+          whileHover={isRemoving ? undefined : { scale: 1.01 }}
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
         >
           <div className="rounded-lg bg-[#1e1e38]/80 backdrop-blur-md shadow-sm ring-1 ring-purple-500/20 overflow-hidden">
