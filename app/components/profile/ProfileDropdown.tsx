@@ -56,7 +56,7 @@ export default function ProfileDropdown({ onClose }: ProfileDropdownProps) {
 
       const updatedUser = await updateUser(user.id, {
         name: trimmedName,
-        imageUrl: selectedAvatar,
+        avatarUrl: selectedAvatar,
       });
 
       setUser(updatedUser as FormattedUser);
