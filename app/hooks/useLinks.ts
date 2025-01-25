@@ -179,54 +179,61 @@ export function useLinks() {
           return;
         }
 
+        // Optimistically update the UI
+        setLinks((prev: FormattedLink[]) =>
+          prev.map((link) =>
+            link.id === linkId
+              ? {
+                  ...link,
+                  voteCount: link.voteCount + 1,
+                  hasVoted: true,
+                  voters: [
+                    ...link.voters,
+                    {
+                      id: user.id,
+                      name: user.name || null,
+                      avatarUrl: user.avatarUrl || null,
+                    },
+                  ],
+                }
+              : link
+          )
+        );
+
+        // Make the API call
         const result = await vote({ linkId, userId });
         if (result.error) {
-          setError(result.error);
-          return;
-        }
-
-        if (result.success && result.user) {
+          // Revert the optimistic update on error
           setLinks((prev: FormattedLink[]) =>
             prev.map((link) =>
               link.id === linkId
-                ? ({
+                ? {
                     ...link,
-                    voteCount: link.voteCount + 1,
-                    hasVoted: true,
-                    voters: [
-                      ...link.voters,
-                      {
-                        id: result.user?.id || '',
-                        name: result.user?.name || null,
-                        avatarUrl: result.user?.avatarUrl || null,
-                      },
-                    ],
-                    votes: [
-                      ...link.votes,
-                      {
-                        id: `${linkId}-${userId}`,
-                        createdAt: new Date(),
-                        userId: result.user?.id || '',
-                        linkId,
-                        user: {
-                          id: result.user?.id || '',
-                          name: result.user?.name || '',
-                          avatarUrl: result.user?.avatarUrl || null,
-                        },
-                        link: {
-                          id: link.id,
-                          url: link.url,
-                          title: link.title,
-                        },
-                      },
-                    ],
-                  } as FormattedLink)
+                    voteCount: link.voteCount - 1,
+                    hasVoted: false,
+                    voters: link.voters.filter((voter) => voter.id !== user.id),
+                  }
                 : link
             )
           );
+          setError(result.error);
+          return;
         }
-      } catch (err) {
-        console.error('Error voting link:', err);
+      } catch {
+        // Revert the optimistic update on error
+        setLinks((prev: FormattedLink[]) =>
+          prev.map((link) =>
+            link.id === linkId
+              ? {
+                  ...link,
+                  voteCount: link.voteCount - 1,
+                  hasVoted: false,
+                  voters: link.voters.filter((voter) => voter.id !== user.id),
+                }
+              : link
+          )
+        );
+        setError(fr.errors.failedToVote);
       }
     },
     [user]
@@ -240,33 +247,68 @@ export function useLinks() {
           return;
         }
 
+        // Optimistically update the UI
+        setLinks((prev: FormattedLink[]) =>
+          prev.map((link) =>
+            link.id === linkId
+              ? {
+                  ...link,
+                  voteCount: link.voteCount - 1,
+                  hasVoted: false,
+                  voters: link.voters.filter((voter) => voter.id !== user.id),
+                }
+              : link
+          )
+        );
+
+        // Make the API call
         const result = await unvote({ linkId, userId });
         if (result.error) {
-          setError(result.error);
-          return;
-        }
-
-        if (result.success) {
-          setLinks((prev) =>
+          // Revert the optimistic update on error
+          setLinks((prev: FormattedLink[]) =>
             prev.map((link) =>
               link.id === linkId
                 ? {
                     ...link,
-                    voteCount: Math.max(0, link.voteCount - 1),
-                    voters: (link.voters || []).filter(
-                      (voter) => voter.id !== userId
-                    ),
-                    votes: (link.votes || []).filter(
-                      (vote) => vote.userId !== userId
-                    ),
-                    hasVoted: false,
+                    voteCount: link.voteCount + 1,
+                    hasVoted: true,
+                    voters: [
+                      ...link.voters,
+                      {
+                        id: user.id,
+                        name: user.name || null,
+                        avatarUrl: user.avatarUrl || null,
+                      },
+                    ],
                   }
                 : link
             )
           );
+          setError(result.error);
+          return;
         }
-      } catch (err) {
-        console.error('Error unvoting link:', err);
+      } catch {
+        // Revert the optimistic update on error
+        setLinks((prev: FormattedLink[]) =>
+          prev.map((link) =>
+            link.id === linkId
+              ? {
+                  ...link,
+                  voteCount: link.voteCount + 1,
+                  hasVoted: true,
+                  voters: [
+                    ...link.voters,
+                    {
+                      id: user.id,
+                      name: user.name || null,
+                      avatarUrl: user.avatarUrl || null,
+                    },
+                  ],
+                }
+              : link
+          )
+        );
+        setError(fr.errors.failedToUnvote);
       }
     },
     [user]
