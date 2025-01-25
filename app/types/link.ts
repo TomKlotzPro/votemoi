@@ -14,7 +14,8 @@ export interface Link {
   updatedAt: Date;
   createdById: string;
   createdBy: User;
-  votes: Vote[];
+  voteCount: number;
+  votedByUsers: string[];
   comments: Comment[];
   hasVoted?: boolean;
 }
@@ -39,34 +40,51 @@ export interface Comment {
   link: Pick<Link, 'id' | 'url' | 'title'>;
 }
 
-export interface FormattedLink
-  extends Omit<
-    Link,
-    'createdAt' | 'updatedAt' | 'createdBy' | 'votes' | 'comments'
-  > {
+export type FormattedComment = {
+  id: string;
+  userId: string;
+  linkId: string;
+  content: string;
   createdAt: string;
   updatedAt: string;
-  createdBy: Pick<User, 'id' | 'name' | 'avatarUrl'>;
-  votes: FormattedVote[];
-  comments: FormattedComment[];
-}
-
-export interface FormattedVote {
-  userId: string;
-  userName: string;
-  createdAt: string;
   user: {
     id: string;
-    name: string;
-    avatarUrl: string;
+    name: string | null;
+    avatarUrl: string | null;
   };
 }
 
-export interface FormattedComment
-  extends Omit<Comment, 'createdAt' | 'updatedAt' | 'user' | 'link'> {
+export type FormattedLink = {
+  id: string;
+  url: string;
+  title: string;
+  description: string | null;
+  imageUrl: string | null;
+  userId: string;
   createdAt: string;
   updatedAt: string;
-  user: Pick<User, 'id' | 'name' | 'avatarUrl'>;
+  comments: FormattedComment[];
+  voteCount: number;
+  votedByUsers: string[];
+  hasVoted?: boolean;
+  user: {
+    id: string;
+    name: string | null;
+    avatarUrl: string | null;
+  };
+  createdBy?: {
+    id: string;
+    name: string | null;
+    avatarUrl: string | null;
+    createdAt?: Date;
+    updatedAt?: Date;
+  };
+  createdById?: string;
+  previewImage?: string | null;
+  previewTitle?: string | null;
+  previewDescription?: string | null;
+  previewFavicon?: string | null;
+  previewSiteName?: string | null;
 }
 
 export type UserBasicInfo = Pick<User, 'id' | 'name' | 'avatarUrl'>;

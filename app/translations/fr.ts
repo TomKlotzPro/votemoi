@@ -152,6 +152,10 @@ export const fr = {
     addedOn: 'Ajouté le',
     votes: 'votes',
     editLink: 'Modifier le lien',
+    title: 'Titre',
+    titlePlaceholder: 'Entrez un titre pour votre lien',
+    description: 'Description',
+    descriptionPlaceholder: 'Entrez une description pour votre lien',
   },
   placeholders: {
     enterURL: 'Entrez une URL',
@@ -205,6 +209,7 @@ export const fr = {
     userExists: 'Un utilisateur avec ce nom existe déjà',
     urlExists: 'Cette URL existe déjà',
     failedToSignOut: 'Échec de la déconnexion',
+    loginRequired: 'Vous devez être connecté pour effectuer cette action',
   },
   commentModal: {
     title: 'Commentaires',

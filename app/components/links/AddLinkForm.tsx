@@ -50,11 +50,11 @@ export default function AddLinkForm({ onSubmit, onClose }: AddLinkFormProps) {
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="relative w-full max-w-md rounded-lg border border-purple-500/20 bg-[#1e1e38] p-6 shadow-xl"
+        className="relative w-full max-w-md rounded-lg border border-white/10 bg-black/80 backdrop-blur-lg p-6 shadow-xl"
       >
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-gray-400 hover:text-white transition-colors"
+          className="absolute right-4 top-4 text-white/60 hover:text-white transition-colors"
         >
           <XMarkIcon className="h-6 w-6" />
         </button>
@@ -82,7 +82,7 @@ export default function AddLinkForm({ onSubmit, onClose }: AddLinkFormProps) {
               id="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              className="mt-1 block w-full rounded-lg border border-purple-500/20 bg-[#2a2a4e] px-4 py-2 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+              className="mt-1 block w-full rounded-lg border border-white/10 bg-black/50 px-4 py-2 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
               placeholder="https://example.com"
               required
               disabled={isSubmitting}
@@ -101,7 +101,7 @@ export default function AddLinkForm({ onSubmit, onClose }: AddLinkFormProps) {
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="mt-1 block w-full rounded-lg border border-purple-500/20 bg-[#2a2a4e] px-4 py-2 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+              className="mt-1 block w-full rounded-lg border border-white/10 bg-black/50 px-4 py-2 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
               placeholder={fr.links.titlePlaceholder}
               disabled={isSubmitting}
             />
@@ -118,7 +118,7 @@ export default function AddLinkForm({ onSubmit, onClose }: AddLinkFormProps) {
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="mt-1 block w-full rounded-lg border border-purple-500/20 bg-[#2a2a4e] px-4 py-2 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+              className="mt-1 block w-full rounded-lg border border-white/10 bg-black/50 px-4 py-2 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
               placeholder={fr.links.descriptionPlaceholder}
               rows={3}
               disabled={isSubmitting}

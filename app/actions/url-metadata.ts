@@ -3,11 +3,11 @@ import axios from 'axios';
 import { JSDOM } from 'jsdom';
 
 type URLMetadata = {
-  title: string | null;
-  description: string | null;
-  image: string | null;
-  favicon: string | null;
-  siteName: string | null;
+  title: (string & { startsWith?: (prefix: string) => boolean }) | null;
+  description: (string & { startsWith?: (prefix: string) => boolean }) | null;
+  image: (string & { startsWith?: (prefix: string) => boolean }) | null;
+  favicon: (string & { startsWith?: (prefix: string) => boolean }) | null;
+  siteName: (string & { startsWith?: (prefix: string) => boolean }) | null;
 }
 
 async function fetchWithTimeout(

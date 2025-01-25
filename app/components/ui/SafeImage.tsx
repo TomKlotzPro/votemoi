@@ -23,23 +23,30 @@ export default function SafeImage({
   const [error, setError] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
+  const imageSource = error ? fallbackSrc : src;
+
   return (
-    <>
-      {!loaded && !error && (
+    <div className={`relative ${className}`} style={{ minWidth: width, minHeight: height }}>
+      {!loaded && (
         <div
-          className={`${className} bg-gray-200 animate-pulse`}
-          style={{ width, height }}
+          className="absolute inset-0 bg-gray-800 animate-pulse rounded-lg"
+          style={{ width: '100%', height: '100%' }}
         />
       )}
       <Image
-        src={error ? fallbackSrc : src}
+        src={imageSource}
         alt={alt}
         width={width}
         height={height}
-        className={`${className} ${!loaded ? 'hidden' : ''}`}
-        onError={() => setError(true)}
+        className={loaded ? className : 'opacity-0'}
+        onError={() => {
+          console.error(`Failed to load image: ${src}`);
+          setError(true);
+          setLoaded(true);
+        }}
         onLoad={() => setLoaded(true)}
+        unoptimized={imageSource.startsWith('data:') || imageSource.startsWith('blob:')}
       />
-    </>
+    </div>
   );
 }

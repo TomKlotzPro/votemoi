@@ -1,25 +1,26 @@
 'use client';
 
 import { fr } from '@/app/translations/fr';
-import { Link } from '@/app/types/link';
+import { FormattedLink, Link } from '@/app/types/link';
 import {
   ArrowUpIcon,
   ChatBubbleLeftIcon,
   PencilIcon,
   TrashIcon,
+  LinkIcon,
 } from '@heroicons/react/24/outline';
-import Image from 'next/image';
 import { useState } from 'react';
 import CommentModal from './CommentModal';
 import EditLinkModal from './EditLinkModal';
+import SafeImage from '../ui/SafeImage';
 
 type LinkCardProps = {
-  link: Link;
+  link: FormattedLink;
   isVoted: boolean;
   isOwner: boolean;
   onVote: () => Promise<void>;
   onUnvote: () => Promise<void>;
-  onComment: () => void;
+  onComment: (content: string) => Promise<void>;
   onEdit: (data: any) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }
@@ -37,11 +38,12 @@ export default function LinkCard({
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCommentModal, setShowCommentModal] = useState(false);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (date: Date | string) => {
+    const dateString = date instanceof Date ? date.toISOString() : date;
+    const dateObject = new Date(dateString);
     const now = new Date();
     const diffInMinutes = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60)
+      (now.getTime() - dateObject.getTime()) / (1000 * 60)
     );
 
     if (diffInMinutes < 1) return fr.common.justNow;
@@ -56,10 +58,84 @@ export default function LinkCard({
 
   return (
     <>
-      <article className="group relative rounded-lg bg-[#1e1e38] p-4 sm:p-6 hover:bg-[#1e1e38]/90 transition-colors">
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* Vote Button */}
-          <div className="flex sm:flex-col items-center gap-2">
+      <article className="group relative rounded-xl bg-[#1e1e38]/80 backdrop-blur-md border border-purple-500/10 shadow-lg hover:shadow-purple-500/5 transition-all duration-300">
+        {/* Main Content Area */}
+        <div className="p-4">
+          {/* Header with User Info and Actions */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <SafeImage
+                src={link.user.avatarUrl || '/default-avatar.png'}
+                alt={link.user.name || 'User'}
+                width={32}
+                height={32}
+                className="rounded-full"
+              />
+              <div className="flex items-center gap-2">
+                <span className="text-gray-300 font-medium">{link.user.name}</span>
+                <span className="text-gray-500">·</span>
+                <span className="text-gray-500 text-sm">
+                  {formatDate(link.createdAt)}
+                </span>
+              </div>
+            </div>
+
+            {isOwner && (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  className="p-1.5 text-gray-400 hover:text-purple-400 hover:bg-purple-500/10 rounded-lg transition-colors"
+                  title={fr.common.edit}
+                >
+                  <PencilIcon className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => onDelete(link.id)}
+                  className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                  title={fr.common.delete}
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Title and Description */}
+          <div className="mb-3">
+            <h3 className="font-medium text-white group-hover:text-purple-300 transition-colors">
+              <a
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2"
+              >
+                {link.title || link.url}
+                <LinkIcon className="h-4 w-4 opacity-50 flex-shrink-0" />
+              </a>
+            </h3>
+            {link.description && (
+              <p className="mt-1 text-gray-400 text-sm line-clamp-2">{link.description}</p>
+            )}
+          </div>
+
+          {/* Preview Image */}
+          {link.previewImage && (
+            <div className="relative mb-3 rounded-lg overflow-hidden bg-gray-800">
+              <div className="aspect-[2/1]">
+                <SafeImage
+                  src={link.previewImage}
+                  alt={link.title || link.url}
+                  width={600}
+                  height={300}
+                  className="object-cover w-full h-full hover:scale-105 transition-transform duration-300"
+                  fallbackSrc="/images/default-preview.png"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Interactions */}
+          <div className="flex items-center gap-4">
             <button
               onClick={() => {
                 if (isVoted) {
@@ -68,87 +144,27 @@ export default function LinkCard({
                   onVote();
                 }
               }}
-              className={`flex items-center gap-1 rounded-lg px-3 py-1 text-sm transition-all ${
+              className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-all ${
                 isVoted
                   ? 'bg-purple-500 text-white'
                   : 'text-gray-400 hover:bg-purple-500/10 hover:text-purple-400'
               }`}
             >
               <ArrowUpIcon className="h-4 w-4" />
-              <span>{link.votes.length}</span>
+              <span>{link.voteCount}</span>
             </button>
             <button
               onClick={() => {
                 setShowCommentModal(true);
-                onComment();
+                onComment('');
               }}
-              className="flex items-center gap-1 rounded-lg px-3 py-1 text-sm text-gray-400 hover:bg-purple-500/10 hover:text-purple-400 transition-all"
+              className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-gray-400 hover:bg-purple-500/10 hover:text-purple-400 transition-all"
             >
               <ChatBubbleLeftIcon className="h-4 w-4" />
               <span>{link.comments.length}</span>
             </button>
           </div>
-
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
-              <div className="flex-1 space-y-1">
-                <h3 className="font-medium text-white">
-                  <a
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:underline"
-                  >
-                    {link.title || link.url}
-                  </a>
-                </h3>
-                {link.description && (
-                  <p className="text-sm text-gray-400">{link.description}</p>
-                )}
-              </div>
-
-              {/* Actions */}
-              {isOwner && (
-                <div className="flex items-center gap-2 self-start opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => setShowEditModal(true)}
-                    className="p-1 text-gray-400 hover:text-purple-400 transition-colors"
-                    title={fr.common.edit}
-                  >
-                    <PencilIcon className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => onDelete(link.id)}
-                    className="p-1 text-gray-400 hover:text-red-400 transition-colors"
-                    title={fr.common.delete}
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Metadata */}
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-400">
-              <span>
-                {fr.common.postedBy} {link.user.name}
-              </span>
-              <span>{formatDate(link.createdAt)}</span>
-            </div>
-          </div>
         </div>
-
-        {link.previewImage && (
-          <div className="relative h-48 rounded-lg overflow-hidden mt-4">
-            <Image
-              src={link.previewImage}
-              alt={link.title || link.url}
-              fill
-              className="object-cover"
-            />
-          </div>
-        )}
       </article>
 
       {showEditModal && (
@@ -163,7 +179,12 @@ export default function LinkCard({
         <CommentModal
           link={link}
           onClose={() => setShowCommentModal(false)}
-          onSubmit={() => {}}
+          onSubmit={async (content: string) => {
+            if (onComment) {
+              await onComment(content);
+            }
+            setShowCommentModal(false);
+          }}
         />
       )}
     </>

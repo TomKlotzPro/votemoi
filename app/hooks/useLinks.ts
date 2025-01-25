@@ -9,14 +9,13 @@ import {
   updateLink,
   vote,
 } from '@/app/actions/links';
+import { useUser } from '@/app/context/user-context';
 import { fr } from '@/app/translations/fr';
 import { FormattedLink } from '@/app/types/link';
-import { Session } from 'next-auth';
-import { useSession } from 'next-auth/react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export function useLinks() {
-  const { data: session } = useSession() as { data: Session | null };
+  const { user } = useUser();
   const [links, setLinks] = useState<FormattedLink[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,10 +33,11 @@ export function useLinks() {
       // Transform the response to include required fields
       const formattedLinks = (response.links || []).map((link) => ({
         ...link,
-        comments: link.comments.map((comment) => ({
+        votes: link.votes || [],
+        comments: (link.comments || []).map((comment) => ({
           ...comment,
-          userId: comment.user.id, // Add userId from the user object
-          linkId: link.id, // Add linkId from the parent link
+          userId: comment.user.id,
+          linkId: link.id,
         })),
       }));
 
@@ -49,162 +49,15 @@ export function useLinks() {
     }
   }, []);
 
-  const handleAddLink = useCallback(
-    async (data: { url: string; title?: string; description?: string }) => {
-      try {
-        if (!session?.user?.id) {
-          setError('You must be logged in to add a link');
-          return;
-        }
-
-        setIsLoading(true);
-        setError(null);
-        const { link: newLink, error } = await createLink({
-          ...data,
-          userId: session.user.id,
-        });
-        if (error) {
-          setError(error);
-          return;
-        }
-        if (!newLink) {
-          setError('Failed to create link');
-          return;
-        }
-        // Ensure the newLink matches FormattedLink type
-        if (!newLink.id) {
-          throw new Error('Link id is required');
-        }
-
-        const formattedLink: FormattedLink = {
-          ...newLink,
-          id: newLink.id, // Explicitly set id to ensure TypeScript knows it's defined
-          createdAt: new Date(newLink.createdAt).toISOString(),
-          updatedAt: new Date(newLink.updatedAt).toISOString(),
-          votes: [],
-          comments: (newLink.comments || []).map((comment) => ({
-            ...comment,
-            createdAt: new Date(comment.createdAt).toISOString(),
-            updatedAt: new Date(comment.updatedAt).toISOString(),
-          })),
-          createdBy: {
-            id: newLink.createdBy.id,
-            name: newLink.createdBy.name,
-            avatarUrl: newLink.createdBy.avatarUrl,
-          },
-          createdById: newLink.createdById,
-          hasVoted: false,
-        };
-        setLinks((prev) => [...prev, formattedLink]);
-      } catch {
-        setError(fr.errors.failedToAddLink);
-        throw new Error(fr.errors.failedToAddLink);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [session]
-  );
-
-  const handleUpdateLink = useCallback(
-    async (
-      id: string,
-      data: { url: string; title?: string; description?: string }
-    ) => {
-      try {
-        if (!session?.user?.id) {
-          setError('You must be logged in to update a link');
-          return;
-        }
-
-        setIsLoading(true);
-        setError(null);
-        const result = await updateLink({
-          id,
-          userId: session?.user?.id as string,
-          url: data.url,
-          title: data.title || '', // Ensure title is always a string
-          ...(data.description && { description: data.description }), // Only include description if it exists
-        });
-
-        if (result.error) {
-          setError(result.error);
-          throw new Error(result.error);
-        }
-
-        if (!result.link) {
-          setError('Failed to update link');
-          return;
-        }
-
-        const link = result.link;
-        // Ensure the updated link matches FormattedLink type
-        const formattedLink: FormattedLink = {
-          id: link.id,
-          url: link.url,
-          title: link.title,
-          description: link.description,
-          previewImage: link.previewImage,
-          previewTitle: link.previewTitle,
-          previewDescription: link.previewDescription,
-          previewFavicon: link.previewFavicon,
-          previewSiteName: link.previewSiteName,
-          createdAt: new Date(link.createdAt).toISOString(),
-          updatedAt: new Date(link.updatedAt).toISOString(),
-          votes: link.votes || [],
-          comments: (link.comments || []).map((comment) => ({
-            ...comment,
-            userId: comment.user.id,
-            linkId: link.id,
-          })),
-          createdBy: {
-            id: link.createdBy.id,
-            name: link.createdBy.name,
-            avatarUrl: link.createdBy.avatarUrl,
-          },
-          createdById: link.createdById,
-          hasVoted: false,
-        };
-        setLinks((prev) =>
-          prev.map((link) => (link.id === id ? formattedLink : link))
-        );
-      } catch {
-        setError(fr.errors.failedToUpdateLink);
-        throw new Error(fr.errors.failedToUpdateLink);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [session]
-  );
-
-  const handleDeleteLink = useCallback(
-    async (id: string) => {
-      if (!session?.user?.id) {
-        setError(fr.errors.unauthorized);
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-        setError(null);
-        await deleteLink({ id, userId: session.user.id });
-        setLinks((prev) => prev.filter((link) => link.id !== id));
-      } catch {
-        setError(fr.errors.failedToDeleteLink);
-        throw new Error(fr.errors.failedToDeleteLink);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [session]
-  );
+  useEffect(() => {
+    refreshLinks();
+  }, [refreshLinks]);
 
   const handleVote = useCallback(
     async (linkId: string, userId: string) => {
       try {
-        if (!session?.user?.id) {
-          setError('You must be logged in to vote');
+        if (!user?.id) {
+          setError(fr.errors.unauthorized);
           return;
         }
 
@@ -222,7 +75,7 @@ export function useLinks() {
                 return {
                   ...link,
                   votes: [
-                    ...link.votes,
+                    ...(link.votes || []),
                     {
                       userId: result.user!.id,
                       userName: result.user!.name,
@@ -244,14 +97,14 @@ export function useLinks() {
         setIsLoading(false);
       }
     },
-    [session]
+    [user]
   );
 
   const handleUnvote = useCallback(
     async (linkId: string, userId: string) => {
       try {
-        if (!session?.user?.id) {
-          setError('You must be logged in to unvote');
+        if (!user?.id) {
+          setError(fr.errors.unauthorized);
           return;
         }
 
@@ -268,7 +121,7 @@ export function useLinks() {
               if (link.id === linkId) {
                 return {
                   ...link,
-                  votes: link.votes.filter((vote) => vote.userId !== userId),
+                  votes: (link.votes || []).filter((vote) => vote.userId !== userId),
                   hasVoted: false,
                 };
               }
@@ -283,51 +136,29 @@ export function useLinks() {
         setIsLoading(false);
       }
     },
-    [session]
+    [user]
   );
 
   const handleAddComment = useCallback(
     async (linkId: string, userId: string, content: string) => {
       try {
-        if (!session?.user?.id) {
-          setError('You must be logged in to add a comment');
+        if (!user?.id) {
+          setError(fr.errors.unauthorized);
           return;
         }
 
         setIsLoading(true);
         setError(null);
-        const response = await createComment({ linkId, userId, content });
-
-        if (response.error) {
-          setError(response.error);
+        const result = await createComment({ linkId, userId, content });
+        if (result.error) {
+          setError(result.error);
           return;
         }
-
-        if (!response.link) {
-          setError('Failed to add comment');
-          return;
+        if (result.link) {
+          setLinks((prev) =>
+            prev.map((link) => (link.id === linkId ? result.link! : link))
+          );
         }
-
-        // Update the links state with the new link
-        setLinks((prevLinks) =>
-          prevLinks.map((link) => {
-            const responseLink = response.link;
-            if (link.id === responseLink?.id && responseLink) {
-              return {
-                ...link,
-                ...responseLink,
-                comments: responseLink.comments.map((comment) => ({
-                  ...comment,
-                  userId: comment.user.id,
-                  linkId: responseLink.id,
-                  createdAt: comment.createdAt || new Date().toISOString(),
-                  updatedAt: comment.updatedAt || new Date().toISOString(),
-                })),
-              };
-            }
-            return link;
-          })
-        );
       } catch {
         setError(fr.errors.failedToAddComment);
         throw new Error(fr.errors.failedToAddComment);
@@ -335,19 +166,113 @@ export function useLinks() {
         setIsLoading(false);
       }
     },
-    [session]
+    [user]
+  );
+
+  const handleDeleteLink = useCallback(
+    async (id: string) => {
+      if (!user?.id) {
+        setError(fr.errors.unauthorized);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError(null);
+        await deleteLink({ id, userId: user.id });
+        setLinks((prev) => prev.filter((link) => link.id !== id));
+      } catch {
+        setError(fr.errors.failedToDeleteLink);
+        throw new Error(fr.errors.failedToDeleteLink);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user]
+  );
+
+  const handleUpdateLink = useCallback(
+    async (id: string, data: { url: string; title?: string; description?: string }) => {
+      try {
+        if (!user?.id) {
+          setError(fr.errors.unauthorized);
+          return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+        const result = await updateLink({
+          id,
+          userId: user.id,
+          url: data.url,
+          title: data.title || '',
+          ...(data.description && { description: data.description }),
+        });
+
+        if (result.error) {
+          setError(result.error);
+          return;
+        }
+
+        if (result.link) {
+          setLinks((prev) =>
+            prev.map((link) => (link.id === id ? result.link! : link))
+          );
+        }
+      } catch {
+        setError(fr.errors.failedToUpdateLink);
+        throw new Error(fr.errors.failedToUpdateLink);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user]
+  );
+
+  const handleAddLink = useCallback(
+    async (data: { url: string; title?: string; description?: string }) => {
+      try {
+        if (!user?.id) {
+          setError(fr.errors.unauthorized);
+          return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+        const { link: newLink, error } = await createLink({
+          ...data,
+          userId: user.id,
+        });
+        if (error) {
+          setError(error);
+          return;
+        }
+        if (!newLink) {
+          setError(fr.errors.failedToAddLink);
+          return;
+        }
+
+        // Refresh the links list instead of adding to state
+        await refreshLinks();
+      } catch {
+        setError(fr.errors.failedToAddLink);
+        throw new Error(fr.errors.failedToAddLink);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user, refreshLinks]
   );
 
   return {
     links,
-    isLoading,
     error,
-    refreshLinks,
-    addLink: handleAddLink,
-    updateLink: handleUpdateLink,
-    deleteLink: handleDeleteLink,
+    isLoading,
     vote: handleVote,
     unvote: handleUnvote,
+    addLink: handleAddLink,
+    deleteLink: handleDeleteLink,
+    updateLink: handleUpdateLink,
     addComment: handleAddComment,
   };
 }

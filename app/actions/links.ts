@@ -1,10 +1,86 @@
 'use server';
 
-import { FormattedLink, LinkWithRelations } from '@/app/types/link';
+import { FormattedComment, FormattedLink } from '../types/link';
+import { Comment, Link, User, Vote } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { fetchUrlMetadata } from '@/lib/url-metadata';
-import { Comment, User } from '@prisma/client';
-import { revalidatePath } from 'next/cache';
+
+const formatComment = (comment: Comment & { user: User }): FormattedComment => ({
+  id: comment.id,
+  userId: comment.userId,
+  linkId: comment.linkId,
+  content: comment.content,
+  createdAt: comment.createdAt.toISOString(),
+  updatedAt: comment.updatedAt.toISOString(),
+  user: {
+    id: comment.user.id,
+    name: comment.user.name,
+    avatarUrl: comment.user.avatarUrl,
+  },
+});
+
+const formatLink = (link: Link & { 
+  createdBy?: User; 
+  votes?: Vote[]; 
+  comments?: (Comment & { user?: User })[];
+  hasVoted?: boolean;
+}): FormattedLink => ({
+  id: link.id,
+  url: link.url,
+  title: link.title,
+  description: link.description ?? null,
+  imageUrl: link.previewImage ?? null, 
+  userId: link.createdById,
+  createdAt: link.createdAt instanceof Date 
+    ? link.createdAt.toISOString() 
+    : link.createdAt,
+  updatedAt: link.updatedAt instanceof Date 
+    ? link.updatedAt.toISOString() 
+    : link.updatedAt,
+  comments: (link.comments || []).map(comment => ({
+    id: comment.id,
+    userId: comment.userId,
+    linkId: comment.linkId,
+    content: comment.content,
+    createdAt: comment.createdAt instanceof Date 
+      ? comment.createdAt.toISOString() 
+      : comment.createdAt,
+    updatedAt: comment.updatedAt instanceof Date 
+      ? comment.updatedAt.toISOString() 
+      : comment.updatedAt,
+    user: {
+      id: comment.user?.id || comment.userId,
+      name: comment.user?.name || null,
+      avatarUrl: comment.user?.avatarUrl || null,
+    },
+  })),
+  voteCount: (link.votes || []).length,
+  votedByUsers: (link.votes || []).map(vote => vote.user?.id || ''),
+  hasVoted: link.hasVoted ?? false,
+  user: {
+    id: link.createdById,
+    name: link.createdBy?.name || null,
+    avatarUrl: link.createdBy?.avatarUrl || null,
+  },
+  createdBy: link.createdBy ? {
+    id: link.createdBy.id,
+    name: link.createdBy.name,
+    avatarUrl: link.createdBy.avatarUrl,
+    createdAt: link.createdAt instanceof Date 
+      ? link.createdAt 
+      : new Date(link.createdAt),
+    updatedAt: link.updatedAt instanceof Date 
+      ? link.updatedAt 
+      : new Date(link.updatedAt),
+  } : undefined,
+  createdById: link.createdById,
+  previewImage: link.previewImage ?? null,
+  previewTitle: link.previewTitle ?? null,
+  previewDescription: link.previewDescription ?? null,
+  previewFavicon: link.previewFavicon ?? null,
+  previewSiteName: link.previewSiteName ?? null,
+});
 
 export async function getLinks(
   userId?: string
@@ -51,47 +127,13 @@ export async function getLinks(
           },
         },
       },
-    })) as LinkWithRelations[];
+    })) as (Link & { createdBy: User; votes: Vote[]; comments: Comment[] })[];
 
     if (!links) {
       return { links: [] };
     }
 
-    const formattedLinks = links.map((link) => ({
-      id: link.id,
-      url: link.url,
-      title: link.title,
-      description: link.description,
-      createdAt: link.createdAt.toISOString(),
-      updatedAt: link.updatedAt.toISOString(),
-      createdById: link.createdById,
-      previewDescription: link.previewDescription,
-      previewFavicon: link.previewFavicon,
-      previewImage: link.previewImage,
-      previewSiteName: link.previewSiteName,
-      previewTitle: link.previewTitle,
-      hasVoted: link.votes.some((vote) => vote.user.id === userId),
-      createdBy: {
-        id: link.createdBy.id,
-        name: link.createdBy.name,
-        avatarUrl: link.createdBy.avatarUrl,
-      },
-      votes: link.votes.map((vote) => ({
-        userId: vote.user.id,
-        userName: vote.user.name,
-        createdAt: vote.createdAt.toISOString(),
-        user: vote.user,
-      })),
-      comments: link.comments.map((comment) => ({
-        id: comment.id,
-        content: comment.content,
-        createdAt: comment.createdAt.toISOString(),
-        updatedAt: comment.updatedAt.toISOString(),
-        user: comment.user,
-        userId: comment.user.id,
-        linkId: link.id,
-      })),
-    }));
+    const formattedLinks = links.map(formatLink);
 
     return { links: formattedLinks };
   } catch {
@@ -205,40 +247,7 @@ export async function createLink(data: {
       throw new Error('Failed to create link in database');
     }
 
-    const formattedLink = {
-      id: link.id,
-      url: link.url,
-      title: link.title,
-      description: link.description,
-      createdAt: link.createdAt.toISOString(),
-      updatedAt: link.updatedAt.toISOString(),
-      createdById: link.createdById,
-      previewDescription: link.previewDescription,
-      previewFavicon: link.previewFavicon,
-      previewImage: link.previewImage,
-      previewSiteName: link.previewSiteName,
-      previewTitle: link.previewTitle,
-      createdBy: {
-        id: link.createdBy.id,
-        name: link.createdBy.name,
-        avatarUrl: link.createdBy.avatarUrl,
-      },
-      votes: link.votes.map((vote) => ({
-        userId: vote.user.id,
-        userName: vote.user.name,
-        createdAt: vote.createdAt.toISOString(),
-        user: vote.user,
-      })),
-      comments: link.comments.map((comment) => ({
-        id: comment.id,
-        content: comment.content,
-        createdAt: comment.createdAt.toISOString(),
-        updatedAt: comment.updatedAt.toISOString(),
-        user: comment.user,
-        userId: comment.user.id,
-        linkId: link.id,
-      })),
-    };
+    const formattedLink = formatLink(link);
 
     revalidatePath('/');
     return { link: formattedLink };
@@ -312,40 +321,7 @@ export async function updateLink(data: {
       },
     });
 
-    const formattedLink = {
-      id: link.id,
-      url: link.url,
-      title: link.title,
-      description: link.description,
-      createdAt: link.createdAt.toISOString(),
-      updatedAt: link.updatedAt.toISOString(),
-      createdById: link.createdById,
-      previewDescription: link.previewDescription,
-      previewFavicon: link.previewFavicon,
-      previewImage: link.previewImage,
-      previewSiteName: link.previewSiteName,
-      previewTitle: link.previewTitle,
-      createdBy: {
-        id: link.createdBy.id,
-        name: link.createdBy.name,
-        avatarUrl: link.createdBy.avatarUrl,
-      },
-      votes: link.votes.map((vote) => ({
-        userId: vote.user.id,
-        userName: vote.user.name,
-        createdAt: vote.createdAt.toISOString(),
-        user: vote.user,
-      })),
-      comments: link.comments.map((comment) => ({
-        id: comment.id,
-        content: comment.content,
-        createdAt: comment.createdAt.toISOString(),
-        updatedAt: comment.updatedAt.toISOString(),
-        user: comment.user,
-        userId: comment.user.id,
-        linkId: link.id,
-      })),
-    };
+    const formattedLink = formatLink(link);
 
     revalidatePath('/');
     return { link: formattedLink };
@@ -507,28 +483,6 @@ export async function createComment(data: {
       return { error: 'Link not found' };
     }
 
-    // Format the link to match FormattedLink type
-    const formattedLink: FormattedLink = {
-      ...link,
-      createdAt: link.createdAt.toISOString(),
-      updatedAt: link.updatedAt.toISOString(),
-      votes: link.votes.map((vote) => ({
-        userId: vote.user.id,
-        userName: vote.user.name,
-        createdAt: vote.createdAt.toISOString(),
-        user: vote.user,
-      })),
-      comments: link.comments.map((comment) => ({
-        id: comment.id,
-        content: comment.content,
-        createdAt: comment.createdAt.toISOString(),
-        updatedAt: comment.updatedAt.toISOString(),
-        user: comment.user,
-        userId: comment.user.id,
-        linkId: link.id,
-      })),
-    };
-
     const comment = await prisma.comment.create({
       data: {
         content: data.content,
@@ -541,8 +495,8 @@ export async function createComment(data: {
     });
 
     const updatedLink = {
-      ...formattedLink,
-      comments: [...formattedLink.comments, comment].map((comment) => ({
+      ...link,
+      comments: [...link.comments, comment].map((comment) => ({
         ...comment,
         createdAt:
           comment.createdAt instanceof Date
@@ -555,8 +509,10 @@ export async function createComment(data: {
       })),
     };
 
+    const formattedLink = formatLink(updatedLink);
+
     revalidatePath('/');
-    return { link: updatedLink };
+    return { link: formattedLink };
   } catch {
     return { error: 'Failed to create comment' };
   }

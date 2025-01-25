@@ -30,16 +30,18 @@ export default function LinkList({
 }: LinkListProps) {
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        {[...Array(3)].map((_, i) => (
-          <div
-            key={i}
-            className="animate-pulse rounded-lg bg-white/5 p-6 space-y-4"
-          >
-            <div className="h-4 bg-white/10 rounded w-3/4" />
-            <div className="h-4 bg-white/10 rounded w-1/2" />
-          </div>
-        ))}
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-3xl mx-auto space-y-6">
+          {[...Array(3)].map((_, i) => (
+            <div
+              key={i}
+              className="animate-pulse rounded-lg bg-white/5 p-6 space-y-4"
+            >
+              <div className="h-4 bg-white/10 rounded w-3/4" />
+              <div className="h-4 bg-white/10 rounded w-1/2" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -49,20 +51,22 @@ export default function LinkList({
   }
 
   return (
-    <div className="grid gap-6">
-      {links.map((link) => (
-        <LinkCard
-          key={link.id}
-          link={link}
-          isVoted={user ? link.votes.includes(user.id) : false}
-          isOwner={user ? link.userId === user.id : false}
-          onVote={() => onVote(link.id)}
-          onUnvote={() => onUnvote(link.id)}
-          onComment={() => onComment(link.id)}
-          onEdit={(data) => onEdit({ ...link, ...data })}
-          onDelete={() => onDelete(link.id)}
-        />
-      ))}
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto space-y-6">
+        {links.map((link) => (
+          <LinkCard
+            key={link.id}
+            link={link}
+            isVoted={user ? link.votedByUsers.includes(user.id) : false}
+            isOwner={user ? link.createdById === user.id : false}
+            onVote={() => onVote(link.id)}
+            onUnvote={() => onUnvote(link.id)}
+            onComment={() => onComment(link.id)}
+            onEdit={(data) => onEdit({ ...link, ...data })}
+            onDelete={() => onDelete(link.id)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

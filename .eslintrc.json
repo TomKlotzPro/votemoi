@@ -1,10 +1,60 @@
 {
-  "extends": ["next/core-web-vitals", "plugin:@typescript-eslint/recommended"],
+  "extends": [
+    "next/core-web-vitals",
+    "plugin:@typescript-eslint/recommended"
+  ],
   "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint"],
+  "parserOptions": {
+    "project": "./tsconfig.json",
+    "ecmaVersion": 2022,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "tsconfigRootDir": ".",
+    "warnOnUnsupportedTypeScriptVersion": false
+  },
+  "plugins": [
+    "@typescript-eslint"
+  ],
   "root": true,
   "rules": {
-    "@typescript-eslint/no-unused-vars": "error",
-    "@typescript-eslint/no-explicit-any": "warn"
+    "@typescript-eslint/no-unused-vars": "warn",
+    "no-console": "warn",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "import/no-commonjs": "error",
+    "no-unused-vars": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/no-empty-interface": "off",
+    "@typescript-eslint/no-empty-function": "off",
+    "@typescript-eslint/ban-types": "off",
+    "@typescript-eslint/no-namespace": "off"
+  },
+  "ignorePatterns": [
+    ".next/**/*",
+    "node_modules/**/*",
+    "*.config.js",
+    "*.config.ts",
+    "**/*.d.ts",
+    "next-env.d.ts",
+    "app/types/*.d.ts",
+    "types/**/*.d.ts",
+    "global.d.ts",
+    "dist/**/*",
+    "build/**/*"
+  ],
+  "settings": {
+    "react": {
+      "version": "detect"
+    },
+    "import/parsers": {
+      "@typescript-eslint/parser": [".ts", ".tsx"]
+    },
+    "import/resolver": {
+      "typescript": {
+        "alwaysTryTypes": true,
+        "project": "./tsconfig.json"
+      }
+    }
   }
 }

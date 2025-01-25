@@ -2,11 +2,11 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 
 export interface URLMetadata {
-  previewImage: string | null;
-  previewTitle: string | null;
-  previewDescription: string | null;
-  previewFavicon: string | null;
-  previewSiteName: string | null;
+  previewImage: (string & { startsWith?: (prefix: string) => boolean }) | null;
+  previewTitle: (string & { startsWith?: (prefix: string) => boolean }) | null;
+  previewDescription: (string & { startsWith?: (prefix: string) => boolean }) | null;
+  previewFavicon: (string & { startsWith?: (prefix: string) => boolean }) | null;
+  previewSiteName: (string & { startsWith?: (prefix: string) => boolean }) | null;
 }
 
 /**

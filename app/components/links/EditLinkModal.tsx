@@ -1,12 +1,12 @@
 'use client';
 
 import { fr } from '@/app/translations/fr';
-import { Link } from '@/app/types/link';
+import { FormattedLink, Link } from '@/app/types/link';
 import { useState } from 'react';
 import UrlForm from '../forms/UrlForm';
 
 type EditLinkModalProps = {
-  link: Link;
+  link: FormattedLink;
   onClose: () => void;
   onSubmit: (data: {
     title?: string;

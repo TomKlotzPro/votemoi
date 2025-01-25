@@ -5,7 +5,7 @@ import { Dialog } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { FormEvent, useState } from 'react';
 
-type CommentModalProps = {
+interface CommentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (content: string) => Promise<void>;

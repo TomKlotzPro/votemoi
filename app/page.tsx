@@ -9,7 +9,7 @@ import { useLinks } from './hooks/useLinks';
 import { fr } from './translations/fr';
 
 export default function Home() {
-  const { links, error, isLoading, addLink } = useLinks();
+  const { links, error, isLoading, addLink, vote, unvote, deleteLink, updateLink, addComment } = useLinks();
   const { user, setUser } = useUser();
   const [showAuthForm, setShowAuthForm] = useState(false);
 
@@ -22,32 +22,32 @@ export default function Home() {
 
   const handleVote = async (linkId: string) => {
     if (user) {
-      await useLinks().vote(linkId, user.id);
+      await vote(linkId, user.id);
     }
   };
 
   const handleUnvote = async (linkId: string) => {
     if (user) {
-      await useLinks().unvote(linkId, user.id);
+      await unvote(linkId, user.id);
     }
   };
 
   const handleDelete = async (linkId: string) => {
     if (user) {
-      await useLinks().deleteLink(linkId);
+      await deleteLink(linkId);
     }
   };
 
   const handleEdit = async (data: string) => {
     if (user) {
       const [id, newData] = JSON.parse(data);
-      await useLinks().updateLink(id, newData);
+      await updateLink(id, newData);
     }
   };
 
   const handleAddComment = async (linkId: string, content: string) => {
     if (user) {
-      await useLinks().addComment(linkId, user.id, content);
+      await addComment(linkId, user.id, content);
     }
   };
 
