@@ -1,5 +1,8 @@
+require('./next-setup.js');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
   images: {
     dangerouslyAllowSVG: true,
     remotePatterns: [
@@ -8,11 +11,17 @@ const nextConfig = {
         hostname: 'api.dicebear.com',
         pathname: '/7.x/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
+      },
     ],
   },
   experimental: {
-    serverActions: true,
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;

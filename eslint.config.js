@@ -1,10 +1,9 @@
-import nextPlugin from '@next/eslint-plugin-next';
-import tsPlugin from '@typescript-eslint/eslint-plugin';
-import tsParser from '@typescript-eslint/parser';
-import reactHooksPlugin from 'eslint-plugin-react-hooks';
+const nextPlugin = require('@next/eslint-plugin-next');
+const tsPlugin = require('@typescript-eslint/eslint-plugin');
+const tsParser = require('@typescript-eslint/parser');
+const reactHooksPlugin = require('eslint-plugin-react-hooks');
 
-/** @type {import('eslint').Linter.FlatConfig[]} */
-export default [
+module.exports = [
   {
     files: ['**/*.{ts,tsx}'],
     ignores: ['node_modules/**', '.next/**', 'dist/**'],

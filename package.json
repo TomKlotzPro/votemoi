@@ -2,19 +2,19 @@
   "name": "votemoi",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
+  "type": "commonjs",
   "engines": {
     "node": "18.x"
   },
   "scripts": {
     "dev": "NODE_OPTIONS='--experimental-fetch' next dev",
-    "build": "NODE_OPTIONS='--experimental-fetch' next build",
+    "build": "node vercel-build.cjs",
     "start": "NODE_OPTIONS='--experimental-fetch' next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prisma:seed": "npx ts-node prisma/seed.ts",
     "postinstall": "prisma generate",
-    "vercel-build": "NODE_OPTIONS='--experimental-fetch' prisma generate && next build",
+    "vercel-build": "node vercel-build.cjs",
     "prepare": "husky install"
   },
   "prisma": {
