@@ -1,5 +1,5 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "buildCommand": "node vercel-build.cjs"
+  "buildCommand": "npm run build"
 }

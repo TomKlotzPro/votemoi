@@ -1,11 +1,11 @@
-const { Headers, Request, Response } = require('undici');
+const undici = require('undici');
 
 if (!global.Headers) {
-  global.Headers = Headers;
+  global.Headers = undici.Headers;
 }
 if (!global.Request) {
-  global.Request = Request;
+  global.Request = undici.Request;
 }
 if (!global.Response) {
-  global.Response = Response;
+  global.Response = undici.Response;
 }
