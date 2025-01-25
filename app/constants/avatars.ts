@@ -14,10 +14,11 @@ const AVATAR_STYLES = [
 
 // Generate avatar URLs with different styles and seeds
 export const AVATAR_OPTIONS = AVATAR_STYLES.flatMap((style) =>
-  Array.from(
-    { length: 3 },
-    (_, i) => `https://api.dicebear.com/7.x/${style}/svg?seed=avatar${i + 1}`
-  )
+  Array(3)
+    .fill(0)
+    .map(
+      (_, i) => `https://api.dicebear.com/7.x/${style}/svg?seed=avatar${i + 1}`
+    )
 );
 
 // Fun loading messages
