@@ -23,7 +23,7 @@ type UseUsersReturn = {
   }) => Promise<FormattedUser>;
   updateUser: (
     id: string,
-    data: { name?: string; image?: string }
+    data: { name?: string; avatarUrl?: string }
   ) => Promise<FormattedUser>;
   deleteUser: (id: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -74,7 +74,7 @@ export function useUsers(): UseUsersReturn {
   );
 
   const handleUpdateUser = useCallback(
-    async (id: string, data: { name?: string; image?: string }) => {
+    async (id: string, data: { name?: string; avatarUrl?: string }) => {
       try {
         setIsLoading(true);
         setError(null);

@@ -75,15 +75,6 @@ export default function VotersModal({
                     <h3 className="text-white font-medium truncate">
                       {vote.user.name}
                     </h3>
-                    <p className="text-white/60 text-sm">
-                      {new Date(vote.createdAt).toLocaleDateString(undefined, {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
                   </div>
                 </motion.div>
               ))}
