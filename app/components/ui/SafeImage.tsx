@@ -10,6 +10,10 @@ type SafeImageProps = {
   className?: string;
   width?: number;
   height?: number;
+  fill?: boolean;
+  sizes?: string;
+  priority?: boolean;
+  style?: React.CSSProperties;
 };
 
 export default function SafeImage({
@@ -17,8 +21,9 @@ export default function SafeImage({
   alt,
   fallbackSrc = '/default-avatar.png',
   className = '',
-  width = 32,
-  height = 32,
+  width,
+  height,
+  style,
 }: SafeImageProps) {
   const [error, setError] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -26,7 +31,7 @@ export default function SafeImage({
   const imageSource: string = error ? fallbackSrc : src;
 
   return (
-    <div className="relative" style={{ width, height }}>
+    <div className="relative w-full h-full">
       {!loaded && !error && (
         <div
           className={`absolute inset-0 ${className} bg-gray-200 animate-pulse`}
@@ -40,6 +45,7 @@ export default function SafeImage({
         className={`${className} transition-opacity duration-300 ${
           loaded ? 'opacity-100' : 'opacity-0'
         }`}
+        style={style}
         onError={() => {
           console.error(`Failed to load image: ${src}`);
           setError(true);

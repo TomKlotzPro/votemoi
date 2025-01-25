@@ -84,20 +84,20 @@ export default function LinkCard({
             {/* Main Content Area */}
             <div className="p-4">
               {/* Header with User Info and Actions */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2 min-w-0">
                   <SafeImage
                     src={link.user.avatarUrl || '/default-avatar.png'}
                     alt={link.user.name || 'User'}
                     width={32}
                     height={32}
-                    className="rounded-full"
+                    className="rounded-full flex-shrink-0"
                   />
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-300 font-medium">
+                  <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                    <span className="text-gray-300 font-medium truncate">
                       {link.user.name}
                     </span>
-                    <span className="text-gray-500">·</span>
+                    <span className="text-gray-500 hidden sm:inline">·</span>
                     <span className="text-gray-500 text-sm">
                       {formatDate(link.createdAt)}
                     </span>
@@ -137,12 +137,14 @@ export default function LinkCard({
                     rel="noopener noreferrer"
                     className="flex items-center gap-2"
                   >
-                    {link.title || link.url}
+                    <span className="line-clamp-2">
+                      {link.title || link.url}
+                    </span>
                     <LinkIcon className="h-4 w-4 opacity-50 flex-shrink-0" />
                   </a>
                 </h3>
                 {link.description && (
-                  <p className="mt-1 text-gray-400 text-sm line-clamp-2">
+                  <p className="mt-1 text-gray-400 text-sm line-clamp-2 sm:line-clamp-3">
                     {link.description}
                   </p>
                 )}
@@ -150,17 +152,15 @@ export default function LinkCard({
 
               {/* Preview Image */}
               {link.previewImage && (
-                <div className="relative mb-3 rounded-lg overflow-hidden bg-gray-800">
-                  <div className="relative aspect-[2/1] w-full">
-                    <SafeImage
-                      src={link.previewImage}
-                      alt={link.previewTitle || link.title || link.url}
-                      width={800}
-                      height={400}
-                      className="object-cover w-full h-full"
-                      fallbackSrc="/images/default-preview.png"
-                    />
-                  </div>
+                <div className="relative mb-3 rounded-lg overflow-hidden bg-gray-800 flex justify-center items-center">
+                  <SafeImage
+                    src={link.previewImage}
+                    alt={link.previewTitle || link.title || link.url}
+                    width={300}
+                    height={150}
+                    className="w-full h-full object-cover"
+                    fallbackSrc="/images/default-preview.png"
+                  />
                 </div>
               )}
 
