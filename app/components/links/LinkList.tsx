@@ -2,6 +2,8 @@
 
 import { Link } from '@/app/types/link';
 import { User } from '@/app/types/user';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import EmptyLinkList from './EmptyLinkList';
 import LinkCard from './LinkCard';
 
@@ -26,45 +28,97 @@ export default function LinkList({
   onEdit,
   onDelete,
 }: LinkListProps) {
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto space-y-6">
-          {[...Array(3)].map((_, i) => (
-            <div
-              key={i}
-              className="animate-pulse rounded-lg bg-white/5 p-6 space-y-4"
-            >
-              <div className="h-4 bg-white/10 rounded w-3/4" />
-              <div className="h-4 bg-white/10 rounded w-1/2" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  // Keep a local copy of links to handle smooth transitions
+  const [localLinks, setLocalLinks] = useState(links);
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
 
-  if (links.length === 0) {
+  // Update local links when props change, but only if not removing items
+  useEffect(() => {
+    if (!isLoading) {
+      const newLinks = links.filter((link) => !removingIds.has(link.id));
+      setLocalLinks((prevLinks) => {
+        // Keep items being removed in the list
+        const removedLinks = prevLinks.filter((link) =>
+          removingIds.has(link.id)
+        );
+        // Add new links at the beginning
+        const addedLinks = newLinks.filter(
+          (newLink) => !prevLinks.some((oldLink) => oldLink.id === newLink.id)
+        );
+        // Keep existing links in their current order
+        const existingLinks = newLinks.filter((newLink) =>
+          prevLinks.some((oldLink) => oldLink.id === newLink.id)
+        );
+        return [...addedLinks, ...existingLinks, ...removedLinks];
+      });
+    }
+  }, [links, isLoading, removingIds]);
+
+  const handleDelete = async (linkId: string) => {
+    setRemovingIds((prev) => new Set([...prev, linkId]));
+    await onDelete(linkId);
+    // Wait for exit animation to complete
+    setTimeout(() => {
+      setRemovingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(linkId);
+        return next;
+      });
+    }, 500);
+  };
+
+  if (localLinks.length === 0 && !isLoading) {
     return <EmptyLinkList />;
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="max-w-3xl mx-auto space-y-6">
-        {links.map((link) => (
-          <LinkCard
-            key={link.id}
-            link={link}
-            isVoted={!!link.hasVoted}
-            isOwner={user ? link.createdById === user.id : false}
-            onVote={() => onVote(link.id)}
-            onUnvote={() => onUnvote(link.id)}
-            onComment={() => onComment(link.id)}
-            onEdit={(data) => onEdit({ ...link, ...data })}
-            onDelete={() => onDelete(link.id)}
-          />
-        ))}
-      </div>
+      <motion.div className="max-w-3xl mx-auto" layout>
+        <AnimatePresence mode="popLayout" initial={false}>
+          {localLinks.map((link) => (
+            <motion.div
+              key={link.id}
+              layout="position"
+              initial={
+                !removingIds.has(link.id)
+                  ? { opacity: 0, y: -20, scale: 0.95 }
+                  : false
+              }
+              animate={{
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                transition: {
+                  type: 'spring',
+                  stiffness: 500,
+                  damping: 30,
+                },
+              }}
+              exit={{
+                opacity: 0,
+                scale: 0.95,
+                y: -20,
+                transition: {
+                  duration: 0.2,
+                },
+              }}
+              className="mb-6"
+            >
+              <LinkCard
+                link={link}
+                isVoted={!!link.hasVoted}
+                isOwner={user ? link.createdById === user.id : false}
+                onVote={() => onVote(link.id)}
+                onUnvote={() => onUnvote(link.id)}
+                onComment={() => onComment(link.id)}
+                onEdit={(data) => onEdit({ ...link, ...data })}
+                onDelete={() => handleDelete(link.id)}
+                isRemoving={removingIds.has(link.id)}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 }

@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { fr } from '@/app/translations/fr';
 import { FormattedLink } from '@/app/types/link';
 import {
@@ -11,6 +10,8 @@ import {
   TrashIcon,
   UserGroupIcon,
 } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
+import React from 'react';
 import SafeImage from '../ui/SafeImage';
 import CommentModal from './CommentModal';
 import EditLinkModal from './EditLinkModal';
@@ -19,10 +20,11 @@ type LinkCardProps = {
   link: FormattedLink;
   isVoted: boolean;
   isOwner: boolean;
+  isRemoving?: boolean;
   onVote: () => Promise<void>;
   onUnvote: () => Promise<void>;
   onComment: (content: string) => Promise<void>;
-  onEdit: (data: any) => Promise<void>;
+  onEdit: (data: Partial<FormattedLink>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 };
 
@@ -30,6 +32,7 @@ export default function LinkCard({
   link,
   isVoted,
   isOwner,
+  isRemoving = false,
   onVote,
   onUnvote,
   onComment,
@@ -67,8 +70,20 @@ export default function LinkCard({
 
   return (
     <>
-      <article className="relative rounded-xl">
-        <div className="relative">
+      <motion.article
+        className="relative rounded-xl"
+        animate={{
+          opacity: isRemoving ? 0.5 : 1,
+          scale: isRemoving ? 0.98 : 1,
+          filter: isRemoving ? 'blur(2px)' : 'blur(0px)',
+        }}
+        transition={{ duration: 0.2 }}
+      >
+        <motion.div
+          className="relative"
+          whileHover={!isRemoving && { scale: 1.01 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+        >
           <div className="rounded-lg bg-[#1e1e38]/80 backdrop-blur-md shadow-sm ring-1 ring-purple-500/20 overflow-hidden">
             {/* Main Content Area */}
             <div className="p-4">
@@ -95,20 +110,24 @@ export default function LinkCard({
 
                 {isOwner && (
                   <div className="flex items-center gap-1">
-                    <button
+                    <motion.button
                       onClick={() => setShowEditModal(true)}
                       className="p-1.5 text-gray-400 hover:text-purple-400 hover:bg-purple-500/10 rounded-lg transition-colors"
                       title={fr.common.edit}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
                     >
-                      <PencilIcon className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => onDelete(link.id)}
+                      <PencilIcon className="w-4 h-4" />
+                    </motion.button>
+                    <motion.button
+                      onClick={onDelete}
                       className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                       title={fr.common.delete}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
                     >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
+                      <TrashIcon className="w-4 h-4" />
+                    </motion.button>
                   </div>
                 )}
               </div>
@@ -161,9 +180,11 @@ export default function LinkCard({
                         : 'text-gray-400 hover:bg-purple-500/10 hover:text-purple-400'
                     }`}
                   >
-                    <ArrowUpIcon 
+                    <ArrowUpIcon
                       className={`h-4 w-4 transition-transform ${
-                        isVoted ? 'text-purple-400 transform -translate-y-0.5' : ''
+                        isVoted
+                          ? 'text-purple-400 transform -translate-y-0.5'
+                          : ''
                       }`}
                     />
                     <span>{link.votes}</span>
@@ -173,7 +194,7 @@ export default function LinkCard({
                       </span>
                     )}
                   </button>
-                  
+
                   <button
                     onClick={() => {
                       setShowCommentModal(true);
@@ -195,9 +216,9 @@ export default function LinkCard({
                           <div
                             key={voter.id}
                             className="relative"
-                            style={{ 
+                            style={{
                               zIndex: 3 - index,
-                              marginLeft: index === 0 ? '0' : '-8px'
+                              marginLeft: index === 0 ? '0' : '-8px',
                             }}
                           >
                             <SafeImage
@@ -210,11 +231,13 @@ export default function LinkCard({
                           </div>
                         ))}
                         {link.voters.length > 3 && (
-                          <div 
+                          <div
                             className="relative flex items-center justify-center h-6 w-6 -ml-2 rounded-full bg-purple-500/20 ring-2 ring-[#1e1e38] transition-all duration-300 ease-out group-hover:ring-purple-500/30"
                             style={{ zIndex: 0 }}
                           >
-                            <span className="text-xs text-purple-400">+{link.voters.length - 3}</span>
+                            <span className="text-xs text-purple-400">
+                              +{link.voters.length - 3}
+                            </span>
                           </div>
                         )}
 
@@ -225,14 +248,16 @@ export default function LinkCard({
                               <UserGroupIcon className="h-4 w-4 text-purple-400" />
                               <span>{fr.common.voters}</span>
                             </div>
-                            <span className="text-purple-400">{link.voters.length}</span>
+                            <span className="text-purple-400">
+                              {link.voters.length}
+                            </span>
                           </div>
                           <div className="py-1 max-h-48 overflow-y-auto">
                             {link.voters.map((voter, index) => (
-                              <div 
-                                key={voter.id} 
+                              <div
+                                key={voter.id}
                                 className="flex items-center gap-2 mx-1 px-2 py-1.5 rounded-md hover:bg-purple-500/10 transition-colors"
-                                style={{ 
+                                style={{
                                   animationDelay: `${index * 30}ms`,
                                 }}
                               >
@@ -243,7 +268,9 @@ export default function LinkCard({
                                   height={20}
                                   className="rounded-full ring-1 ring-purple-500/20"
                                 />
-                                <span className="text-xs text-gray-300 font-medium">{voter.name}</span>
+                                <span className="text-xs text-gray-300 font-medium">
+                                  {voter.name}
+                                </span>
                               </div>
                             ))}
                           </div>
@@ -255,15 +282,15 @@ export default function LinkCard({
               </div>
             </div>
           </div>
-        </div>
-      </article>
+        </motion.div>
+      </motion.article>
 
       {showEditModal && (
         <EditLinkModal
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
           onSubmit={async (title, description) => {
-            await onEdit(link.id, { title, description });
+            await onEdit({ title, description });
             setShowEditModal(false);
           }}
           link={link}

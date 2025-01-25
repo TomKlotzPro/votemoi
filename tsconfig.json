@@ -22,7 +22,7 @@
       "@/*": ["./app/*", "./*"]
     },
     "baseUrl": ".",
-    "types": ["node", "jest"],
+    "types": ["node"],
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true
   },

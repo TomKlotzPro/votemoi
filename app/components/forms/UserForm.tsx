@@ -1,16 +1,10 @@
 'use client';
 
+import { AVATAR_OPTIONS } from '@/app/constants/avatars';
 import { fr } from '@/app/translations/fr';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import { useState } from 'react';
-
-const AVATAR_OPTIONS = [
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=monkey1&backgroundColor=b6e3f4',
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=monkey2&backgroundColor=ffdfbf',
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=monkey3&backgroundColor=c0aede',
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=monkey4&backgroundColor=ffd5dc',
-];
+import SafeImage from '../ui/SafeImage';
 
 type UserFormProps = {
   initialData?: {
@@ -51,7 +45,7 @@ export default function UserForm({
       <div>
         <label
           htmlFor="name"
-          className="block text-sm font-medium text-gray-300 mb-1"
+          className="block text-sm font-medium text-gray-200 mb-2"
         >
           {fr.users.name}
         </label>
@@ -60,14 +54,14 @@ export default function UserForm({
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full px-4 py-2 bg-[#2a2a4e] border border-purple-500/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           placeholder={fr.users.namePlaceholder}
-          disabled={loading}
+          required
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-gray-200 mb-4">
           {fr.users.selectAvatar}
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -75,64 +69,41 @@ export default function UserForm({
             <motion.button
               key={avatar}
               type="button"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setSelectedAvatar(avatar)}
-              className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+              className={`relative p-2 rounded-lg ${
                 selectedAvatar === avatar
-                  ? 'border-purple-500'
-                  : 'border-transparent hover:border-purple-500/50'
+                  ? 'bg-purple-500/20 ring-2 ring-purple-500'
+                  : 'bg-white/5 hover:bg-white/10'
               }`}
-              initial={{ scale: 1 }}
-              whileHover={{
-                scale: 1.05,
-                transition: { duration: 0.2 },
-              }}
-              whileTap={{
-                scale: 0.95,
-                transition: { duration: 0.1 },
-              }}
-              animate={{
-                scale: selectedAvatar === avatar ? 1.05 : 1,
-                boxShadow:
-                  selectedAvatar === avatar
-                    ? '0 10px 30px -10px rgba(168, 85, 247, 0.5)'
-                    : 'none',
-                transition: {
-                  type: 'spring',
-                  stiffness: 300,
-                  damping: 20,
-                },
-              }}
-              disabled={loading}
             >
-              <Image
+              <SafeImage
                 src={avatar}
-                alt={fr.users.avatarAlt}
-                fill
-                className="object-cover"
+                alt="Avatar option"
+                width={64}
+                height={64}
+                className="rounded-lg"
               />
             </motion.button>
           ))}
         </div>
       </div>
 
-      <div className="flex justify-end space-x-3">
+      <div className="flex justify-end space-x-4">
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all transform hover:scale-105 shadow-lg shadow-gray-500/30"
+          className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors"
         >
           {fr.common.cancel}
         </button>
         <button
           type="submit"
-          disabled={!name.trim() || loading}
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          disabled={loading}
+          className="px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading
-            ? fr.common.loading
-            : initialData
-              ? fr.common.update
-              : fr.common.create}
+          {loading ? fr.common.loading : fr.common.save}
         </button>
       </div>
     </form>

@@ -1,13 +1,15 @@
-import React from 'react';
 import ClientLayout from '@/app/components/layout/ClientLayout';
 import Navigation from '@/app/components/layout/Navigation';
 import { Providers } from '@/app/components/providers/Providers';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import React from 'react';
+import { Toaster } from 'react-hot-toast';
+import AvatarPreloader from './components/ui/AvatarPreloader';
+import LinkPreloader from './components/ui/LinkPreloader';
 import './globals.css';
 import { preloadAvatars } from './utils/image-preloader';
-import AvatarPreloader from './components/ui/AvatarPreloader';
-import { Toaster } from 'react-hot-toast';
+import { preloadLinks } from './utils/link-preloader';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -17,9 +19,10 @@ export const metadata: Metadata = {
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  // Preload avatar images on initial render
+  // Preload avatar images and links on initial render
   if (typeof window !== 'undefined') {
     preloadAvatars();
+    preloadLinks();
   }
 
   return (
@@ -27,6 +30,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <body className={`${inter.className} bg-black`} suppressHydrationWarning>
         <Providers>
           <AvatarPreloader />
+          <LinkPreloader />
           <ClientLayout>
             {/* Synthwave sun */}
             <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gradient-radial from-purple-500 via-transparent to-transparent opacity-20 blur-3xl" />
@@ -56,7 +60,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       padding: '0.75rem 1rem',
                       backdropFilter: 'blur(8px)',
                       fontSize: '0.875rem',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                      boxShadow:
+                        '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
                       maxWidth: '380px',
                     },
                     success: {

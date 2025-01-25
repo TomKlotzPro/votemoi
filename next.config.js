@@ -13,19 +13,17 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '*',
-        pathname: '/**',
+        hostname: 'api.dicebear.com',
+        pathname: '/7.x/**',
       },
     ],
   },
   experimental: {
-    serverActions: {
-      bodySizeLimit: '2mb',
-    },
+    serverActions: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;

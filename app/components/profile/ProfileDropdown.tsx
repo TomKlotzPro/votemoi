@@ -7,7 +7,7 @@ import { fr } from '@/app/translations/fr';
 import { FormattedUser } from '@/app/types/user';
 import { Transition } from '@headlessui/react';
 import { CheckIcon } from '@heroicons/react/24/outline';
-import { Fragment, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import SafeImage from '../ui/SafeImage';
 
 interface ProfileDropdownProps {
@@ -18,9 +18,14 @@ export default function ProfileDropdown({ onClose }: ProfileDropdownProps) {
   const { user, setUser } = useUser();
   const { users, updateUser } = useUsers();
   const [name, setName] = useState(user?.name || '');
-  const [selectedAvatar, setSelectedAvatar] = useState(user?.avatarUrl || AVATAR_OPTIONS[0]);
+  const [selectedAvatar, setSelectedAvatar] = useState(
+    user?.avatarUrl || AVATAR_OPTIONS[0]
+  );
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Only show first 18 avatars in the dropdown to avoid clutter
+  const displayedAvatars = useMemo(() => AVATAR_OPTIONS.slice(0, 18), []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,12 +56,13 @@ export default function ProfileDropdown({ onClose }: ProfileDropdownProps) {
 
       const updatedUser = await updateUser(user.id, {
         name: trimmedName,
-        avatarUrl: selectedAvatar,
+        imageUrl: selectedAvatar,
       });
 
       setUser(updatedUser as FormattedUser);
       onClose();
-    } catch (err) {
+    } catch (error) {
+      console.error('Failed to update profile:', error);
       setError(fr.errors.generic);
       setIsSubmitting(false);
     }
@@ -103,7 +109,7 @@ export default function ProfileDropdown({ onClose }: ProfileDropdownProps) {
 
             {/* Avatar Grid */}
             <div className="grid grid-cols-6 gap-1 p-1.5 rounded-md bg-black/20">
-              {AVATAR_OPTIONS.map((avatar) => (
+              {displayedAvatars.map((avatar) => (
                 <button
                   key={avatar}
                   type="button"
@@ -114,7 +120,7 @@ export default function ProfileDropdown({ onClose }: ProfileDropdownProps) {
                     hover:scale-105 hover:shadow-lg hover:z-10
                     ${
                       selectedAvatar === avatar
-                        ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-black scale-105 rotate-3'
+                        ? 'ring-2 ring-purple-500 ring-offset-1 ring-offset-black scale-105'
                         : 'ring-1 ring-white/10 hover:ring-white/30'
                     }
                   `}
@@ -132,48 +138,31 @@ export default function ProfileDropdown({ onClose }: ProfileDropdownProps) {
                   />
                   {selectedAvatar === avatar && (
                     <div className="absolute inset-0 flex items-center justify-center bg-purple-500/20 backdrop-blur-sm">
-                      <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center">
-                        <svg
-                          className="w-4 h-4 text-white"
-                          fill="none"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
+                      <CheckIcon className="w-4 h-4 text-white" />
                     </div>
                   )}
                 </button>
               ))}
             </div>
 
-            {error && (
-              <p className="text-red-500 text-xs px-1.5" role="alert">
-                {error}
-              </p>
-            )}
+            {/* Error Message */}
+            {error && <p className="text-xs text-red-400 px-1.5">{error}</p>}
 
-            <div className="flex justify-end gap-1 pt-1.5 mt-1 border-t border-purple-500/10">
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-1 pt-1">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-2.5 py-1.5 text-xs text-gray-400 hover:text-white transition-colors rounded-md hover:bg-white/5"
+                className="px-2.5 py-1.5 text-xs text-white/70 hover:text-white transition-colors"
               >
                 {fr.common.cancel}
               </button>
               <button
                 type="submit"
-                className="relative px-2.5 py-1.5 text-xs bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 rounded-md text-white font-medium shadow-sm disabled:opacity-50 transition-all duration-200 overflow-hidden group"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !name.trim()}
+                className="px-2.5 py-1.5 text-xs bg-purple-500/20 text-purple-300 rounded-md hover:bg-purple-500/30 hover:text-purple-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span className="relative z-10">
-                  {isSubmitting ? fr.common.saving : fr.common.save}
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-400/0 via-white/20 to-pink-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                {isSubmitting ? fr.common.saving : fr.common.save}
               </button>
             </div>
           </form>
