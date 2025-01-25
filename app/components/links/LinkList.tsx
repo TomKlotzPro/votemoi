@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import EmptyLinkList from './EmptyLinkList';
 import LinkCard from './LinkCard';
+import LinkCardSkeleton from './LinkCardSkeleton';
 
 type LinkListProps = {
   links: FormattedLink[];
@@ -18,6 +19,36 @@ type LinkListProps = {
   onDelete: (linkId: string) => Promise<void>;
 };
 
+const container = {
+  hidden: { opacity: 1 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: 'spring',
+      stiffness: 300,
+      damping: 25,
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -20,
+    transition: {
+      duration: 0.2,
+    },
+  },
+};
+
 export default function LinkList({
   links,
   isLoading,
@@ -28,36 +59,26 @@ export default function LinkList({
   onEdit,
   onDelete,
 }: LinkListProps) {
-  // Keep a local copy of links to handle smooth transitions
   const [localLinks, setLocalLinks] = useState(links);
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
+  const [showEmpty, setShowEmpty] = useState(links.length === 0 && !isLoading);
 
-  // Update local links when props change, but only if not removing items
   useEffect(() => {
-    if (!isLoading) {
-      const newLinks = links.filter((link) => !removingIds.has(link.id));
-      setLocalLinks((prevLinks) => {
-        // Keep items being removed in the list
-        const removedLinks = prevLinks.filter((link) =>
-          removingIds.has(link.id)
-        );
-        // Add new links at the beginning
-        const addedLinks = newLinks.filter(
-          (newLink) => !prevLinks.some((oldLink) => oldLink.id === newLink.id)
-        );
-        // Keep existing links in their current order
-        const existingLinks = newLinks.filter((newLink) =>
-          prevLinks.some((oldLink) => oldLink.id === newLink.id)
-        );
-        return [...addedLinks, ...existingLinks, ...removedLinks];
-      });
+    if (isLoading) return;
+
+    const newLinks = links.filter((link) => !removingIds.has(link.id));
+    setLocalLinks(newLinks);
+
+    if (newLinks.length === 0) {
+      setTimeout(() => setShowEmpty(true), 300);
+    } else {
+      setShowEmpty(false);
     }
   }, [links, isLoading, removingIds]);
 
   const handleDelete = async (linkId: string) => {
     setRemovingIds((prev) => new Set([...prev, linkId]));
     await onDelete(linkId);
-    // Wait for exit animation to complete
     setTimeout(() => {
       setRemovingIds((prev) => {
         const next = new Set(prev);
@@ -67,42 +88,61 @@ export default function LinkList({
     }, 500);
   };
 
-  if (localLinks.length === 0 && !isLoading) {
-    return <EmptyLinkList />;
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-3xl mx-auto space-y-6">
+          {[...Array(3)].map((_, i) => (
+            <motion.div
+              key={`skeleton-${i}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+            >
+              <LinkCardSkeleton />
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (showEmpty) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <motion.div
+          className="max-w-3xl mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
+        >
+          <EmptyLinkList />
+        </motion.div>
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <motion.div className="max-w-3xl mx-auto" layout>
-        <AnimatePresence mode="popLayout" initial={false}>
+      <motion.div
+        className="max-w-3xl mx-auto space-y-6"
+        variants={container}
+        initial="hidden"
+        animate="show"
+      >
+        <AnimatePresence mode="popLayout">
           {localLinks.map((link) => (
             <motion.div
               key={link.id}
-              layout="position"
-              initial={
-                !removingIds.has(link.id)
-                  ? { opacity: 0, y: -20, scale: 0.95 }
-                  : false
+              variants={item}
+              initial="hidden"
+              animate="show"
+              exit="exit"
+              layout
+              className={
+                removingIds.has(link.id) ? 'pointer-events-none opacity-50' : ''
               }
-              animate={{
-                opacity: 1,
-                y: 0,
-                scale: 1,
-                transition: {
-                  type: 'spring',
-                  stiffness: 500,
-                  damping: 30,
-                },
-              }}
-              exit={{
-                opacity: 0,
-                scale: 0.95,
-                y: -20,
-                transition: {
-                  duration: 0.2,
-                },
-              }}
-              className="mb-6"
             >
               <LinkCard
                 link={link}
