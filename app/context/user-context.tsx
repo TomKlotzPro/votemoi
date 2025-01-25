@@ -20,7 +20,7 @@ type UserContextType = {
   isAuthFormVisible: boolean;
   isLoading: boolean;
   logout: () => void;
-}
+};
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 

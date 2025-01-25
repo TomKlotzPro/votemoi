@@ -7,7 +7,7 @@ type AnimatedAvatarProps = {
   src: string;
   alt: string;
   className?: string;
-}
+};
 
 export default function AnimatedAvatar({
   src,

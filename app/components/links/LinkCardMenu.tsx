@@ -4,7 +4,7 @@ import { Fragment } from 'react';
 
 type LinkCardMenuProps = {
   onDelete: () => Promise<void>;
-}
+};
 
 export default function LinkCardMenu({ onDelete }: LinkCardMenuProps) {
   return (

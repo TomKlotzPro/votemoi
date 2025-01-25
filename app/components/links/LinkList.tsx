@@ -1,9 +1,7 @@
 'use client';
 
-import { fr } from '@/app/translations/fr';
 import { Link } from '@/app/types/link';
 import { User } from '@/app/types/user';
-import { PlusIcon } from '@heroicons/react/24/outline';
 import EmptyLinkList from './EmptyLinkList';
 import LinkCard from './LinkCard';
 
@@ -16,7 +14,7 @@ type LinkListProps = {
   onComment: (linkId: string) => void;
   onEdit: (link: Link) => Promise<void>;
   onDelete: (linkId: string) => Promise<void>;
-}
+};
 
 export default function LinkList({
   links,
@@ -57,7 +55,7 @@ export default function LinkList({
           <LinkCard
             key={link.id}
             link={link}
-            isVoted={user ? link.votedByUsers.includes(user.id) : false}
+            isVoted={!!link.hasVoted}
             isOwner={user ? link.createdById === user.id : false}
             onVote={() => onVote(link.id)}
             onUnvote={() => onUnvote(link.id)}

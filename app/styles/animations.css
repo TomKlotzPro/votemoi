@@ -1,0 +1,15 @@
+@keyframes shine {
+  0% {
+    background: radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 0%);
+  }
+  50% {
+    background: radial-gradient(circle at center, rgba(255,255,255,0.1) 50%, transparent 100%);
+  }
+  100% {
+    background: radial-gradient(circle at center, rgba(255,255,255,0) 100%, transparent 100%);
+  }
+}
+
+.animate-shine {
+  animation: shine 0.6s ease-out;
+}

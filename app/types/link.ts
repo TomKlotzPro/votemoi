@@ -14,8 +14,7 @@ export interface Link {
   updatedAt: Date;
   createdById: string;
   createdBy: User;
-  voteCount: number;
-  votedByUsers: string[];
+  votes: Vote[];
   comments: Comment[];
   hasVoted?: boolean;
 }
@@ -64,8 +63,7 @@ export type FormattedLink = {
   createdAt: string;
   updatedAt: string;
   comments: FormattedComment[];
-  voteCount: number;
-  votedByUsers: string[];
+  votes: number;
   hasVoted?: boolean;
   user: {
     id: string;

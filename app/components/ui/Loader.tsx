@@ -3,7 +3,7 @@
 type LoaderProps = {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
-}
+};
 
 export default function Loader({ size = 'md', className = '' }: LoaderProps) {
   const sizeClasses = {

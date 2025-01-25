@@ -5,7 +5,7 @@ import { useState } from 'react';
 type UrlListProps = {
   onUrlSelect?: (url: { id: string; url: string; title?: string }) => void;
   selectedUrlId?: string;
-}
+};
 
 export default function UrlList({ onUrlSelect, selectedUrlId }: UrlListProps) {
   const { urls, loading, error, addUrl } = useUrls();

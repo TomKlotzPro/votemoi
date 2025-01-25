@@ -55,8 +55,7 @@ const formatLink = (link: Link & {
       avatarUrl: comment.user?.avatarUrl || null,
     },
   })),
-  voteCount: (link.votes || []).length,
-  votedByUsers: (link.votes || []).map(vote => vote.user?.id || ''),
+  votes: (link.votes || []).length,
   hasVoted: link.hasVoted ?? false,
   user: {
     id: link.createdById,

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { createUser, getUsers } from '../actions/users';
 import { FormattedUser } from '../types/user';
 
-export function useUsers() {
+export function useUsersQuery() {
   const [users, setUsers] = useState<FormattedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -9,7 +9,7 @@ type VotersModalProps = {
   isOpen: boolean;
   onClose: () => void;
   votes: Vote[];
-}
+};
 
 export default function VotersModal({
   isOpen,

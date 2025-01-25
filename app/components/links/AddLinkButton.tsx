@@ -13,7 +13,7 @@ type AddLinkButtonProps = {
     title?: string;
     description?: string;
   }) => Promise<void> | null;
-}
+};
 
 export default function AddLinkButton({ onAdd }: AddLinkButtonProps) {
   const [showAuthForm, setShowAuthForm] = useState(false);

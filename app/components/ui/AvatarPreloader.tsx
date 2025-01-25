@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
 type AvatarPreloaderProps = {
   avatars: string[];
   onLoad?: () => void;
-}
+};
 
 export default function AvatarPreloader({
   avatars,

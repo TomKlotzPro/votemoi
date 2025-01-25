@@ -8,7 +8,7 @@ import { persist } from 'zustand/middleware';
 type UserState = {
   user: User | null;
   isAuthFormVisible: boolean;
-}
+};
 
 type UserActions = {
   setUser: (user: User | null) => void;
@@ -16,7 +16,7 @@ type UserActions = {
   showAuthForm: () => void;
   hideAuthForm: () => void;
   logout: () => void;
-}
+};
 
 export const createUserStore = () =>
   create<UserState & UserActions>()(

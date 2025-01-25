@@ -9,7 +9,17 @@ import { useLinks } from './hooks/useLinks';
 import { fr } from './translations/fr';
 
 export default function Home() {
-  const { links, error, isLoading, addLink, vote, unvote, deleteLink, updateLink, addComment } = useLinks();
+  const {
+    links,
+    error,
+    isLoading,
+    addLink,
+    vote,
+    unvote,
+    deleteLink,
+    updateLink,
+    addComment,
+  } = useLinks();
   const { user, setUser } = useUser();
   const [showAuthForm, setShowAuthForm] = useState(false);
 

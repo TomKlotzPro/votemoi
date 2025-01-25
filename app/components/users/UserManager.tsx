@@ -9,7 +9,7 @@ import UserList from './UserList';
 type UserManagerProps = {
   onUserSelect?: (user: FormattedUser) => void;
   selectedUserId?: string;
-}
+};
 
 export default function UserManager({
   onUserSelect,

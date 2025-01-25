@@ -5,7 +5,7 @@ import { useState } from 'react';
 type TooltipProps = {
   content: string;
   children: React.ReactNode;
-}
+};
 
 export function Tooltip({ content, children }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);

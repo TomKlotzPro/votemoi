@@ -5,7 +5,7 @@ import SafeImage from '../ui/SafeImage';
 
 type LinkCommentsProps = {
   comments: Comment[];
-}
+};
 
 export default function LinkComments({ comments }: LinkCommentsProps) {
   return (

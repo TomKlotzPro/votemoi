@@ -5,7 +5,7 @@ import UrlList from './UrlList';
 type UrlManagerProps = {
   onUrlSelect?: (url: { id: string; url: string; title?: string }) => void;
   selectedUrlId?: string;
-}
+};
 
 export default function UrlManager({
   onUrlSelect,

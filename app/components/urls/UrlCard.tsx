@@ -9,7 +9,7 @@ import { Tooltip } from '../common/Tooltip';
 
 type UrlCardProps = {
   url: Url;
-}
+};
 
 export default function UrlCard({ url }: UrlCardProps) {
   const { user } = useUser();

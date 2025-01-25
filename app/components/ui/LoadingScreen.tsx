@@ -7,7 +7,7 @@ import AvatarPreloader from './AvatarPreloader';
 
 type LoadingScreenProps = {
   onLoadingComplete: () => void;
-}
+};
 
 export default function LoadingScreen({
   onLoadingComplete,

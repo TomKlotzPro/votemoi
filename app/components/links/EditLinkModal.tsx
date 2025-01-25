@@ -1,7 +1,7 @@
 'use client';
 
 import { fr } from '@/app/translations/fr';
-import { FormattedLink, Link } from '@/app/types/link';
+import { FormattedLink } from '@/app/types/link';
 import { useState } from 'react';
 import UrlForm from '../forms/UrlForm';
 
@@ -13,7 +13,7 @@ type EditLinkModalProps = {
     description?: string;
     url?: string;
   }) => Promise<void>;
-}
+};
 
 export default function EditLinkModal({
   link,

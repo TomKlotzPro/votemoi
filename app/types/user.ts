@@ -40,14 +40,14 @@ type Link = {
   createdAt: string;
   updatedAt: string;
   createdById: string;
-}
+};
 
 type Vote = {
   id: string;
   createdAt: string;
   userId: string;
   linkId: string;
-}
+};
 
 type Comment = {
   id: string;
@@ -56,4 +56,4 @@ type Comment = {
   updatedAt: string;
   userId: string;
   linkId: string;
-}
+};

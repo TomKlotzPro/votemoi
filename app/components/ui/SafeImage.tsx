@@ -26,11 +26,10 @@ export default function SafeImage({
   const imageSource = error ? fallbackSrc : src;
 
   return (
-    <div className={`relative ${className}`} style={{ minWidth: width, minHeight: height }}>
-      {!loaded && (
+    <div className="relative" style={{ width, height }}>
+      {!loaded && !error && (
         <div
-          className="absolute inset-0 bg-gray-800 animate-pulse rounded-lg"
-          style={{ width: '100%', height: '100%' }}
+          className={`absolute inset-0 ${className} bg-gray-200 animate-pulse`}
         />
       )}
       <Image
@@ -38,14 +37,16 @@ export default function SafeImage({
         alt={alt}
         width={width}
         height={height}
-        className={loaded ? className : 'opacity-0'}
+        className={`${className} transition-opacity duration-300 ${
+          loaded ? 'opacity-100' : 'opacity-0'
+        }`}
         onError={() => {
           console.error(`Failed to load image: ${src}`);
           setError(true);
           setLoaded(true);
         }}
         onLoad={() => setLoaded(true)}
-        unoptimized={imageSource.startsWith('data:') || imageSource.startsWith('blob:')}
+        unoptimized={imageSource.startsWith('data:')}
       />
     </div>
   );

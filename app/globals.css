@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import './styles/animations.css';
+
 :root {
   --primary: #8b3dff;
   --primary-light: #a366ff;

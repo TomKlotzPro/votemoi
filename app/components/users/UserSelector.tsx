@@ -11,7 +11,7 @@ type UserSelectorProps = {
   users: FormattedUser[];
   selectedUser: FormattedUser | null;
   onSelect: (user: FormattedUser) => void;
-}
+};
 
 export default function UserSelector({
   users,

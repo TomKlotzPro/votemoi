@@ -11,7 +11,7 @@ type CreateLinkFormProps = {
     title?: string;
     description?: string;
   }) => Promise<void>;
-}
+};
 
 export default function CreateLinkForm({ onSubmit }: CreateLinkFormProps) {
   const [url, setUrl] = useState('');

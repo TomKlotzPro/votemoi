@@ -15,7 +15,7 @@ type LinkFormModalProps = {
   }) => Promise<void>;
   initialData?: Link;
   mode: 'create' | 'edit';
-}
+};
 
 export default function LinkFormModal({
   isOpen,

@@ -8,7 +8,7 @@ type UserListProps = {
   users: FormattedUser[];
   onUserSelect?: (user: FormattedUser) => void;
   selectedUserId?: string;
-}
+};
 
 export default function UserList({
   users,

@@ -8,7 +8,7 @@ type UserCardProps = {
   user: FormattedUser;
   onClick?: (user: FormattedUser) => void;
   isSelected?: boolean;
-}
+};
 
 export default function UserCard({ user, onClick, isSelected }: UserCardProps) {
   return (

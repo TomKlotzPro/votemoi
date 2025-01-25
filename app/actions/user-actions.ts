@@ -8,12 +8,12 @@ import { revalidatePath } from 'next/cache';
 type CreateUserData = {
   name: string;
   avatarUrl: string;
-}
+};
 
 type UpdateUserData = {
   name: string;
   avatarUrl: string;
-}
+};
 
 type Link = {
   id: string;
@@ -28,7 +28,7 @@ type Link = {
   createdAt: Date;
   updatedAt: Date;
   createdById: string;
-}
+};
 
 type Comment = {
   id: string;
@@ -37,7 +37,7 @@ type Comment = {
   updatedAt: Date;
   userId: string;
   linkId: string;
-}
+};
 
 export async function getUsers(): Promise<User[]> {
   try {

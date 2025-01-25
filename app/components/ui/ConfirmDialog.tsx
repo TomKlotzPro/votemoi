@@ -13,7 +13,7 @@ type ConfirmDialogProps = {
   confirmText: string;
   cancelText: string;
   type?: 'danger' | 'warning' | 'info';
-}
+};
 
 export default function ConfirmDialog({
   isOpen,

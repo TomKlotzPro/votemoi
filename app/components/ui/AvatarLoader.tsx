@@ -7,7 +7,7 @@ type AvatarLoaderProps = {
   user?: User;
   size?: 'xs' | 'sm' | 'md' | 'lg';
   className?: string;
-}
+};
 
 export default function AvatarLoader({
   user,

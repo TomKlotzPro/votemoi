@@ -1,7 +1,7 @@
 type ErrorMessageProps = {
   message: string;
   className?: string;
-}
+};
 
 export default function ErrorMessage({
   message,

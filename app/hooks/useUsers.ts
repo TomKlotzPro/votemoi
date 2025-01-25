@@ -27,7 +27,7 @@ type UseUsersReturn = {
   ) => Promise<FormattedUser>;
   deleteUser: (id: string) => Promise<void>;
   signOut: () => Promise<void>;
-}
+};
 
 export function useUsers(): UseUsersReturn {
   const [users, setUsers] = useState<FormattedUser[]>([]);

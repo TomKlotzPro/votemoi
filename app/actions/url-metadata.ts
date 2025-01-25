@@ -8,7 +8,7 @@ type URLMetadata = {
   image: (string & { startsWith?: (prefix: string) => boolean }) | null;
   favicon: (string & { startsWith?: (prefix: string) => boolean }) | null;
   siteName: (string & { startsWith?: (prefix: string) => boolean }) | null;
-}
+};
 
 async function fetchWithTimeout(
   url: string,

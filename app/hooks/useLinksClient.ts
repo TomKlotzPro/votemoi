@@ -17,7 +17,7 @@ type UseLinksClientReturn = {
   deleteLink: (id: string) => Promise<void>;
   voteForLink: (linkId: string) => Promise<void>;
   unvoteForLink: (linkId: string) => Promise<void>;
-}
+};
 
 export function useLinksClient(): UseLinksClientReturn {
   const [links, setLinks] = useState<FormattedLink[]>([]);

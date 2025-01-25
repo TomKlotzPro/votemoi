@@ -10,7 +10,7 @@ type UseUrlsReturn = {
   updateUrl: (id: string, data: { url: string }) => Promise<Url>;
   deleteUrl: (id: string) => Promise<void>;
   voteForUrl: (id: string) => Promise<void>;
-}
+};
 
 export function useUrls(): UseUrlsReturn {
   const [urls, setUrls] = useState<Url[]>([]);

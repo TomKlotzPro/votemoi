@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 type AnimatedTextProps = {
   text: string;
   className?: string;
-}
+};
 
 export default function AnimatedText({ text, className }: AnimatedTextProps) {
   return (
