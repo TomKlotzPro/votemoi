@@ -111,8 +111,16 @@ export function useLinks() {
         });
 
         if (result.error) {
-          setError(result.error);
-          throw new Error(result.error);
+          if (result.error === 'Link not found') {
+            setError(fr.errors.linkNotFound);
+            throw new Error(fr.errors.linkNotFound);
+          } else if (result.error === 'Not authorized') {
+            setError(fr.errors.unauthorized);
+            throw new Error(fr.errors.unauthorized);
+          } else {
+            setError(fr.errors.failedToUpdateLink);
+            throw new Error(fr.errors.failedToUpdateLink);
+          }
         }
 
         if (!result.link) {
@@ -127,7 +135,11 @@ export function useLinks() {
 
         setIsLoading(false);
       } catch (error) {
-        setError(fr.errors.failedToUpdateLink);
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError(fr.errors.failedToUpdateLink);
+        }
         throw error;
       } finally {
         setIsLoading(false);

@@ -61,10 +61,12 @@ export default function Home() {
           title: link.title,
           description: link.description || undefined,
         });
-        showToast('Lien mis à jour avec succès', 'success');
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        showToast(fr.common.success, 'success');
       } catch (error) {
-        showToast('Impossible de mettre à jour le lien', 'error');
+        showToast(
+          error instanceof Error ? error.message : fr.errors.failedToUpdateLink,
+          'error'
+        );
       }
     }
   };
