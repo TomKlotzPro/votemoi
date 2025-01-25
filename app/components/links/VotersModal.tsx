@@ -3,6 +3,7 @@
 import { Vote } from '@/app/types/link';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { AnimatePresence, motion } from 'framer-motion';
+import AnimatedBackground from '../ui/AnimatedBackground';
 import SafeImage from '../ui/SafeImage';
 
 type VotersModalProps = {
@@ -26,32 +27,34 @@ export default function VotersModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
-          />
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+          >
+            <AnimatedBackground />
+          </motion.div>
 
           {/* Modal */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-black/80 backdrop-blur-md rounded-xl p-6 z-50 border border-white/10"
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-gradient-to-br from-[#1e1e38]/90 to-[#2d1b69]/90 backdrop-blur-md rounded-xl shadow-2xl border border-purple-500/20 z-50"
           >
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between p-4 border-b border-purple-500/20">
               <h2 className="text-xl font-semibold text-white">
                 {votes.length} {votes.length === 1 ? 'vote' : 'votes'}
               </h2>
               <button
                 onClick={onClose}
-                className="p-1 rounded-lg hover:bg-white/10 transition-colors"
+                className="p-1 rounded-lg hover:bg-purple-500/20 transition-colors"
               >
-                <XMarkIcon className="w-5 h-5 text-white" />
+                <XMarkIcon className="w-6 h-6 text-white/60 hover:text-white" />
               </button>
             </div>
 
             {/* Voters List */}
-            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+            <div className="max-h-[60vh] overflow-y-auto p-4 space-y-3">
               {votes.map((vote, index) => (
                 <motion.div
                   key={vote.user.id}

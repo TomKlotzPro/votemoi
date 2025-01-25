@@ -7,6 +7,7 @@ import React from 'react';
 import { Toaster } from 'react-hot-toast';
 import AvatarPreloader from './components/ui/AvatarPreloader';
 import LinkPreloader from './components/ui/LinkPreloader';
+import SynthwaveBackground from './components/ui/SynthwaveBackground';
 import './globals.css';
 import { preloadAvatars } from './utils/image-preloader';
 import { preloadLinks } from './utils/link-preloader';
@@ -27,14 +28,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className={`${inter.className} bg-black`} suppressHydrationWarning>
+      <body
+        className={`${inter.className} min-h-screen`}
+        suppressHydrationWarning
+      >
         <Providers>
           <AvatarPreloader />
           <LinkPreloader />
+          <SynthwaveBackground />
           <ClientLayout>
-            {/* Synthwave sun */}
-            <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gradient-radial from-purple-500 via-transparent to-transparent opacity-20 blur-3xl" />
-
             {/* Stars */}
             <div className="fixed inset-0 stars" />
 
