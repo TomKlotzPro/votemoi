@@ -3,7 +3,7 @@
 import { useUser } from '@/app/context/user-context';
 import { fr } from '@/app/translations/fr';
 import { Menu, Transition } from '@headlessui/react';
-import { UserCircleIcon } from '@heroicons/react/24/outline';
+import { UserCircleIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Fragment } from 'react';
@@ -24,7 +24,7 @@ export default function Navigation() {
 
           <div className="flex items-center">
             {user ? (
-              <Menu as="div" className="relative">
+              <Menu as="div" className="relative inline-block text-left">
                 <Menu.Button className="flex items-center space-x-3 hover:bg-white/5 rounded-lg px-3 py-2 transition-all duration-200 h-10">
                   <div className="relative w-8 h-8 rounded-full overflow-hidden">
                     {user.avatarUrl ? (
@@ -53,7 +53,7 @@ export default function Navigation() {
                   leaveFrom="transform opacity-100 scale-100"
                   leaveTo="transform opacity-0 scale-95"
                 >
-                  <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-lg border border-purple-500/20 bg-[#1e1e38] shadow-lg backdrop-blur-sm focus:outline-none">
+                  <Menu.Items className="absolute right-0 mt-1 w-56 origin-top-right rounded-lg border border-purple-500/20 bg-[#1e1e38] shadow-lg backdrop-blur-sm focus:outline-none z-50">
                     <div className="p-1">
                       <Menu.Item>
                         {({ active }) => (
@@ -64,9 +64,15 @@ export default function Navigation() {
                               )
                             }
                             className={`${
-                              active ? 'bg-purple-500/10' : ''
-                            } group flex w-full items-center rounded-md px-3 py-2 text-sm text-gray-300 transition-colors duration-200`}
+                              active ? 'bg-purple-500/10 text-primary' : 'text-gray-300'
+                            } group flex w-full items-center rounded-md px-3 py-2 text-sm transition-colors duration-200`}
                           >
+                            <UserCircleIcon 
+                              className={`${
+                                active ? 'text-primary' : 'text-gray-300'
+                              } mr-2 h-5 w-5 transition-colors duration-200`} 
+                              aria-hidden="true"
+                            />
                             {fr.common.editProfile}
                           </button>
                         )}
@@ -76,9 +82,15 @@ export default function Navigation() {
                           <button
                             onClick={() => setUser(null)}
                             className={`${
-                              active ? 'bg-purple-500/10' : ''
-                            } group flex w-full items-center rounded-md px-3 py-2 text-sm text-gray-300 transition-colors duration-200`}
+                              active ? 'bg-purple-500/10 text-red-500' : 'text-gray-300'
+                            } group flex w-full items-center rounded-md px-3 py-2 text-sm transition-colors duration-200`}
                           >
+                            <ArrowRightOnRectangleIcon 
+                              className={`${
+                                active ? 'text-red-500' : 'text-gray-300'
+                              } mr-2 h-5 w-5 transition-colors duration-200`} 
+                              aria-hidden="true"
+                            />
                             {fr.auth.signOut}
                           </button>
                         )}
