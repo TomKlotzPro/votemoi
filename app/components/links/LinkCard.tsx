@@ -38,8 +38,7 @@ export default function LinkCard({
   const [showEditModal, setShowEditModal] = React.useState(false);
 
   const formatDate = (date: Date | string) => {
-    const dateString = date instanceof Date ? date.toISOString() : date;
-    const dateObject = new Date(dateString);
+    const dateObject = typeof date === 'string' ? new Date(date) : date;
     const now = new Date();
     const diffInMinutes = Math.floor(
       (now.getTime() - dateObject.getTime()) / (1000 * 60)
@@ -117,7 +116,7 @@ export default function LinkCard({
                       <PencilIcon className="w-4 h-4" />
                     </motion.button>
                     <motion.button
-                      onClick={onDelete}
+                      onClick={() => onDelete(link.id)}
                       className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                       title={fr.common.delete}
                       whileHover={{ scale: 1.1 }}
