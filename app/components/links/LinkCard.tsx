@@ -1,5 +1,6 @@
 'use client';
 
+import { useUserDataStore } from '@/app/stores/userDataStore';
 import { fr } from '@/app/translations/fr';
 import { FormattedLink } from '@/app/types/link';
 import {
@@ -36,6 +37,24 @@ export default function LinkCard({
   onDelete,
 }: LinkCardProps) {
   const [showEditModal, setShowEditModal] = React.useState(false);
+  const [isUpdating, setIsUpdating] = React.useState(false);
+  const userData = useUserDataStore((state) => state.getUserData(link.user.id));
+  const syncWithUser = useUserDataStore((state) => state.syncWithUser);
+
+  // Sync user data on mount
+  React.useEffect(() => {
+    syncWithUser(link.user);
+  }, [link.user, syncWithUser]);
+
+  // Watch for user data changes
+  const userDataString = JSON.stringify(userData);
+  React.useEffect(() => {
+    if (userData) {
+      setIsUpdating(true);
+      const timer = setTimeout(() => setIsUpdating(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [userDataString]); // React to changes in the stringified user data
 
   const formatDate = (date: Date | string) => {
     const dateObject = typeof date === 'string' ? new Date(date) : date;
@@ -86,17 +105,135 @@ export default function LinkCard({
               {/* Header with User Info and Actions */}
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
-                  <SafeImage
-                    src={link.user.avatarUrl || '/default-avatar.png'}
-                    alt={link.user.name || 'User'}
-                    width={28}
-                    height={28}
-                    className="rounded-full shrink-0"
-                  />
-                  <div className="flex items-center">
-                    <p className="text-white font-medium text-sm">
-                      {link.user.name}
-                    </p>
+                  <motion.div
+                    initial={false}
+                    animate={
+                      isUpdating
+                        ? {
+                            scale: [1, 1.2, 0.9, 1.1, 1],
+                            rotate: [0, -15, 15, -5, 0],
+                            filter: [
+                              'brightness(1)',
+                              'brightness(1.3)',
+                              'brightness(1)',
+                            ],
+                          }
+                        : {
+                            scale: 1,
+                            rotate: 0,
+                            filter: 'brightness(1)',
+                          }
+                    }
+                    transition={{
+                      duration: 1.2,
+                      ease: [0.4, 0, 0.2, 1],
+                    }}
+                    className="relative"
+                  >
+                    <motion.div
+                      className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 blur-lg"
+                      initial={{ opacity: 0, scale: 1.2 }}
+                      animate={
+                        isUpdating
+                          ? {
+                              opacity: [0, 0.8, 0],
+                              scale: [1.2, 1.8, 1.2],
+                              rotate: [0, 180, 360],
+                            }
+                          : {
+                              opacity: 0,
+                              scale: 1.2,
+                              rotate: 0,
+                            }
+                      }
+                      transition={{
+                        duration: 1.5,
+                        ease: 'easeInOut',
+                      }}
+                    />
+                    <SafeImage
+                      src={
+                        userData?.avatarUrl ||
+                        link.user.avatarUrl ||
+                        '/default-avatar.png'
+                      }
+                      alt={userData?.name || link.user.name || 'User'}
+                      width={28}
+                      height={28}
+                      className="rounded-full shrink-0 relative z-10 ring-2 ring-purple-500/20"
+                    />
+                  </motion.div>
+                  <div className="flex items-center overflow-hidden">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={userData?.name || link.user.name}
+                        initial={
+                          isUpdating
+                            ? {
+                                y: 30,
+                                x: -20,
+                                opacity: 0,
+                                scale: 0.5,
+                                rotateX: 90,
+                              }
+                            : false
+                        }
+                        animate={
+                          isUpdating
+                            ? {
+                                y: 0,
+                                x: 0,
+                                opacity: 1,
+                                scale: 1,
+                                rotateX: 0,
+                              }
+                            : { opacity: 1 }
+                        }
+                        exit={
+                          isUpdating
+                            ? {
+                                y: -30,
+                                x: 20,
+                                opacity: 0,
+                                scale: 0.5,
+                                rotateX: -90,
+                              }
+                            : { opacity: 0 }
+                        }
+                        transition={{
+                          type: 'spring',
+                          stiffness: 200,
+                          damping: 20,
+                          mass: 1.5,
+                        }}
+                        className="relative"
+                      >
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-purple-500/30 via-fuchsia-500/30 to-pink-500/30 rounded-lg blur-xl"
+                          initial={{ opacity: 0, scale: 1.2 }}
+                          animate={
+                            isUpdating
+                              ? {
+                                  opacity: [0, 0.8, 0],
+                                  scale: [1.2, 2, 1.2],
+                                  rotate: [0, 360],
+                                }
+                              : {
+                                  opacity: 0,
+                                  scale: 1.2,
+                                  rotate: 0,
+                                }
+                          }
+                          transition={{
+                            duration: 1.5,
+                            ease: 'easeInOut',
+                          }}
+                        />
+                        <p className="text-white font-medium text-sm whitespace-nowrap relative z-10 px-2 py-0.5">
+                          {userData?.name || link.user.name}
+                        </p>
+                      </motion.div>
+                    </AnimatePresence>
                     <span className="text-gray-500 mx-1.5 shrink-0">·</span>
                     <span className="text-gray-500 text-sm shrink-0">
                       {formatDate(link.createdAt)}

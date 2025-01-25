@@ -3,6 +3,7 @@
 import { AVATAR_OPTIONS } from '@/app/constants/avatars';
 import { useUser } from '@/app/context/user-context';
 import { useUsers } from '@/app/hooks/useUsers';
+import { useUserDataStore } from '@/app/stores/userDataStore';
 import { fr } from '@/app/translations/fr';
 import { FormattedUser } from '@/app/types/user';
 import { Transition } from '@headlessui/react';
@@ -17,6 +18,7 @@ interface ProfileDropdownProps {
 export default function ProfileDropdown({ onClose }: ProfileDropdownProps) {
   const { user, setUser } = useUser();
   const { users, updateUser } = useUsers();
+  const { updateUserData, syncWithUser } = useUserDataStore();
   const [name, setName] = useState(user?.name || '');
   const [selectedAvatar, setSelectedAvatar] = useState(
     user?.avatarUrl || AVATAR_OPTIONS[0]
@@ -24,15 +26,12 @@ export default function ProfileDropdown({ onClose }: ProfileDropdownProps) {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Use all avatars instead of limiting to 18
   const displayedAvatars = AVATAR_OPTIONS;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-
-    setError('');
     setIsSubmitting(true);
+    setError('');
 
     try {
       const trimmedName = name.trim();
@@ -59,7 +58,14 @@ export default function ProfileDropdown({ onClose }: ProfileDropdownProps) {
         avatarUrl: selectedAvatar,
       });
 
+      // Update local store first for immediate UI update
+      updateUserData(user.id, {
+        name: trimmedName,
+        avatarUrl: selectedAvatar,
+      });
+
       setUser(updatedUser as FormattedUser);
+      syncWithUser(updatedUser as FormattedUser);
       onClose();
     } catch (error) {
       console.error('Failed to update profile:', error);
