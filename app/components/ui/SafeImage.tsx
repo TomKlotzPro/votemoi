@@ -46,7 +46,7 @@ export default function SafeImage({
           setLoaded(true);
         }}
         onLoad={() => setLoaded(true)}
-        unoptimized={(imageSource as string).startsWith('data:')}
+        unoptimized={(imageSource as string).indexOf('data:') !== 0}
       />
     </div>
   );

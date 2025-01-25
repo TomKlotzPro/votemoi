@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 import AuthForm from './components/auth/AuthForm';
 import AddLinkButton from './components/links/AddLinkButton';
 import LinkList from './components/links/LinkList';
+import { showToast } from './components/ui/Toast';
 import { useUser } from './context/user-context';
 import { useLinks } from './hooks/useLinks';
 import { fr } from './translations/fr';
+import { FormattedLink } from './types/link';
 
 export default function Home() {
   const {
@@ -18,7 +20,6 @@ export default function Home() {
     unvote,
     deleteLink,
     updateLink,
-    addComment,
   } = useLinks();
   const { user, setUser } = useUser();
   const [showAuthForm, setShowAuthForm] = useState(false);
@@ -52,16 +53,19 @@ export default function Home() {
     }
   };
 
-  const handleEdit = async (data: string) => {
-    if (user) {
-      const [id, newData] = JSON.parse(data);
-      await updateLink(id, newData);
-    }
-  };
-
-  const handleAddComment = async (linkId: string, content: string) => {
-    if (user) {
-      await addComment(linkId, user.id, content);
+  const handleEdit = async (link: Partial<FormattedLink>) => {
+    if (user && link.id && link.url) {
+      try {
+        await updateLink(link.id, {
+          url: link.url,
+          title: link.title,
+          description: link.description || undefined,
+        });
+        showToast('Lien mis à jour avec succès', 'success');
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (error) {
+        showToast('Impossible de mettre à jour le lien', 'error');
+      }
     }
   };
 
@@ -80,7 +84,13 @@ export default function Home() {
 
         {/* Add Link Button */}
         <div className="flex justify-center">
-          <AddLinkButton onAdd={(data) => user && addLink(data)} />
+          <AddLinkButton
+            onAdd={async (data) => {
+              if (user) {
+                return addLink(data);
+              }
+            }}
+          />
         </div>
 
         {/* Links Section */}
@@ -97,7 +107,6 @@ export default function Home() {
             onUnvote={handleUnvote}
             onDelete={handleDelete}
             onEdit={handleEdit}
-            onAddComment={handleAddComment}
             user={user}
           />
         </section>

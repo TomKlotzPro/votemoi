@@ -1,16 +1,15 @@
 'use client';
 
-import React from 'react';
 import { fr } from '@/app/translations/fr';
-import { Dialog, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
 import { FormattedLink } from '@/app/types/link';
+import { Dialog, Transition } from '@headlessui/react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
+import React, { Fragment } from 'react';
 
 interface EditLinkModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (title: string, description: string | null) => void;
+  onSubmit: (url: string, title: string, description: string | null) => void;
   link: FormattedLink;
 }
 
@@ -24,6 +23,7 @@ export default function EditLinkModal({
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     onSubmit(
+      formData.get('url') as string,
       formData.get('title') as string,
       formData.get('description') as string
     );
@@ -32,7 +32,11 @@ export default function EditLinkModal({
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="fixed inset-0 z-50 overflow-y-auto" onClose={onClose}>
+      <Dialog
+        as="div"
+        className="fixed inset-0 z-50 overflow-y-auto"
+        onClose={onClose}
+      >
         <div className="min-h-screen px-4 text-center">
           <Transition.Child
             as={Fragment}
@@ -43,11 +47,17 @@ export default function EditLinkModal({
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <div className="fixed inset-0 bg-black/25 backdrop-blur-sm" aria-hidden="true" />
+            <div
+              className="fixed inset-0 bg-black/25 backdrop-blur-sm"
+              aria-hidden="true"
+            />
           </Transition.Child>
 
           {/* This element is to trick the browser into centering the modal contents. */}
-          <span className="inline-block h-screen align-middle" aria-hidden="true">
+          <span
+            className="inline-block h-screen align-middle"
+            aria-hidden="true"
+          >
             &#8203;
           </span>
 
@@ -63,7 +73,10 @@ export default function EditLinkModal({
             <Dialog.Panel className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-[#1e1e38]/95 backdrop-blur-sm shadow-xl rounded-2xl border border-purple-500/20">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <Dialog.Title as="h3" className="text-lg font-medium text-gray-200">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-lg font-medium text-gray-200"
+                  >
                     {fr.common.editLink}
                   </Dialog.Title>
                   <p className="mt-1 text-sm text-gray-400">
@@ -81,11 +94,31 @@ export default function EditLinkModal({
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label
+                    htmlFor="url"
+                    className="block text-sm font-medium text-gray-300 mb-1.5"
+                  >
+                    <span>{fr.links.urlLabel}</span>
+                  </label>
+                  <input
+                    type="url"
+                    name="url"
+                    id="url"
+                    required
+                    defaultValue={link.url}
+                    className="w-full rounded-lg bg-[#1e1e38] border border-purple-500/20 px-4 py-2.5 text-sm text-gray-200 placeholder-gray-400 focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/10 transition-colors"
+                    placeholder={fr.placeholders.linkUrl}
+                  />
+                </div>
+
+                <div>
+                  <label
                     htmlFor="title"
                     className="block text-sm font-medium text-gray-300 mb-1.5 flex items-center justify-between"
                   >
                     <span>{fr.links.titleLabel}</span>
-                    <span className="text-xs text-gray-400">{fr.common.optional}</span>
+                    <span className="text-xs text-gray-400">
+                      {fr.common.optional}
+                    </span>
                   </label>
                   <input
                     type="text"
@@ -103,7 +136,9 @@ export default function EditLinkModal({
                     className="block text-sm font-medium text-gray-300 mb-1.5 flex items-center justify-between"
                   >
                     <span>{fr.links.descriptionLabel}</span>
-                    <span className="text-xs text-gray-400">{fr.common.optional}</span>
+                    <span className="text-xs text-gray-400">
+                      {fr.common.optional}
+                    </span>
                   </label>
                   <textarea
                     name="description"

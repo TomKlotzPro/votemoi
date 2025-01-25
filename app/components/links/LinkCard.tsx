@@ -390,8 +390,13 @@ export default function LinkCard({
         <EditLinkModal
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
-          onSubmit={async (title, description) => {
-            await onEdit({ title, description });
+          onSubmit={async (url, title, description) => {
+            await onEdit({
+              id: link.id,
+              url,
+              title: title || undefined,
+              description: description || undefined,
+            });
             setShowEditModal(false);
           }}
           link={link}

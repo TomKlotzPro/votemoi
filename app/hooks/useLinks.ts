@@ -95,18 +95,19 @@ export function useLinks() {
     ) => {
       try {
         if (!user?.id) {
-          setError('You must be logged in to update a link');
-          return;
+          setError(fr.errors.loginRequired);
+          throw new Error(fr.errors.loginRequired);
         }
 
         setIsLoading(true);
         setError(null);
+
         const result = await updateLink({
           id,
           userId: user.id,
           url: data.url,
-          title: data.title || '', // Ensure title is always a string
-          ...(data.description && { description: data.description }), // Only include description if it exists
+          title: data.title || data.url, // Use URL as fallback for title
+          description: data.description,
         });
 
         if (result.error) {
@@ -115,49 +116,24 @@ export function useLinks() {
         }
 
         if (!result.link) {
-          setError('Failed to update link');
-          return;
+          setError(fr.errors.failedToUpdateLink);
+          throw new Error(fr.errors.failedToUpdateLink);
         }
 
-        const link = result.link;
-        // Ensure the updated link matches FormattedLink type
-        const formattedLink: FormattedLink = {
-          id: link.id,
-          url: link.url,
-          title: link.title,
-          description: link.description,
-          previewImage: link.previewImage,
-          previewTitle: link.previewTitle,
-          previewDescription: link.previewDescription,
-          previewFavicon: link.previewFavicon,
-          previewSiteName: link.previewSiteName,
-          createdAt: new Date(link.createdAt).toISOString(),
-          updatedAt: new Date(link.updatedAt).toISOString(),
-          votes: link.votes || [],
-          comments: (link.comments || []).map((comment) => ({
-            ...comment,
-            userId: comment.user.id,
-            linkId: link.id,
-          })),
-          createdBy: {
-            id: link.createdBy.id,
-            name: link.createdBy.name,
-            avatarUrl: link.createdBy.avatarUrl,
-          },
-          createdById: link.createdById,
-          hasVoted: false,
-        };
+        // Update links state with the new data
         setLinks((prev) =>
-          prev.map((link) => (link.id === id ? formattedLink : link))
+          prev.map((link) => (link.id === id ? result.link! : link))
         );
-      } catch {
+
+        setIsLoading(false);
+      } catch (error) {
         setError(fr.errors.failedToUpdateLink);
-        throw new Error(fr.errors.failedToUpdateLink);
+        throw error;
       } finally {
         setIsLoading(false);
       }
     },
-    [user]
+    [user, setLinks]
   );
 
   const handleDeleteLink = useCallback(
