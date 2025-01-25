@@ -4,6 +4,7 @@ import { useUsers } from '@/app/hooks/useUsers';
 import { fr } from '@/app/translations/fr';
 import { FormattedUser } from '@/app/types/user';
 import { useCallback } from 'react';
+import UserListSkeleton from '../ui/UserListSkeleton';
 import UserList from './UserList';
 
 type UserManagerProps = {
@@ -24,12 +25,8 @@ export default function UserManager({
     [onUserSelect]
   );
 
-  if (isLoading && users.length === 0) {
-    return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
-      </div>
-    );
+  if (isLoading) {
+    return <UserListSkeleton />;
   }
 
   if (error) {
@@ -46,13 +43,18 @@ export default function UserManager({
     );
   }
 
+  if (users.length === 0) {
+    return (
+      <div className="flex justify-center items-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">{fr.common.title}</h1>
-        {isLoading && (
-          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary" />
-        )}
       </div>
       <UserList
         users={users}

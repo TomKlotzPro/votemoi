@@ -174,7 +174,6 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
                   </label>
                   <div className="bg-[#1a1a38]/50 rounded-xl overflow-hidden">
                     <AvatarSelection
-                      selectedAvatar={selectedAvatar}
                       onSelect={setSelectedAvatar}
                       disabled={isSubmitting}
                     />

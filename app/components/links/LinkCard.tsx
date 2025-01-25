@@ -84,28 +84,28 @@ export default function LinkCard({
             {/* Main Content Area */}
             <div className="p-4">
               {/* Header with User Info and Actions */}
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
                   <SafeImage
                     src={link.user.avatarUrl || '/default-avatar.png'}
                     alt={link.user.name || 'User'}
-                    width={32}
-                    height={32}
-                    className="rounded-full flex-shrink-0"
+                    width={28}
+                    height={28}
+                    className="rounded-full shrink-0"
                   />
-                  <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                    <span className="text-gray-300 font-medium truncate">
+                  <div className="flex items-center">
+                    <p className="text-white font-medium text-sm">
                       {link.user.name}
-                    </span>
-                    <span className="text-gray-500 hidden sm:inline">·</span>
-                    <span className="text-gray-500 text-sm">
+                    </p>
+                    <span className="text-gray-500 mx-1.5 shrink-0">·</span>
+                    <span className="text-gray-500 text-sm shrink-0">
                       {formatDate(link.createdAt)}
                     </span>
                   </div>
                 </div>
 
                 {isOwner && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 ml-2 shrink-0">
                     <motion.button
                       onClick={() => setShowEditModal(true)}
                       className="p-1.5 text-gray-400 hover:text-purple-400 hover:bg-purple-500/10 rounded-lg transition-colors"

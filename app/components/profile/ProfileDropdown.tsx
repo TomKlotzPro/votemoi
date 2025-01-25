@@ -7,7 +7,7 @@ import { fr } from '@/app/translations/fr';
 import { FormattedUser } from '@/app/types/user';
 import { Transition } from '@headlessui/react';
 import { CheckIcon } from '@heroicons/react/24/outline';
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useState } from 'react';
 import SafeImage from '../ui/SafeImage';
 
 interface ProfileDropdownProps {
@@ -24,8 +24,8 @@ export default function ProfileDropdown({ onClose }: ProfileDropdownProps) {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Only show first 18 avatars in the dropdown to avoid clutter
-  const displayedAvatars = useMemo(() => AVATAR_OPTIONS.slice(0, 18), []);
+  // Use all avatars instead of limiting to 18
+  const displayedAvatars = AVATAR_OPTIONS;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,7 +108,7 @@ export default function ProfileDropdown({ onClose }: ProfileDropdownProps) {
             </div>
 
             {/* Avatar Grid */}
-            <div className="grid grid-cols-6 gap-1 p-1.5 rounded-md bg-black/20">
+            <div className="grid grid-cols-6 gap-1 p-1.5 rounded-md bg-black/20 max-h-[200px] overflow-y-auto">
               {displayedAvatars.map((avatar) => (
                 <button
                   key={avatar}
