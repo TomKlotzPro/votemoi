@@ -14,7 +14,6 @@ type LinkListProps = {
   user: User | null;
   onVote: (linkId: string) => Promise<void>;
   onUnvote: (linkId: string) => Promise<void>;
-  onComment: (linkId: string) => void;
   onEdit: (link: Partial<FormattedLink>) => Promise<void>;
   onDelete: (linkId: string) => Promise<void>;
 };
@@ -55,7 +54,6 @@ export default function LinkList({
   user,
   onVote,
   onUnvote,
-  onComment,
   onEdit,
   onDelete,
 }: LinkListProps) {
@@ -128,7 +126,6 @@ export default function LinkList({
                     isOwner={user ? link.createdById === user.id : false}
                     onVote={() => onVote(link.id)}
                     onUnvote={() => onUnvote(link.id)}
-                    onComment={() => onComment(link.id)}
                     onEdit={(data) => onEdit({ ...link, ...data })}
                     onDelete={() => handleDelete(link.id)}
                     isRemoving={removingIds.has(link.id)}

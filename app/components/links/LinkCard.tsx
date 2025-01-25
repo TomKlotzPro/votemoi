@@ -12,7 +12,6 @@ import {
 import { AnimatePresence, motion } from 'framer-motion';
 import React from 'react';
 import SafeImage from '../ui/SafeImage';
-import CommentModal from './CommentModal';
 import EditLinkModal from './EditLinkModal';
 
 type LinkCardProps = {
@@ -22,7 +21,6 @@ type LinkCardProps = {
   isRemoving?: boolean;
   onVote: () => Promise<void>;
   onUnvote: () => Promise<void>;
-  onComment: (content: string) => Promise<void>;
   onEdit: (data: Partial<FormattedLink>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 };
@@ -34,12 +32,10 @@ export default function LinkCard({
   isRemoving = false,
   onVote,
   onUnvote,
-  onComment,
   onEdit,
   onDelete,
 }: LinkCardProps) {
   const [showEditModal, setShowEditModal] = React.useState(false);
-  const [showCommentModal, setShowCommentModal] = React.useState(false);
 
   const formatDate = (date: Date | string) => {
     const dateString = date instanceof Date ? date.toISOString() : date;
@@ -67,11 +63,6 @@ export default function LinkCard({
     } else {
       await onVote();
     }
-  };
-
-  const handleCommentClick = (_event: React.MouseEvent<HTMLButtonElement>) => {
-    setShowCommentModal(true);
-    onComment('');
   };
 
   return (
@@ -264,10 +255,7 @@ export default function LinkCard({
                     </motion.div>
                   </motion.button>
 
-                  <button
-                    onClick={handleCommentClick}
-                    className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-gray-400 hover:bg-purple-500/10 hover:text-purple-400 transition-all"
-                  >
+                  <button className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-gray-400 hover:bg-purple-500/10 hover:text-purple-400 transition-all">
                     <ChatBubbleLeftIcon className="h-4 w-4" />
                     <span>{link.comments.length}</span>
                   </button>
@@ -407,19 +395,6 @@ export default function LinkCard({
             setShowEditModal(false);
           }}
           link={link}
-        />
-      )}
-
-      {showCommentModal && (
-        <CommentModal
-          link={link}
-          onClose={() => setShowCommentModal(false)}
-          onSubmit={async (content: string) => {
-            if (onComment) {
-              await onComment(content);
-            }
-            setShowCommentModal(false);
-          }}
         />
       )}
     </>

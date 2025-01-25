@@ -10,7 +10,7 @@ type SafeImageProps = {
   className?: string;
   width?: number;
   height?: number;
-}
+};
 
 export default function SafeImage({
   src,
@@ -23,7 +23,7 @@ export default function SafeImage({
   const [error, setError] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  const imageSource = error ? fallbackSrc : src;
+  const imageSource: string = error ? fallbackSrc : src;
 
   return (
     <div className="relative" style={{ width, height }}>
@@ -46,7 +46,7 @@ export default function SafeImage({
           setLoaded(true);
         }}
         onLoad={() => setLoaded(true)}
-        unoptimized={imageSource.startsWith('data:')}
+        unoptimized={(imageSource as string).startsWith('data:')}
       />
     </div>
   );

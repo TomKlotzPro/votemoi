@@ -8,8 +8,6 @@ import {
   useState,
 } from 'react';
 import AuthForm from '../components/auth/AuthForm';
-import LoadingScreen from '../components/ui/LoadingScreen';
-import { AVATAR_OPTIONS } from '../constants/avatars';
 import { User } from '../types/user';
 
 type UserContextType = {
@@ -30,33 +28,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthFormVisible, setIsAuthFormVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [avatarsLoaded, setAvatarsLoaded] = useState(false);
-
-  // Preload avatars
-  useEffect(() => {
-    const preloadAvatars = async () => {
-      try {
-        await Promise.all(
-          AVATAR_OPTIONS.map(
-            (url) =>
-              new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = resolve;
-                img.onerror = reject;
-                img.src = url;
-              })
-          )
-        );
-      } catch (error) {
-        console.error('Failed to preload some avatars:', error);
-      } finally {
-        setAvatarsLoaded(true);
-      }
-    };
-
-    preloadAvatars();
-  }, []);
-
   // Initialize user from localStorage
   useEffect(() => {
     const storedUser = localStorage.getItem(USER_STORAGE_KEY);
@@ -100,11 +71,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem(USER_STORAGE_KEY);
     setUser(null);
   }, []);
-
-  // Show loading screen until avatars are loaded
-  if (!avatarsLoaded) {
-    return <LoadingScreen onLoadingComplete={() => setAvatarsLoaded(true)} />;
-  }
 
   // Don't render anything until we've checked localStorage
   if (isLoading) {
