@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { Comment, Link, User, Vote } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { FormattedLink } from '../types/link';
+import { extractURLMetadata } from './url-metadata';
 
 const formatLink = (
   link: Link & {
@@ -115,23 +116,31 @@ export async function createLink(data: {
   userId: string;
 }): Promise<{ link?: FormattedLink; error?: string }> {
   try {
+    // Extract metadata from URL
+    const metadata = await extractURLMetadata(data.url);
+
     const link = await prisma.link.create({
       data: {
         url: data.url,
-        title: data.title || '',
-        description: data.description,
+        title: data.title || metadata.title || '',
+        description: data.description || metadata.description || '',
+        previewImage: metadata.image || null,
+        previewTitle: metadata.title || null,
+        previewDescription: metadata.description || null,
+        previewFavicon: metadata.favicon || null,
+        previewSiteName: metadata.siteName || null,
         createdBy: {
           connect: { id: data.userId },
         },
       },
       include: {
         createdBy: true,
-        comments: {
+        votes: {
           include: {
             user: true,
           },
         },
-        votes: {
+        comments: {
           include: {
             user: true,
           },
@@ -140,7 +149,8 @@ export async function createLink(data: {
     });
 
     revalidatePath('/');
-    return { link: formatLink({ ...link, currentUserId: data.userId }) };
+
+    return { link: formatLink(link) };
   } catch (error) {
     console.error('Error creating link:', error);
     return { error: 'Failed to create link' };
