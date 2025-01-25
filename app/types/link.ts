@@ -51,44 +51,36 @@ export type FormattedComment = {
     name: string | null;
     avatarUrl: string | null;
   };
-}
+};
 
 export type FormattedLink = {
   id: string;
   url: string;
   title: string;
   description: string | null;
-  imageUrl: string | null;
-  userId: string;
+  previewImage: string | null;
+  previewTitle: string | null;
+  previewDescription: string | null;
+  previewFavicon: string | null;
+  previewSiteName: string | null;
   createdAt: string;
   updatedAt: string;
-  comments: FormattedComment[];
-  votes: number;
-  hasVoted?: boolean;
-  voters?: {
+  createdById: string;
+  voteCount: number;
+  votes: Vote[];
+  voters: {
     id: string;
     name: string | null;
     avatarUrl: string | null;
   }[];
+  comments: FormattedComment[];
+  hasVoted: boolean;
   user: {
     id: string;
     name: string | null;
     avatarUrl: string | null;
   };
-  createdBy?: {
-    id: string;
-    name: string | null;
-    avatarUrl: string | null;
-    createdAt?: Date;
-    updatedAt?: Date;
-  };
-  createdById?: string;
-  previewImage?: string | null;
-  previewTitle?: string | null;
-  previewDescription?: string | null;
-  previewFavicon?: string | null;
-  previewSiteName?: string | null;
-}
+};
 
 export type UserBasicInfo = Pick<User, 'id' | 'name' | 'avatarUrl'>;
 

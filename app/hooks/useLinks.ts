@@ -13,7 +13,6 @@ import { useUser } from '@/app/context/user-context';
 import { fr } from '@/app/translations/fr';
 import { FormattedLink } from '@/app/types/link';
 import { useCallback, useEffect, useState } from 'react';
-import { showToast } from '../components/ui/Toast';
 
 export function useLinks() {
   const { user } = useUser();
@@ -188,33 +187,49 @@ export function useLinks() {
     async (linkId: string, userId: string) => {
       try {
         if (!user?.id) {
-          showToast(fr.errors.loginRequired, 'error');
+          setError(fr.errors.loginRequired);
           return;
         }
 
         const result = await vote({ linkId, userId });
         if (result.error) {
-          showToast(result.error, 'error');
+          setError(result.error);
           return;
         }
 
-        if (result.success) {
+        if (result.success && result.user) {
           setLinks((prev) =>
             prev.map((link) =>
               link.id === linkId
                 ? {
                     ...link,
-                    votes: link.votes + 1,
+                    voteCount: link.voteCount + 1,
+                    voters: [
+                      ...(link.voters || []),
+                      {
+                        id: result.user.id,
+                        name: result.user.name,
+                        avatarUrl: result.user.avatarUrl,
+                      },
+                    ],
+                    votes: [
+                      ...(link.votes || []),
+                      {
+                        id: `${linkId}-${userId}`,
+                        userId: result.user.id,
+                        linkId,
+                        createdAt: new Date(),
+                        user: result.user,
+                      },
+                    ],
                     hasVoted: true,
                   }
                 : link
             )
           );
-          showToast(fr.common.voteAdded, 'success');
         }
       } catch (err) {
         console.error('Error voting link:', err);
-        showToast(fr.errors.failedToVote, 'error');
       }
     },
     [user]
@@ -224,13 +239,13 @@ export function useLinks() {
     async (linkId: string, userId: string) => {
       try {
         if (!user?.id) {
-          showToast(fr.errors.loginRequired, 'error');
+          setError(fr.errors.loginRequired);
           return;
         }
 
         const result = await unvote({ linkId, userId });
         if (result.error) {
-          showToast(result.error, 'error');
+          setError(result.error);
           return;
         }
 
@@ -240,17 +255,21 @@ export function useLinks() {
               link.id === linkId
                 ? {
                     ...link,
-                    votes: Math.max(0, link.votes - 1),
+                    voteCount: Math.max(0, link.voteCount - 1),
+                    voters: (link.voters || []).filter(
+                      (voter) => voter.id !== userId
+                    ),
+                    votes: (link.votes || []).filter(
+                      (vote) => vote.userId !== userId
+                    ),
                     hasVoted: false,
                   }
                 : link
             )
           );
-          showToast(fr.common.voteRemoved, 'success');
         }
       } catch (err) {
         console.error('Error unvoting link:', err);
-        showToast(fr.errors.failedToUnvote, 'error');
       }
     },
     [user]

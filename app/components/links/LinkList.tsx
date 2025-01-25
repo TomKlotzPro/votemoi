@@ -1,6 +1,6 @@
 'use client';
 
-import { Link } from '@/app/types/link';
+import { FormattedLink } from '@/app/types/link';
 import { User } from '@/app/types/user';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
@@ -8,13 +8,13 @@ import EmptyLinkList from './EmptyLinkList';
 import LinkCard from './LinkCard';
 
 type LinkListProps = {
-  links: Link[];
+  links: FormattedLink[];
   isLoading: boolean;
   user: User | null;
   onVote: (linkId: string) => Promise<void>;
   onUnvote: (linkId: string) => Promise<void>;
   onComment: (linkId: string) => void;
-  onEdit: (link: Link) => Promise<void>;
+  onEdit: (link: Partial<FormattedLink>) => Promise<void>;
   onDelete: (linkId: string) => Promise<void>;
 };
 
@@ -106,7 +106,11 @@ export default function LinkList({
             >
               <LinkCard
                 link={link}
-                isVoted={!!link.hasVoted}
+                isVoted={
+                  user
+                    ? link.voters.some((voter) => voter.id === user.id)
+                    : false
+                }
                 isOwner={user ? link.createdById === user.id : false}
                 onVote={() => onVote(link.id)}
                 onUnvote={() => onUnvote(link.id)}
