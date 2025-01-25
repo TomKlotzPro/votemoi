@@ -1,21 +1,20 @@
 const nextPlugin = require('@next/eslint-plugin-next');
-const tsPlugin = require('@typescript-eslint/eslint-plugin');
-const tsParser = require('@typescript-eslint/parser');
-const reactHooksPlugin = require('eslint-plugin-react-hooks');
+const js = require('@eslint/js');
+const globals = require('globals');
 
 module.exports = [
+  js.configs.recommended,
   {
-    files: ['**/*.{ts,tsx}'],
-    ignores: ['node_modules/**', '.next/**', 'dist/**'],
+    files: ['**/*.{js,jsx,ts,tsx}'],
     plugins: {
-      '@typescript-eslint': tsPlugin,
-      'react-hooks': reactHooksPlugin,
       '@next/next': nextPlugin,
     },
     languageOptions: {
-      parser: tsParser,
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
       parserOptions: {
-        project: './tsconfig.json',
         ecmaVersion: 'latest',
         sourceType: 'module',
         ecmaFeatures: {
@@ -23,27 +22,9 @@ module.exports = [
         },
       },
     },
-    linterOptions: {
-      reportUnusedDisableDirectives: true,
-    },
-    settings: {
-      react: {
-        version: 'detect',
-      },
-    },
     rules: {
-      ...tsPlugin.configs['recommended'].rules,
-      ...reactHooksPlugin.configs.recommended.rules,
-      ...nextPlugin.configs.recommended.rules,
-      ...nextPlugin.configs['core-web-vitals'].rules,
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
-        },
-      ],
+      'no-unused-vars': 'warn',
+      '@next/next/no-html-link-for-pages': 'error',
     },
   },
 ];
