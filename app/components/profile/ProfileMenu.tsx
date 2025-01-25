@@ -15,7 +15,7 @@ import { useEffect, useRef, useState } from 'react';
 import ErrorMessage from '../common/ErrorMessage';
 import SafeImage from '../ui/SafeImage';
 
-interface ProfileMenuProps {
+type ProfileMenuProps = {
   user: User;
   onClose: () => void;
   onLogout: () => void;

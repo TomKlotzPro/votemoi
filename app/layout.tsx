@@ -4,6 +4,7 @@ import { Providers } from '@/app/components/providers/Providers';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { preloadAvatars } from './utils/image-preloader';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -13,6 +14,11 @@ export const metadata: Metadata = {
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
+  // Preload avatar images on initial render
+  if (typeof window !== 'undefined') {
+    preloadAvatars();
+  }
+
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={`${inter.className} bg-black`} suppressHydrationWarning>

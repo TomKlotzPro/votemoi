@@ -5,7 +5,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Fragment, useEffect, useState } from 'react';
 
-interface LinkFormModalProps {
+type LinkFormModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: {

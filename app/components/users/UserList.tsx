@@ -4,7 +4,7 @@ import { fr } from '@/app/translations/fr';
 import { FormattedUser } from '@/app/types/user';
 import UserCard from './UserCard';
 
-interface UserListProps {
+type UserListProps = {
   users: FormattedUser[];
   onUserSelect?: (user: FormattedUser) => void;
   selectedUserId?: string;

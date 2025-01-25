@@ -11,7 +11,7 @@ const nextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   env: {
-    NODE_OPTIONS: '--experimental-fetch'
+    NODE_OPTIONS: '--experimental-fetch',
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {

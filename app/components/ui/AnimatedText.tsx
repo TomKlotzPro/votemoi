@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 
-interface AnimatedTextProps {
+type AnimatedTextProps = {
   text: string;
   className?: string;
 }

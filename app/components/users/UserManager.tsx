@@ -6,7 +6,7 @@ import { FormattedUser } from '@/app/types/user';
 import { useCallback } from 'react';
 import UserList from './UserList';
 
-interface UserManagerProps {
+type UserManagerProps = {
   onUserSelect?: (user: FormattedUser) => void;
   selectedUserId?: string;
 }
@@ -17,9 +17,12 @@ export default function UserManager({
 }: UserManagerProps) {
   const { users, isLoading, error, refreshUsers } = useUsers();
 
-  const handleUserSelect = useCallback((user: FormattedUser) => {
-    onUserSelect?.(user);
-  }, [onUserSelect]);
+  const handleUserSelect = useCallback(
+    (user: FormattedUser) => {
+      onUserSelect?.(user);
+    },
+    [onUserSelect]
+  );
 
   if (isLoading && users.length === 0) {
     return (

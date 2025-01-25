@@ -13,8 +13,11 @@
 body {
   background-color: var(--synthwave-bg);
   color: var(--synthwave-text);
-  background-image: 
-    linear-gradient(0deg, rgba(26, 27, 38, 0.9), rgba(26, 27, 38, 0.9)),
+  background-image: linear-gradient(
+      0deg,
+      rgba(26, 27, 38, 0.9),
+      rgba(26, 27, 38, 0.9)
+    ),
     url('/grid.svg');
   background-size: cover;
   background-attachment: fixed;
@@ -57,7 +60,11 @@ body {
 
 /* Button styles */
 .synthwave-button {
-  background: linear-gradient(45deg, var(--synthwave-primary), var(--synthwave-secondary));
+  background: linear-gradient(
+    45deg,
+    var(--synthwave-primary),
+    var(--synthwave-secondary)
+  );
   color: var(--synthwave-text);
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
@@ -103,6 +110,10 @@ body {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

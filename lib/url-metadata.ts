@@ -20,17 +20,26 @@ export async function fetchUrlMetadata(url: string): Promise<URLMetadata> {
     const $ = cheerio.load(response.data);
 
     const metadata: URLMetadata = {
-      previewImage: $('meta[property="og:image"]').attr('content') || 
-                   $('meta[name="twitter:image"]').attr('content') || null,
-      previewTitle: $('meta[property="og:title"]').attr('content') || 
-                   $('meta[name="twitter:title"]').attr('content') || 
-                   $('title').text() || null,
-      previewDescription: $('meta[property="og:description"]').attr('content') || 
-                         $('meta[name="twitter:description"]').attr('content') || 
-                         $('meta[name="description"]').attr('content') || null,
-      previewFavicon: $('link[rel="icon"]').attr('href') || 
-                     $('link[rel="shortcut icon"]').attr('href') || null,
-      previewSiteName: $('meta[property="og:site_name"]').attr('content') || null
+      previewImage:
+        $('meta[property="og:image"]').attr('content') ||
+        $('meta[name="twitter:image"]').attr('content') ||
+        null,
+      previewTitle:
+        $('meta[property="og:title"]').attr('content') ||
+        $('meta[name="twitter:title"]').attr('content') ||
+        $('title').text() ||
+        null,
+      previewDescription:
+        $('meta[property="og:description"]').attr('content') ||
+        $('meta[name="twitter:description"]').attr('content') ||
+        $('meta[name="description"]').attr('content') ||
+        null,
+      previewFavicon:
+        $('link[rel="icon"]').attr('href') ||
+        $('link[rel="shortcut icon"]').attr('href') ||
+        null,
+      previewSiteName:
+        $('meta[property="og:site_name"]').attr('content') || null,
     };
 
     // Convert relative URLs to absolute URLs
@@ -38,8 +47,14 @@ export async function fetchUrlMetadata(url: string): Promise<URLMetadata> {
       metadata.previewImage = new URL(metadata.previewImage, url).toString();
     }
 
-    if (metadata.previewFavicon && !metadata.previewFavicon.startsWith('http')) {
-      metadata.previewFavicon = new URL(metadata.previewFavicon, url).toString();
+    if (
+      metadata.previewFavicon &&
+      !metadata.previewFavicon.startsWith('http')
+    ) {
+      metadata.previewFavicon = new URL(
+        metadata.previewFavicon,
+        url
+      ).toString();
     }
 
     return metadata;

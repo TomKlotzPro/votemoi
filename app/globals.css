@@ -49,11 +49,19 @@ body {
 
   .button-gradient {
     @apply px-4 py-2 text-sm text-white rounded-lg transition-all disabled:opacity-50;
-    background: linear-gradient(135deg, rgb(168, 85, 247) 0%, rgb(147, 51, 234) 100%);
+    background: linear-gradient(
+      135deg,
+      rgb(168, 85, 247) 0%,
+      rgb(147, 51, 234) 100%
+    );
   }
 
   .button-gradient:hover:not(:disabled) {
-    background: linear-gradient(135deg, rgb(147, 51, 234) 0%, rgb(126, 34, 206) 100%);
+    background: linear-gradient(
+      135deg,
+      rgb(147, 51, 234) 0%,
+      rgb(126, 34, 206) 100%
+    );
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(168, 85, 247, 0.25);
   }
@@ -120,7 +128,7 @@ body {
 
 .grid-floor {
   background: linear-gradient(90deg, var(--primary) 1px, transparent 1px),
-              linear-gradient(var(--primary) 1px, transparent 1px);
+    linear-gradient(var(--primary) 1px, transparent 1px);
   background-size: 40px 40px;
   transform: scale(1, 2) translateZ(0);
   opacity: 0.1;
@@ -128,8 +136,12 @@ body {
 }
 
 @keyframes moveGrid {
-  0% { background-position: 0 0; }
-  100% { background-position: 40px 40px; }
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 40px 40px;
+  }
 }
 
 /* Stars effect */
@@ -140,13 +152,12 @@ body {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  background: 
-    radial-gradient(1px 1px at 20px 30px, #fff, rgba(0,0,0,0)),
-    radial-gradient(1px 1px at 40px 70px, #fff, rgba(0,0,0,0)),
-    radial-gradient(1px 1px at 50px 160px, #fff, rgba(0,0,0,0)),
-    radial-gradient(1px 1px at 90px 40px, #fff, rgba(0,0,0,0)),
-    radial-gradient(1px 1px at 130px 80px, #fff, rgba(0,0,0,0)),
-    radial-gradient(1px 1px at 160px 120px, #fff, rgba(0,0,0,0));
+  background: radial-gradient(1px 1px at 20px 30px, #fff, rgba(0, 0, 0, 0)),
+    radial-gradient(1px 1px at 40px 70px, #fff, rgba(0, 0, 0, 0)),
+    radial-gradient(1px 1px at 50px 160px, #fff, rgba(0, 0, 0, 0)),
+    radial-gradient(1px 1px at 90px 40px, #fff, rgba(0, 0, 0, 0)),
+    radial-gradient(1px 1px at 130px 80px, #fff, rgba(0, 0, 0, 0)),
+    radial-gradient(1px 1px at 160px 120px, #fff, rgba(0, 0, 0, 0));
   background-repeat: repeat;
   background-size: 200px 200px;
   animation: stars 4s linear infinite;
@@ -155,8 +166,12 @@ body {
 }
 
 @keyframes stars {
-  0% { background-position: 0 0; }
-  100% { background-position: 40px 40px; }
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 40px 40px;
+  }
 }
 
 /* Scrollbar */
@@ -215,15 +230,18 @@ body {
 }
 
 @keyframes glow {
-  0%, 100% {
-    text-shadow: 0 0 10px rgba(139, 92, 246, 0.5),
-                 0 0 20px rgba(139, 92, 246, 0.3),
-                 0 0 30px rgba(139, 92, 246, 0.2);
+  0%,
+  100% {
+    text-shadow:
+      0 0 10px rgba(139, 92, 246, 0.5),
+      0 0 20px rgba(139, 92, 246, 0.3),
+      0 0 30px rgba(139, 92, 246, 0.2);
   }
   50% {
-    text-shadow: 0 0 20px rgba(139, 92, 246, 0.7),
-                 0 0 30px rgba(139, 92, 246, 0.5),
-                 0 0 40px rgba(139, 92, 246, 0.3);
+    text-shadow:
+      0 0 20px rgba(139, 92, 246, 0.7),
+      0 0 30px rgba(139, 92, 246, 0.5),
+      0 0 40px rgba(139, 92, 246, 0.3);
   }
 }
 
@@ -256,17 +274,20 @@ body {
 
 @keyframes neon-pulse {
   0% {
-    box-shadow: 0 0 5px #8b3dff,
+    box-shadow:
+      0 0 5px #8b3dff,
       0 0 10px #8b3dff,
       0 0 15px #8b3dff;
   }
   50% {
-    box-shadow: 0 0 10px #8b3dff,
+    box-shadow:
+      0 0 10px #8b3dff,
       0 0 20px #8b3dff,
       0 0 30px #8b3dff;
   }
   100% {
-    box-shadow: 0 0 5px #8b3dff,
+    box-shadow:
+      0 0 5px #8b3dff,
       0 0 10px #8b3dff,
       0 0 15px #8b3dff;
   }

@@ -3,7 +3,7 @@
 import { User } from '@/app/types/user';
 import SafeImage from './SafeImage';
 
-interface AvatarLoaderProps {
+type AvatarLoaderProps = {
   user?: User;
   size?: 'xs' | 'sm' | 'md' | 'lg';
   className?: string;

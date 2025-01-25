@@ -2,7 +2,7 @@ import { fr } from '@/app/translations/fr';
 import axios from 'axios';
 import { JSDOM } from 'jsdom';
 
-interface URLMetadata {
+type URLMetadata = {
   title: string | null;
   description: string | null;
   image: string | null;

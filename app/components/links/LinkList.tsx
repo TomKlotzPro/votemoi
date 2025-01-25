@@ -1,19 +1,21 @@
 'use client';
 
-import { FormattedLink } from '@/app/types/link';
+import { fr } from '@/app/translations/fr';
+import { Link } from '@/app/types/link';
 import { User } from '@/app/types/user';
+import { PlusIcon } from '@heroicons/react/24/outline';
 import EmptyLinkList from './EmptyLinkList';
 import LinkCard from './LinkCard';
 
-interface LinkListProps {
-  links: FormattedLink[];
+type LinkListProps = {
+  links: Link[];
   isLoading: boolean;
   user: User | null;
   onVote: (linkId: string) => Promise<void>;
   onUnvote: (linkId: string) => Promise<void>;
+  onComment: (linkId: string) => void;
+  onEdit: (link: Link) => Promise<void>;
   onDelete: (linkId: string) => Promise<void>;
-  onEdit: (data: string) => Promise<void>;
-  onAddComment: (linkId: string, content: string) => Promise<void>;
 }
 
 export default function LinkList({
@@ -22,29 +24,42 @@ export default function LinkList({
   user,
   onVote,
   onUnvote,
-  onDelete,
+  onComment,
   onEdit,
-  onAddComment,
+  onDelete,
 }: LinkListProps) {
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="space-y-6">
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={i}
+            className="animate-pulse rounded-lg bg-white/5 p-6 space-y-4"
+          >
+            <div className="h-4 bg-white/10 rounded w-3/4" />
+            <div className="h-4 bg-white/10 rounded w-1/2" />
+          </div>
+        ))}
+      </div>
+    );
   }
 
-  if (!links.length) {
+  if (links.length === 0) {
     return <EmptyLinkList />;
   }
 
   return (
-    <div className="space-y-4">
+    <div className="grid gap-6">
       {links.map((link) => (
         <LinkCard
           key={link.id}
           link={link}
-          currentUser={user}
+          isVoted={user ? link.votes.includes(user.id) : false}
+          isOwner={user ? link.userId === user.id : false}
           onVote={() => onVote(link.id)}
           onUnvote={() => onUnvote(link.id)}
-          onComment={(content) => onAddComment(link.id, content)}
-          onEdit={() => onEdit(link.id)}
+          onComment={() => onComment(link.id)}
+          onEdit={(data) => onEdit({ ...link, ...data })}
           onDelete={() => onDelete(link.id)}
         />
       ))}

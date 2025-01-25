@@ -1,7 +1,7 @@
 import { FormattedLink } from '@/app/types/link';
 import { useState } from 'react';
 
-interface UseLinksClientReturn {
+type UseLinksClientReturn = {
   links: FormattedLink[];
   loading: boolean;
   error: string | null;

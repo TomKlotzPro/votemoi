@@ -12,7 +12,7 @@ import LoadingScreen from '../components/ui/LoadingScreen';
 import { AVATAR_OPTIONS } from '../constants/avatars';
 import { User } from '../types/user';
 
-interface UserContextType {
+type UserContextType = {
   user: User | null;
   setUser: (user: User | null) => void;
   showAuthForm: () => void;

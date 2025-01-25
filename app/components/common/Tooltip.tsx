@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-interface TooltipProps {
+type TooltipProps = {
   content: string;
   children: React.ReactNode;
 }

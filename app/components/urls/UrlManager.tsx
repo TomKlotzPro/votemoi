@@ -2,7 +2,7 @@ import { useUrls } from '@/app/hooks/useUrls';
 import { fr } from '@/app/translations/fr';
 import UrlList from './UrlList';
 
-interface UrlManagerProps {
+type UrlManagerProps = {
   onUrlSelect?: (url: { id: string; url: string; title?: string }) => void;
   selectedUrlId?: string;
 }

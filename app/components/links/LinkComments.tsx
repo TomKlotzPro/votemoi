@@ -3,7 +3,7 @@
 import { Comment } from '@/app/types/link';
 import SafeImage from '../ui/SafeImage';
 
-interface LinkCommentsProps {
+type LinkCommentsProps = {
   comments: Comment[];
 }
 

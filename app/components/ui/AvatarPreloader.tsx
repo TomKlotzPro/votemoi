@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 
-interface AvatarPreloaderProps {
+type AvatarPreloaderProps = {
   avatars: string[];
   onLoad?: () => void;
 }

@@ -4,12 +4,12 @@ import { User } from '@/app/types/user';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface UserState {
+type UserState = {
   user: User | null;
   isAuthFormVisible: boolean;
 }
 
-interface UserActions {
+type UserActions = {
   setUser: (user: User | null) => void;
   updateUser: (data: Partial<User>) => void;
   showAuthForm: () => void;

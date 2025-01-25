@@ -45,6 +45,11 @@ export const fr = {
     optional: 'Optionnel',
     comments: 'Commentaires',
     openMenu: 'Ouvrir le menu',
+    postedBy: 'Posté par',
+    justNow: "À l'instant",
+    minutesAgo: 'min',
+    hoursAgo: 'h',
+    daysAgo: 'j',
   },
   nav: {
     home: 'Accueil',
@@ -139,9 +144,14 @@ export const fr = {
     deleteComment: 'Supprimer le commentaire',
   },
   links: {
+    noLinks: 'Aucun lien pour le moment',
+    noLinksDescription:
+      'Commencez à partager des liens intéressants avec la communauté. Votre premier lien peut faire la différence!',
+    addFirstLink: 'Ajouter mon premier lien',
     addLink: 'Ajouter un lien',
     addedOn: 'Ajouté le',
     votes: 'votes',
+    editLink: 'Modifier le lien',
   },
   placeholders: {
     enterURL: 'Entrez une URL',

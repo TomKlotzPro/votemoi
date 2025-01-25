@@ -5,17 +5,17 @@ import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
-interface CreateUserData {
+type CreateUserData = {
   name: string;
   avatarUrl: string;
 }
 
-interface UpdateUserData {
+type UpdateUserData = {
   name: string;
   avatarUrl: string;
 }
 
-interface Link {
+type Link = {
   id: string;
   url: string;
   title: string;
@@ -30,7 +30,7 @@ interface Link {
   createdById: string;
 }
 
-interface Comment {
+type Comment = {
   id: string;
   content: string;
   createdAt: Date;

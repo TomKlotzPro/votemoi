@@ -2,7 +2,7 @@ import { fr } from '@/app/translations/fr';
 import { Menu, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 
-interface LinkCardMenuProps {
+type LinkCardMenuProps = {
   onDelete: () => Promise<void>;
 }
 

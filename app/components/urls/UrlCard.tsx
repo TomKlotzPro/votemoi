@@ -7,7 +7,7 @@ import { Url } from '@/app/types/url';
 import Image from 'next/image';
 import { Tooltip } from '../common/Tooltip';
 
-interface UrlCardProps {
+type UrlCardProps = {
   url: Url;
 }
 

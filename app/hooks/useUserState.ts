@@ -3,7 +3,7 @@
 import { User } from '@/app/types/user';
 import { create } from 'zustand';
 
-interface UserState {
+type UserState = {
   user: User | null;
   setUser: (user: User | null) => void;
   updateUserInfo: (data: { name: string; avatarUrl: string }) => void;

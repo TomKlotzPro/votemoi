@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import SafeImage from './SafeImage';
 
-interface AnimatedAvatarProps {
+type AnimatedAvatarProps = {
   src: string;
   alt: string;
   className?: string;

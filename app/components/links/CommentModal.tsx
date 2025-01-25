@@ -5,13 +5,17 @@ import { Dialog } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { FormEvent, useState } from 'react';
 
-interface CommentModalProps {
+type CommentModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (content: string) => Promise<void>;
 }
 
-export default function CommentModal({ isOpen, onClose, onSubmit }: CommentModalProps) {
+export default function CommentModal({
+  isOpen,
+  onClose,
+  onSubmit,
+}: CommentModalProps) {
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,7 +56,7 @@ export default function CommentModal({ isOpen, onClose, onSubmit }: CommentModal
             <form onSubmit={handleSubmit}>
               <textarea
                 value={content}
-                onChange={e => setContent(e.target.value)}
+                onChange={(e) => setContent(e.target.value)}
                 placeholder={fr.placeholders.comment}
                 className="w-full rounded-lg border border-gray-300 p-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                 rows={4}

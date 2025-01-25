@@ -2,7 +2,7 @@ import { fr } from '@/app/translations/fr';
 import { Url } from '@/app/types/url';
 import { useState } from 'react';
 
-interface UseUrlsReturn {
+type UseUrlsReturn = {
   urls: Url[];
   loading: boolean;
   error: string | null;

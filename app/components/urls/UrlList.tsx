@@ -2,7 +2,7 @@ import { useUrls } from '@/app/hooks/useUrls';
 import { fr } from '@/app/translations/fr';
 import { useState } from 'react';
 
-interface UrlListProps {
+type UrlListProps = {
   onUrlSelect?: (url: { id: string; url: string; title?: string }) => void;
   selectedUrlId?: string;
 }

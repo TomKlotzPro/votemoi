@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import ErrorMessage from '../common/ErrorMessage';
 
-interface CreateLinkFormProps {
+type CreateLinkFormProps = {
   onSubmit: (data: {
     url: string;
     title?: string;

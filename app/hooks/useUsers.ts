@@ -1,18 +1,30 @@
 'use client';
 
-import { createUser, deleteUser, getUsers, updateUser, signOut } from '@/app/actions/users';
+import {
+  createUser,
+  deleteUser,
+  getUsers,
+  signOut,
+  updateUser,
+} from '@/app/actions/users';
 import { fr } from '@/app/translations/fr';
 import { FormattedUser } from '@/app/types/user';
 import { useCallback, useEffect, useState } from 'react';
 
-interface UseUsersReturn {
+type UseUsersReturn = {
   users: FormattedUser[];
   isLoading: boolean;
   error: string | null;
   currentUser: FormattedUser | null;
   refreshUsers: () => Promise<void>;
-  createUser: (data: { name: string; image?: string }) => Promise<FormattedUser>;
-  updateUser: (id: string, data: { name?: string; image?: string }) => Promise<FormattedUser>;
+  createUser: (data: {
+    name: string;
+    image?: string;
+  }) => Promise<FormattedUser>;
+  updateUser: (
+    id: string,
+    data: { name?: string; image?: string }
+  ) => Promise<FormattedUser>;
   deleteUser: (id: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -42,37 +54,45 @@ export function useUsers(): UseUsersReturn {
     refreshUsers();
   }, [refreshUsers]);
 
-  const handleCreateUser = useCallback(async (data: { name: string; image?: string }) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const newUser = await createUser(data);
-      setUsers((prev) => [...prev, newUser]);
-      return newUser;
-    } catch (error) {
-      console.error('Failed to create user:', error);
-      setError(fr.errors.failedToAddUser);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const handleCreateUser = useCallback(
+    async (data: { name: string; image?: string }) => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const newUser = await createUser(data);
+        setUsers((prev) => [...prev, newUser]);
+        return newUser;
+      } catch (error) {
+        console.error('Failed to create user:', error);
+        setError(fr.errors.failedToAddUser);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
 
-  const handleUpdateUser = useCallback(async (id: string, data: { name?: string; image?: string }) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const updatedUser = await updateUser(id, data);
-      setUsers((prev) => prev.map((user) => (user.id === id ? updatedUser : user)));
-      return updatedUser;
-    } catch (error) {
-      console.error('Failed to update user:', error);
-      setError(fr.errors.failedToUpdateUser);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const handleUpdateUser = useCallback(
+    async (id: string, data: { name?: string; image?: string }) => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const updatedUser = await updateUser(id, data);
+        setUsers((prev) =>
+          prev.map((user) => (user.id === id ? updatedUser : user))
+        );
+        return updatedUser;
+      } catch (error) {
+        console.error('Failed to update user:', error);
+        setError(fr.errors.failedToUpdateUser);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
 
   const handleDeleteUser = useCallback(async (id: string) => {
     try {

@@ -4,7 +4,7 @@ import { useUserState } from '@/app/hooks/useUserState';
 import { User } from '@/app/types/user';
 import { useEffect } from 'react';
 
-interface UseUserSyncProps {
+type UseUserSyncProps = {
   user: User | null;
   setUser: (user: User | null) => void;
 }

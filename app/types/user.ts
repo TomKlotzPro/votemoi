@@ -27,7 +27,7 @@ export function formatUser(user: User): FormattedUser {
   };
 }
 
-interface Link {
+type Link = {
   id: string;
   url: string;
   title: string;
@@ -42,14 +42,14 @@ interface Link {
   createdById: string;
 }
 
-interface Vote {
+type Vote = {
   id: string;
   createdAt: string;
   userId: string;
   linkId: string;
 }
 
-interface Comment {
+type Comment = {
   id: string;
   content: string;
   createdAt: string;

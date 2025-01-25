@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 
-interface SafeImageProps {
+type SafeImageProps = {
   src: string;
   alt: string;
   fallbackSrc?: string;

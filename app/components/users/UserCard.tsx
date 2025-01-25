@@ -4,7 +4,7 @@ import { fr } from '@/app/translations/fr';
 import { FormattedUser } from '@/app/types/user';
 import Image from 'next/image';
 
-interface UserCardProps {
+type UserCardProps = {
   user: FormattedUser;
   onClick?: (user: FormattedUser) => void;
   isSelected?: boolean;
@@ -12,7 +12,7 @@ interface UserCardProps {
 
 export default function UserCard({ user, onClick, isSelected }: UserCardProps) {
   return (
-    <div 
+    <div
       className={`card p-6 ${isSelected ? 'border-primary' : ''}`}
       onClick={() => onClick?.(user)}
       role="button"

@@ -4,24 +4,39 @@ import { AVATAR_OPTIONS } from '@/app/constants/avatars';
 import { useUsers } from '@/app/hooks/useUsersClient';
 import { fr } from '@/app/translations/fr';
 import { FormattedUser } from '@/app/types/user';
-import { useState } from 'react';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import ErrorMessage from '../common/ErrorMessage';
-import SafeImage from '../ui/SafeImage';
 
-interface AuthFormProps {
-  onSuccess: (user: FormattedUser) => void;
-  onClose: () => void;
+type AuthFormProps = {
+  onSuccess(user: FormattedUser): void;
+  onClose(): void;
 }
 
 type AuthMode = 'select' | 'create';
 
 export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
-  const { users, loading, error: usersError, addUser } = useUsers();
+  const {
+    users,
+    loading: usersLoading,
+    error: usersError,
+    addUser,
+  } = useUsers();
   const [mode, setMode] = useState<AuthMode>('select');
   const [name, setName] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_OPTIONS[0]);
   const [error, setError] = useState(usersError);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate a short delay to ensure smooth initial loading
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,7 +93,7 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
     setName('');
   };
 
-  if (loading) {
+  if (isLoading || usersLoading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
         <div className="w-full max-w-md mx-auto bg-black/80 backdrop-blur-lg rounded-lg border border-white/10 p-6">
@@ -137,11 +152,13 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
                 onClick={() => handleUserSelect(user)}
                 className="flex items-center gap-4 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
               >
-                <div className="w-10 h-10 rounded-full overflow-hidden">
-                  <SafeImage
+                <div className="w-10 h-10 rounded-full overflow-hidden relative">
+                  <Image
                     src={user.avatarUrl}
                     alt={user.name}
-                    className="w-10 h-10 object-cover"
+                    fill
+                    className="object-cover"
+                    priority
                   />
                 </div>
                 <span className="text-white">{user.name}</span>
@@ -197,13 +214,15 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
                     `}
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <SafeImage
+                    <Image
                       src={avatar}
                       alt={fr.common.avatarOption}
+                      fill
                       className={`
-                        w-full h-full object-cover transform transition-transform duration-300
+                        object-cover transform transition-transform duration-300
                         ${selectedAvatar === avatar ? 'scale-110' : 'group-hover:scale-110'}
                       `}
+                      priority
                     />
                     {selectedAvatar === avatar && (
                       <div className="absolute inset-0 flex items-center justify-center bg-purple-500/20 backdrop-blur-sm">
