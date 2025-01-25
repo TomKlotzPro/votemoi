@@ -186,32 +186,41 @@ export function useLinks() {
         }
 
         if (result.success && result.user) {
-          setLinks((prev) =>
+          setLinks((prev: FormattedLink[]) =>
             prev.map((link) =>
               link.id === linkId
-                ? {
+                ? ({
                     ...link,
                     voteCount: link.voteCount + 1,
+                    hasVoted: true,
                     voters: [
-                      ...(link.voters || []),
+                      ...link.voters,
                       {
-                        id: result.user.id,
-                        name: result.user.name,
-                        avatarUrl: result.user.avatarUrl,
+                        id: result.user?.id || '',
+                        name: result.user?.name || null,
+                        avatarUrl: result.user?.avatarUrl || null,
                       },
                     ],
                     votes: [
-                      ...(link.votes || []),
+                      ...link.votes,
                       {
                         id: `${linkId}-${userId}`,
-                        userId: result.user.id,
-                        linkId,
                         createdAt: new Date(),
-                        user: result.user,
+                        userId: result.user?.id || '',
+                        linkId,
+                        user: {
+                          id: result.user?.id || '',
+                          name: result.user?.name || '',
+                          avatarUrl: result.user?.avatarUrl || null,
+                        },
+                        link: {
+                          id: link.id,
+                          url: link.url,
+                          title: link.title,
+                        },
                       },
                     ],
-                    hasVoted: true,
-                  }
+                  } as FormattedLink)
                 : link
             )
           );

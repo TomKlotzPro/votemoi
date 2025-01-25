@@ -38,24 +38,29 @@ const formatLink = (
     userId: comment.userId,
     linkId: comment.linkId,
     content: comment.content,
-    createdAt:
-      comment.createdAt instanceof Date
-        ? comment.createdAt.toISOString()
-        : comment.createdAt,
-    updatedAt:
-      comment.updatedAt instanceof Date
-        ? comment.updatedAt.toISOString()
-        : comment.updatedAt,
+    createdAt: comment.createdAt.toISOString(),
+    updatedAt: comment.updatedAt.toISOString(),
     user: comment.user
       ? {
           id: comment.user.id,
           name: comment.user.name,
           avatarUrl: comment.user.avatarUrl,
         }
-      : null,
+      : {
+          id: comment.userId,
+          name: null,
+          avatarUrl: null,
+        },
   })),
   voteCount: link.votes?.length ?? 0,
-  votes: link.votes || [],
+  votes: (link.votes || []).map((vote) => ({
+    ...vote,
+    link: {
+      id: link.id,
+      url: link.url,
+      title: link.title,
+    },
+  })),
   voters:
     link.votes?.map((vote) => ({
       id: vote.user.id,
@@ -149,7 +154,6 @@ export async function createLink(data: {
     });
 
     revalidatePath('/');
-
     return { link: formatLink(link) };
   } catch (error) {
     console.error('Error creating link:', error);

@@ -82,13 +82,22 @@ export async function extractURLMetadata(url: string): Promise<URLMetadata> {
           ?.getAttribute('content') || null,
     };
 
-    // Convert relative URLs to absolute URLs
-    if (metadata.image && !metadata.image.startsWith('http')) {
-      metadata.image = new URL(metadata.image, url).toString();
+    const imageUrl =
+      metadata.image && typeof metadata.image === 'string'
+        ? metadata.image
+        : '';
+    const faviconUrl =
+      metadata.favicon && typeof metadata.favicon === 'string'
+        ? metadata.favicon
+        : '';
+
+    // Handle relative URLs for images and favicons
+    if (imageUrl && !/^https?:\/\//i.test(imageUrl)) {
+      metadata.image = new URL(imageUrl, url).toString();
     }
 
-    if (metadata.favicon && !metadata.favicon.startsWith('http')) {
-      metadata.favicon = new URL(metadata.favicon, url).toString();
+    if (faviconUrl && !/^https?:\/\//i.test(faviconUrl)) {
+      metadata.favicon = new URL(faviconUrl, url).toString();
     }
 
     return metadata;

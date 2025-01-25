@@ -49,11 +49,26 @@ export async function getLinks(): Promise<FormattedLink[]> {
       ...link,
       createdAt: link.createdAt.toISOString(),
       updatedAt: link.updatedAt.toISOString(),
+      voteCount: link.votes.length,
+      voters: link.votes.map((vote) => ({
+        id: vote.user.id,
+        name: vote.user.name,
+        avatarUrl: vote.user.avatarUrl,
+      })),
       votes: link.votes.map((vote) => ({
         ...vote,
-        userName: vote.user.name,
-        createdAt: vote.createdAt.toISOString(),
+        link: {
+          id: link.id,
+          url: link.url,
+          title: link.title,
+        },
       })),
+      hasVoted: false,
+      user: {
+        id: link.createdById,
+        name: link.createdBy.name,
+        avatarUrl: link.createdBy.avatarUrl,
+      },
       comments: link.comments.map((comment) => ({
         ...comment,
         createdAt: comment.createdAt.toISOString(),
@@ -126,11 +141,26 @@ export async function addLink(
       ...result,
       createdAt: result.createdAt.toISOString(),
       updatedAt: result.updatedAt.toISOString(),
+      voteCount: result.votes.length,
+      voters: result.votes.map((vote) => ({
+        id: vote.user.id,
+        name: vote.user.name,
+        avatarUrl: vote.user.avatarUrl,
+      })),
       votes: result.votes.map((vote) => ({
         ...vote,
-        userName: vote.user.name,
-        createdAt: vote.createdAt.toISOString(),
+        link: {
+          id: result.id,
+          url: result.url,
+          title: result.title,
+        },
       })),
+      hasVoted: false,
+      user: {
+        id: result.createdById,
+        name: result.createdBy.name,
+        avatarUrl: result.createdBy.avatarUrl,
+      },
       comments: result.comments.map((comment) => ({
         ...comment,
         createdAt: comment.createdAt.toISOString(),
@@ -203,11 +233,26 @@ export async function editLink(
       ...link,
       createdAt: link.createdAt.toISOString(),
       updatedAt: link.updatedAt.toISOString(),
+      voteCount: link.votes.length,
+      voters: link.votes.map((vote) => ({
+        id: vote.user.id,
+        name: vote.user.name,
+        avatarUrl: vote.user.avatarUrl,
+      })),
       votes: link.votes.map((vote) => ({
         ...vote,
-        userName: vote.user.name,
-        createdAt: vote.createdAt.toISOString(),
+        link: {
+          id: link.id,
+          url: link.url,
+          title: link.title,
+        },
       })),
+      hasVoted: false,
+      user: {
+        id: link.createdById,
+        name: link.createdBy.name,
+        avatarUrl: link.createdBy.avatarUrl,
+      },
       comments: link.comments.map((comment) => ({
         ...comment,
         createdAt: comment.createdAt.toISOString(),
@@ -318,11 +363,26 @@ export async function addComment(
       ...link,
       createdAt: link.createdAt.toISOString(),
       updatedAt: link.updatedAt.toISOString(),
+      voteCount: link.votes.length,
+      voters: link.votes.map((vote) => ({
+        id: vote.user.id,
+        name: vote.user.name,
+        avatarUrl: vote.user.avatarUrl,
+      })),
       votes: link.votes.map((vote) => ({
         ...vote,
-        userName: vote.user.name,
-        createdAt: vote.createdAt.toISOString(),
+        link: {
+          id: link.id,
+          url: link.url,
+          title: link.title,
+        },
       })),
+      hasVoted: false,
+      user: {
+        id: link.createdById,
+        name: link.createdBy.name,
+        avatarUrl: link.createdBy.avatarUrl,
+      },
       comments: link.comments.map((comment) => ({
         ...comment,
         createdAt: comment.createdAt.toISOString(),
