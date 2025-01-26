@@ -8,6 +8,7 @@ export function useUsersQuery() {
   const [users, setUsers] = useState<FormattedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -40,6 +41,7 @@ export function useUsersQuery() {
         throw new Error('No user data returned from server');
       }
 
+      setSessionId(response.sessionId);
       await fetchUsers(); // Refresh the list after adding
       return response;
     } catch (err) {
@@ -58,6 +60,7 @@ export function useUsersQuery() {
     users,
     loading,
     error,
+    sessionId,
     addUser,
     refresh,
   };

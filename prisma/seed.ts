@@ -1,28 +1,54 @@
 import { PrismaClient } from '@prisma/client';
+import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
 
 async function main() {
   try {
     // Clean up existing data
+    await prisma.session.deleteMany();
     await prisma.comment.deleteMany();
     await prisma.vote.deleteMany();
     await prisma.link.deleteMany();
     await prisma.user.deleteMany();
 
-    // Create sample users
-    const user1 = await prisma.user.create({
-      data: {
-        name: 'Chloé',
-        avatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=chloe',
-      },
+    // Create sample users with sessions
+    const user1 = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          name: 'Chloé',
+          avatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=chloe',
+        },
+      });
+
+      await tx.session.create({
+        data: {
+          id: randomUUID(),
+          userId: user.id,
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        },
+      });
+
+      return user;
     });
 
-    const user2 = await prisma.user.create({
-      data: {
-        name: 'Tom',
-        avatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=tom',
-      },
+    const user2 = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          name: 'Tom',
+          avatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=tom',
+        },
+      });
+
+      await tx.session.create({
+        data: {
+          id: randomUUID(),
+          userId: user.id,
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        },
+      });
+
+      return user;
     });
 
     // Create sample links

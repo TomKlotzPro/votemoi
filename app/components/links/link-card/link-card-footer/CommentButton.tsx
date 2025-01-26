@@ -1,72 +1,83 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import React from 'react';
+import { useUser } from '@/app/context/user-context';
+import { motion, AnimatePresence } from 'framer-motion';
+import React, { useCallback, useState } from 'react';
+import { fr } from '@/app/translations/fr';
 
 type CommentButtonProps = {
   showComments: boolean;
   commentCount: number;
-  isDisabled: boolean;
   onClick: () => void;
 };
 
 export default function CommentButton({
   showComments,
   commentCount,
-  isDisabled,
   onClick,
 }: CommentButtonProps) {
+  const { user } = useUser();
+  const [isLoading, setIsLoading] = useState(false);
+  const [optimisticCommentCount, setOptimisticCommentCount] = useState(commentCount);
+
+  const handleClick = useCallback(async () => {
+    if (!user) {
+      window.dispatchEvent(new CustomEvent('show-auth-form'));
+      return;
+    }
+
+    setIsLoading(true);
+    setOptimisticCommentCount(showComments ? commentCount - 1 : commentCount + 1);
+    try {
+      onClick();
+    } catch (error) {
+      console.error('Failed to handle comment:', error);
+      setOptimisticCommentCount(commentCount);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, showComments, commentCount, onClick]);
+
   return (
     <motion.button
-      onClick={onClick}
-      className="flex items-center gap-1 px-2 h-8 rounded-full bg-purple-500/10 hover:bg-purple-500/20 transition-colors duration-200"
+      onClick={handleClick}
+      className="flex items-center gap-2 text-sm text-purple-400/50 hover:text-purple-300 transition-colors"
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      disabled={isDisabled}
+      disabled={isLoading}
     >
-      <motion.div className="relative">
-        <motion.svg
+      <motion.div
+        animate={showComments ? { scale: 1.1 } : { scale: 1 }}
+        transition={{ duration: 0.2 }}
+      >
+        <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-4 w-4"
+          className="h-5 w-5"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
-          initial={false}
-          animate={
-            showComments
-              ? {
-                  fill: '#d946db',
-                  stroke: '#d946db',
-                  scale: 1,
-                }
-              : {
-                  fill: 'rgba(0,0,0,0)',
-                  stroke: 'currentColor',
-                  scale: 1,
-                }
-          }
-          transition={{ duration: 0.3 }}
         >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
-            strokeWidth={2}
+            strokeWidth={1.5}
             d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
           />
-        </motion.svg>
+        </svg>
       </motion.div>
-      <motion.div className="relative">
-        <motion.span
-          key={`count-${commentCount}`}
-          className={`block text-sm ${isDisabled ? 'text-gray-500' : 'text-gray-400'}`}
-          initial={{ opacity: 0, y: 10 }}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={commentCount}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
+          exit={{ opacity: 0, y: 10 }}
           transition={{ duration: 0.2 }}
+          className={`block ${isLoading ? 'text-gray-500' : 'text-gray-400'}`}
         >
-          {commentCount}
-        </motion.span>
-      </motion.div>
+          {commentCount}{' '}
+          {commentCount === 1 ? fr.comments.comment : fr.comments.comments}
+        </motion.div>
+      </AnimatePresence>
     </motion.button>
   );
 }

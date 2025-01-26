@@ -1,40 +1,158 @@
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
+import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 export async function POST(
   request: NextRequest,
-  context: { params: Promise<{ linkId: string }> }
+  { params }: { params: { linkId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    const params = await context.params;
+    // Get userId from cookies
+    const cookieStore = await cookies();
+    const userId = cookieStore.get('userId')?.value;
+    const sessionId = cookieStore.get('sessionId')?.value;
 
-    if (!session?.user?.name) {
+    if (!userId || !sessionId) {
       return NextResponse.json(
         { error: 'User not authenticated' },
         { status: 401 }
       );
     }
 
-    // Delete vote if it exists
-    try {
-      await prisma.vote.deleteMany({
+    // Validate session
+    const session = await prisma.session.findUnique({
+      where: {
+        id: sessionId,
+        userId: userId,
+        active: true,
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
+    });
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Invalid or expired session' },
+        { status: 401 }
+      );
+    }
+
+    const linkId = params.linkId;
+
+    // Use a transaction to ensure data consistency
+    const result = await prisma.$transaction(async (tx) => {
+      // Verify link exists
+      const link = await tx.link.findUnique({
+        where: { id: linkId },
+        select: { id: true },
+      });
+
+      if (!link) {
+        throw new Error('Link not found');
+      }
+
+      // Delete vote if it exists
+      const vote = await tx.vote.delete({
         where: {
-          userId: session.user.name.toLowerCase(),
-          linkId: params.linkId,
+          userId_linkId: {
+            userId: userId,
+            linkId: linkId,
+          },
+        },
+      }).catch(() => null);
+
+      if (!vote) {
+        throw new Error('Vote not found');
+      }
+
+      // Get updated link data with all relations
+      const updatedLink = await tx.link.findUnique({
+        where: { id: linkId },
+        include: {
+          votes: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+          },
+          comments: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+          },
+          createdBy: {
+            select: {
+              id: true,
+              name: true,
+              avatarUrl: true,
+            },
+          },
         },
       });
 
-      // Return success response
-      return NextResponse.json({ success: true });
-    } catch (error) {
-      console.error('Error deleting vote:', error);
-      return NextResponse.json({ success: true }); // Return success even if vote doesn't exist
-    }
+      if (!updatedLink || !updatedLink.createdBy) {
+        throw new Error('Failed to fetch updated link data');
+      }
+
+      return {
+        id: updatedLink.id,
+        url: updatedLink.url,
+        title: updatedLink.title,
+        description: updatedLink.description,
+        previewImage: updatedLink.previewImage,
+        previewTitle: updatedLink.previewTitle,
+        previewDescription: updatedLink.previewDescription,
+        previewFavicon: updatedLink.previewFavicon,
+        previewSiteName: updatedLink.previewSiteName,
+        createdAt: updatedLink.createdAt.toISOString(),
+        updatedAt: updatedLink.updatedAt.toISOString(),
+        createdById: updatedLink.createdById,
+        votes: updatedLink.votes,
+        voters: updatedLink.votes
+          .map(vote => vote.user)
+          .filter((user): user is NonNullable<typeof user> => user !== null)
+          .map(user => ({
+            id: user.id,
+            name: user.name,
+            avatarUrl: user.avatarUrl,
+          })),
+        comments: updatedLink.comments
+          .filter(comment => comment.user !== null)
+          .map(comment => ({
+            ...comment,
+            createdAt: comment.createdAt.toISOString(),
+            updatedAt: comment.updatedAt.toISOString(),
+          })),
+        user: {
+          id: updatedLink.createdBy.id,
+          name: updatedLink.createdBy.name,
+          avatarUrl: updatedLink.createdBy.avatarUrl,
+        },
+      };
+    });
+
+    return NextResponse.json({
+      success: true,
+      link: result,
+    });
   } catch (error) {
     console.error('Error unvoting:', error);
-    return NextResponse.json({ error: 'Failed to unvote' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to unvote';
+    const status = message === 'Link not found' ? 404 :
+                  message === 'Vote not found' ? 400 : 500;
+    
+    return NextResponse.json({ error: message }, { status });
   }
 }

@@ -1,10 +1,12 @@
 'use client';
 
 import { fr } from '@/app/translations/fr';
+import { createComment, deleteComment } from '@/app/actions/comments';
 import { formatDistanceToNow } from 'date-fns';
 import { fr as dateFnsFR } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'framer-motion';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import SafeImage from '../../../../ui/SafeImage';
 import CommentInput from './CommentInput';
 
@@ -18,6 +20,7 @@ type Comment = {
     name: string;
     avatarUrl: string;
   };
+  linkId: string;
 };
 
 type CommentListProps = {
@@ -27,8 +30,8 @@ type CommentListProps = {
     name: string;
     avatarUrl: string;
   } | null;
-  onSubmitComment: (content: string) => void;
-  onDeleteComment?: (commentId: string) => void;
+  linkId: string;
+  onCommentSuccess: (comment: Comment | null) => void;
 };
 
 const COMMENTS_PER_PAGE = 5;
@@ -36,11 +39,84 @@ const COMMENTS_PER_PAGE = 5;
 export default function CommentList({
   comments,
   currentUser,
-  onSubmitComment,
-  onDeleteComment,
+  linkId,
+  onCommentSuccess,
 }: CommentListProps) {
   const [visibleComments, setVisibleComments] = useState(COMMENTS_PER_PAGE);
   const [isLoading, setIsLoading] = useState(false);
+  const [optimisticComments, setOptimisticComments] = useState(comments);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
+
+  const handleSubmitComment = useCallback(async (content: string) => {
+    if (!currentUser) {
+      window.dispatchEvent(new CustomEvent('show-auth-form'));
+      return;
+    }
+
+    if (!content.trim()) return;
+
+    setIsSubmitting(true);
+    // Create optimistic comment
+    const optimisticComment = {
+      id: `temp-${Date.now()}`,
+      content: content.trim(),
+      createdAt: new Date().toISOString(),
+      userId: currentUser.id,
+      user: {
+        id: currentUser.id,
+        name: currentUser.name,
+        avatarUrl: currentUser.avatarUrl,
+      },
+      linkId,
+    };
+
+    // Optimistically add the comment
+    onCommentSuccess(optimisticComment);
+
+    try {
+      const newComment = await createComment(linkId, content);
+      // Replace optimistic comment with real one
+      onCommentSuccess(newComment);
+    } catch (error) {
+      console.error('Failed to add comment:', error);
+      // Remove optimistic comment on error
+      onCommentSuccess(null);
+      toast.error(fr.errors.failedToCreateComment);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [currentUser, linkId, onCommentSuccess]);
+
+  const handleDeleteComment = useCallback(async (commentId: string) => {
+    if (!currentUser) {
+      window.dispatchEvent(new CustomEvent('show-auth-form'));
+      return;
+    }
+
+    // Store comment for potential restoration
+    const deletedComment = optimisticComments.find(c => c.id === commentId);
+    
+    // Optimistically remove comment and update UI
+    onCommentSuccess(null);
+    setOptimisticComments(prev => prev.filter(c => c.id !== commentId));
+
+    try {
+      await deleteComment(linkId, commentId);
+    } catch (error) {
+      console.error('Failed to delete comment:', error);
+      // Restore comment on error
+      if (deletedComment) {
+        onCommentSuccess(deletedComment);
+        setOptimisticComments(prev => [...prev, deletedComment]);
+      }
+      toast.error(fr.errors.failedToDeleteComment);
+    }
+  }, [currentUser, linkId, optimisticComments, onCommentSuccess]);
+
+  useEffect(() => {
+    setOptimisticComments(comments);
+  }, [comments]);
 
   const handleLoadMore = () => {
     setIsLoading(true);
@@ -51,11 +127,7 @@ export default function CommentList({
     }, 300);
   };
 
-  useEffect(() => {
-    setVisibleComments(COMMENTS_PER_PAGE);
-  }, [comments.length]);
-
-  const sortedComments = [...comments].sort(
+  const sortedComments = [...optimisticComments].sort(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
 
@@ -64,10 +136,10 @@ export default function CommentList({
   return (
     <div>
       {/* Comments list */}
-      {comments.length > 0 && (
+      {optimisticComments.length > 0 && (
         <div className="px-4 pt-2 pb-2 space-y-4 border-t border-purple-500/10">
           {/* Load More button */}
-          {comments.length > visibleComments && (
+          {optimisticComments.length > visibleComments && (
             <div className="flex justify-center">
               <motion.button
                 onClick={handleLoadMore}
@@ -88,7 +160,7 @@ export default function CommentList({
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     />
                   ) : (
                     <path
@@ -99,28 +171,32 @@ export default function CommentList({
                     />
                   )}
                 </svg>
-                {fr.comments.loadMore}
+                {fr.buttons.loadMore}
               </motion.button>
             </div>
           )}
-          <AnimatePresence initial={false} mode="popLayout">
+
+          {/* Comments */}
+          <AnimatePresence mode="popLayout" initial={false}>
             {displayedComments.map((comment) => (
               <motion.div
                 key={comment.id}
-                className="flex space-x-3 py-2"
-                initial={{ opacity: 0, y: 20 }}
+                layout
+                initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
+                exit={{ opacity: 0, y: 20 }}
                 transition={{
-                  type: 'spring',
+                  type: "spring",
                   stiffness: 500,
-                  damping: 30,
+                  damping: 40,
+                  mass: 1
                 }}
+                className="flex space-x-3 py-2"
               >
                 <div className="flex-shrink-0">
                   <SafeImage
-                    src={comment.user.avatarUrl || '/default-avatar.png'}
-                    alt={comment.user.name || 'User'}
+                    src={comment.user.avatarUrl || 'https://api.dicebear.com/7.x/adventurer/svg?seed=fallback'}
+                    alt={comment.user.name}
                     width={32}
                     height={32}
                     className="h-8 w-8 rounded-full ring-2 ring-purple-500/20"
@@ -138,25 +214,52 @@ export default function CommentList({
                         locale: dateFnsFR,
                       })}
                     </span>
-                    {currentUser?.id === comment.userId && onDeleteComment && (
-                      <button
-                        onClick={() => onDeleteComment(comment.id)}
-                        className="text-gray-400 hover:text-red-400 transition-colors duration-200 ml-2"
+                    {currentUser?.id === comment.userId && (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleDeleteComment(comment.id)}
+                        className="text-gray-400 hover:text-red-400 transition-colors"
+                        disabled={deletingCommentId === comment.id}
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                      </button>
+                        {deletingCommentId === comment.id ? (
+                          <svg
+                            className="animate-spin h-4 w-4"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                        ) : (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            fill="none"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        )}
+                      </motion.button>
                     )}
                   </div>
                   <p className="text-gray-300 break-words">{comment.content}</p>
@@ -169,11 +272,14 @@ export default function CommentList({
 
       {/* Comment Input */}
       {currentUser && (
-        <CommentInput
-          userAvatarUrl={currentUser.avatarUrl}
-          userName={currentUser.name}
-          onSubmit={onSubmitComment}
-        />
+        <div className="p-4 pt-2">
+          <CommentInput
+            userAvatarUrl={currentUser.avatarUrl}
+            userName={currentUser.name}
+            onSubmit={handleSubmitComment}
+            isSubmitting={isSubmitting}
+          />
+        </div>
       )}
     </div>
   );

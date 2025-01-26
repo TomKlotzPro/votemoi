@@ -1,41 +1,50 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
-import { NextRequest } from 'next/server';
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { linkId: string; commentId: string } }
 ) {
   try {
-    const cookieStore = cookies();
-    const userName = (await cookieStore).get('userName')?.value;
-    if (!userName) {
+    const cookieStore = await cookies();
+    const userId = cookieStore.get('userId')?.value;
+    const sessionId = cookieStore.get('sessionId')?.value;
+
+    if (!userId || !sessionId) {
       return NextResponse.json(
         { error: 'User not authenticated' },
         { status: 401 }
       );
     }
 
-    // Get user by name
-    const user = await prisma.user.findUnique({
-      where: { name: userName },
-      select: {
-        id: true,
+    // Validate session
+    const session = await prisma.session.findUnique({
+      where: {
+        id: sessionId,
+        userId: userId,
+        active: true,
+        expiresAt: {
+          gt: new Date(),
+        },
       },
     });
 
-    if (!user) {
+    if (!session) {
       return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
+        { error: 'Invalid session' },
+        { status: 401 }
       );
     }
 
-    // Check if comment exists and belongs to the user
+    // Find comment and check ownership
     const comment = await prisma.comment.findUnique({
-      where: { id: params.commentId },
-      select: { userId: true },
+      where: {
+        id: params.commentId,
+      },
+      include: {
+        user: true,
+      },
     });
 
     if (!comment) {
@@ -45,19 +54,34 @@ export async function DELETE(
       );
     }
 
-    if (comment.userId !== user.id) {
+    if (comment.userId !== userId) {
       return NextResponse.json(
         { error: 'Unauthorized' },
-        { status: 403 }
+        { status: 401 }
       );
     }
 
-    // Delete the comment
     await prisma.comment.delete({
-      where: { id: params.commentId },
+      where: {
+        id: params.commentId,
+      },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      comment: {
+        id: comment.id,
+        content: comment.content,
+        createdAt: comment.createdAt,
+        userId: comment.userId,
+        user: {
+          id: comment.user.id,
+          name: comment.user.name,
+          avatarUrl: comment.user.avatarUrl,
+        },
+        linkId: params.linkId,
+      }
+    });
   } catch (error) {
     console.error('Failed to delete comment:', error);
     return NextResponse.json(

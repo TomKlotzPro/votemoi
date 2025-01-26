@@ -1,46 +1,71 @@
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import prisma from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { cookies } from 'next/headers';
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { commentId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return new NextResponse('Unauthorized', { status: 401 });
+    const cookieStore = await cookies();
+    const userId = cookieStore.get('userId')?.value;
+    const sessionId = cookieStore.get('sessionId')?.value;
+
+    if (!userId || !sessionId) {
+      return NextResponse.json(
+        { error: 'User not authenticated' },
+        { status: 401 }
+      );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+    // Validate session
+    const session = await prisma.session.findUnique({
+      where: {
+        id: sessionId,
+        userId: userId,
+        active: true,
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
     });
 
-    if (!user) {
-      return new NextResponse('User not found', { status: 404 });
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Invalid session' },
+        { status: 401 }
+      );
     }
 
     const comment = await prisma.comment.findUnique({
       where: { id: params.commentId },
+      select: { userId: true },
     });
 
     if (!comment) {
-      return new NextResponse('Comment not found', { status: 404 });
+      return NextResponse.json(
+        { error: 'Comment not found' },
+        { status: 404 }
+      );
     }
 
-    if (comment.userId !== user.id) {
-      return new NextResponse('Forbidden', { status: 403 });
+    if (comment.userId !== userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
     }
 
-    await prisma.comment.update({
+    await prisma.comment.delete({
       where: { id: params.commentId },
-      data: { isDeleted: true },
     });
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error('Failed to delete comment:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }
