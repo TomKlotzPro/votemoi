@@ -5,6 +5,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { AnimatePresence, motion } from 'framer-motion';
 import AnimatedBackground from '../ui/AnimatedBackground';
 import SafeImage from '../ui/SafeImage';
+import { useUserDataStore } from '@/app/stores/userDataStore';
 
 type VotersModalProps = {
   isOpen: boolean;
@@ -55,32 +56,40 @@ export default function VotersModal({
 
             {/* Voters List */}
             <div className="max-h-[60vh] overflow-y-auto p-4 space-y-3">
-              {votes.map((vote, index) => (
-                <motion.div
-                  key={vote.user.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors group"
-                >
+              {votes.map((vote, index) => {
+                const voterData = useUserDataStore(
+                  (state) => state.getUserData(vote.user?.id)
+                );
+                const voter = vote.user;
+                if (!voter) return null;
+                
+                return (
                   <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    transition={{ type: 'spring', stiffness: 400 }}
+                    key={voter.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors group"
                   >
-                    <SafeImage
-                      src={vote.user.avatarUrl}
-                      alt={vote.user.name}
-                      className="w-10 h-10 rounded-full border-2 border-white/10 group-hover:border-white/20 transition-colors"
-                    />
-                  </motion.div>
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      transition={{ type: 'spring', stiffness: 400 }}
+                    >
+                      <SafeImage
+                        src={voterData?.avatarUrl || voter.avatarUrl || '/default-avatar.png'}
+                        alt={voterData?.name || voter.name || 'User'}
+                        className="w-10 h-10 rounded-full border-2 border-white/10 group-hover:border-white/20 transition-colors"
+                      />
+                    </motion.div>
 
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-white font-medium truncate">
-                      {vote.user.name}
-                    </h3>
-                  </div>
-                </motion.div>
-              ))}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-white font-medium truncate">
+                        {voterData?.name || voter.name}
+                      </h3>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           </motion.div>
         </>

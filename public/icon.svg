@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="128" fill="#1e1e38"/>
+  
+  <!-- Synthwave sun -->
+  <circle cx="256" cy="256" r="120" fill="#ff2d95" opacity="0.8"/>
+  <circle cx="256" cy="256" r="90" fill="#1e1e38"/>
+  
+  <!-- Grid lines -->
+  <path d="M128 384 L384 384" stroke="#ff2d95" stroke-width="8" opacity="0.6"/>
+  <path d="M128 352 L384 352" stroke="#ff2d95" stroke-width="6" opacity="0.5"/>
+  <path d="M128 320 L384 320" stroke="#ff2d95" stroke-width="4" opacity="0.4"/>
+  <path d="M128 288 L384 288" stroke="#ff2d95" stroke-width="2" opacity="0.3"/>
+  
+  <!-- Vote arrow -->
+  <path d="M256 140 L196 220 L316 220 Z" fill="#fff"/>
+</svg>

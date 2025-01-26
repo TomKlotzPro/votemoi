@@ -15,8 +15,56 @@ import { preloadLinks } from './utils/link-preloader';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'VoteMoi',
-  description: 'Partagez et votez pour vos liens préférés',
+  title: 'VoteMoi - Partagez et votez pour vos liens préférés',
+  description: 'VoteMoi est une plateforme sociale permettant de partager et voter pour vos liens préférés dans une ambiance synthwave unique.',
+  keywords: ['vote', 'social', 'liens', 'partage', 'synthwave', 'communauté'],
+  authors: [{ name: 'Tom Klotz' }],
+  creator: 'Tom Klotz',
+  publisher: 'VoteMoi',
+  robots: 'index, follow',
+  themeColor: '#1e1e38',
+  colorScheme: 'dark',
+  viewport: 'width=device-width, initial-scale=1',
+  openGraph: {
+    type: 'website',
+    locale: 'fr_FR',
+    url: 'https://votemoi.vercel.app',
+    title: 'VoteMoi - Partagez et votez pour vos liens préférés',
+    description: 'VoteMoi est une plateforme sociale permettant de partager et voter pour vos liens préférés dans une ambiance synthwave unique.',
+    siteName: 'VoteMoi',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'VoteMoi Preview'
+      }
+    ]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'VoteMoi - Partagez et votez pour vos liens préférés',
+    description: 'VoteMoi est une plateforme sociale permettant de partager et voter pour vos liens préférés dans une ambiance synthwave unique.',
+    images: ['/og-image.png']
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' }
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
+    ],
+    other: [
+      {
+        rel: 'mask-icon',
+        url: '/safari-pinned-tab.svg',
+        color: '#1e1e38'
+      }
+    ]
+  },
+  manifest: '/site.webmanifest'
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
