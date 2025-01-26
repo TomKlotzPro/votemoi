@@ -16,7 +16,8 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'VoteMoi - Partagez et votez pour vos liens préférés',
-  description: 'VoteMoi est une plateforme sociale permettant de partager et voter pour vos liens préférés dans une ambiance synthwave unique.',
+  description:
+    'VoteMoi est une plateforme sociale permettant de partager et voter pour vos liens préférés dans une ambiance synthwave unique.',
   keywords: ['vote', 'social', 'liens', 'partage', 'synthwave', 'communauté'],
   authors: [{ name: 'Tom Klotz' }],
   creator: 'Tom Klotz',
@@ -24,47 +25,49 @@ export const metadata: Metadata = {
   robots: 'index, follow',
   themeColor: '#1e1e38',
   colorScheme: 'dark',
-  viewport: 'width=device-width, initial-scale=1',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
   openGraph: {
     type: 'website',
     locale: 'fr_FR',
     url: 'https://votemoi.vercel.app',
     title: 'VoteMoi - Partagez et votez pour vos liens préférés',
-    description: 'VoteMoi est une plateforme sociale permettant de partager et voter pour vos liens préférés dans une ambiance synthwave unique.',
+    description:
+      'VoteMoi est une plateforme sociale permettant de partager et voter pour vos liens préférés dans une ambiance synthwave unique.',
     siteName: 'VoteMoi',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'VoteMoi Preview'
-      }
-    ]
+        alt: 'VoteMoi Preview',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'VoteMoi - Partagez et votez pour vos liens préférés',
-    description: 'VoteMoi est une plateforme sociale permettant de partager et voter pour vos liens préférés dans une ambiance synthwave unique.',
-    images: ['/og-image.png']
+    description:
+      'VoteMoi est une plateforme sociale permettant de partager et voter pour vos liens préférés dans une ambiance synthwave unique.',
+    images: ['/og-image.png'],
   },
   icons: {
     icon: [
       { url: '/favicon.ico' },
       { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
-      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' }
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
     ],
     apple: [
-      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
     other: [
       {
         rel: 'mask-icon',
         url: '/safari-pinned-tab.svg',
-        color: '#1e1e38'
-      }
-    ]
+        color: '#1e1e38',
+      },
+    ],
   },
-  manifest: '/site.webmanifest'
+  manifest: '/site.webmanifest',
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {

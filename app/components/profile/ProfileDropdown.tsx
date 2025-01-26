@@ -8,6 +8,7 @@ import { fr } from '@/app/translations/fr';
 import { FormattedUser } from '@/app/types/user';
 import { Transition } from '@headlessui/react';
 import { CheckIcon } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
 import { Fragment, useState } from 'react';
 import SafeImage from '../ui/SafeImage';
 
@@ -128,31 +129,31 @@ export default function ProfileDropdown({ onClose }: ProfileDropdownProps) {
                   type="button"
                   onClick={() => setSelectedAvatar(avatar)}
                   className={`
-                    group relative aspect-square rounded-lg overflow-hidden
-                    transition-all duration-300 ease-out transform
-                    hover:scale-105 hover:shadow-lg hover:z-10
+                    relative aspect-square rounded-lg overflow-hidden
+                    transition-all duration-150 border
                     ${
                       selectedAvatar === avatar
-                        ? 'ring-2 ring-purple-500 ring-offset-1 ring-offset-black scale-105'
-                        : 'ring-1 ring-white/10 hover:ring-white/30'
+                        ? 'bg-purple-500/10 border-purple-500'
+                        : 'border-white/10 hover:border-white/20 hover:bg-white/5'
                     }
                   `}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <SafeImage
                     src={avatar}
                     alt="Avatar option"
                     width={32}
                     height={32}
-                    className={`
-                      w-full h-full object-cover transform transition-transform duration-300
-                      ${selectedAvatar === avatar ? 'scale-110' : 'group-hover:scale-110'}
-                    `}
+                    className="w-full h-full object-cover"
                   />
                   {selectedAvatar === avatar && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-purple-500/20 backdrop-blur-sm">
-                      <CheckIcon className="w-4 h-4 text-white" />
-                    </div>
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute inset-0 flex items-center justify-center"
+                    >
+                      <CheckIcon className="w-4 h-4 text-purple-300" />
+                    </motion.div>
                   )}
                 </button>
               ))}

@@ -32,6 +32,16 @@ body {
   color: var(--text-primary);
 }
 
+@layer base {
+  input[type="text"],
+  input[type="url"],
+  input[type="email"],
+  input[type="password"],
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 @layer components {
   .card {
     @apply bg-[var(--card-bg)] backdrop-blur-lg border border-[var(--border)] rounded-xl transition-all hover:border-[var(--primary)] hover:border-opacity-30;
@@ -300,4 +310,20 @@ body {
   transition-property: color, background-color, border-color;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 200ms;
+}
+
+/* Smooth animation classes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
 }

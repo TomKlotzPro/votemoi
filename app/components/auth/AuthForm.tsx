@@ -127,25 +127,43 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
               <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
                 {loading ? (
                   <UserListSkeleton />
-                ) : (
-                  users.map((user) => (
+                ) : users.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center p-8 rounded-lg bg-black/20 text-center space-y-4 animate-fadeIn">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 flex items-center justify-center">
+                      <span className="text-2xl">👥</span>
+                    </div>
+                    <h3 className="text-xl font-semibold text-white">
+                      {fr.auth.noUsers}
+                    </h3>
+                    <p className="text-white/60">{fr.auth.createFirstUser}</p>
                     <button
-                      key={user.id}
-                      onClick={() => handleUserSelect(user)}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg bg-black/20 hover:bg-black/30 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/10 group"
+                      onClick={() => handleModeChange('create')}
+                      className="px-6 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-500/20 transition-all duration-300 transform hover:scale-105"
                     >
-                      <Image
-                        src={user.avatarUrl || ''}
-                        alt={user.name}
-                        width={40}
-                        height={40}
-                        className="rounded-full"
-                      />
-                      <span className="text-white group-hover:text-purple-400 transition-colors">
-                        {user.name}
-                      </span>
+                      {fr.auth.createNew}
                     </button>
-                  ))
+                  </div>
+                ) : (
+                  <div className="animate-fadeIn">
+                    {users.map((user) => (
+                      <button
+                        key={user.id}
+                        onClick={() => handleUserSelect(user)}
+                        className="w-full flex items-center gap-3 p-3 rounded-lg bg-black/20 hover:bg-black/30 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/10 group mb-3"
+                      >
+                        <Image
+                          src={user.avatarUrl || ''}
+                          alt={user.name}
+                          width={40}
+                          height={40}
+                          className="rounded-full"
+                        />
+                        <span className="text-white group-hover:text-purple-400 transition-colors">
+                          {user.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
             ) : (

@@ -66,9 +66,10 @@ export const fr = {
     profile: 'Profil',
   },
   auth: {
-    selectExisting: 'Sélectionner un profil existant',
-    createNew: 'Créer un nouveau profil',
-    noUsers: 'Aucun utilisateur existant',
+    selectExisting: 'Sélectionner un utilisateur',
+    createNew: 'Créer un utilisateur',
+    noUsers: 'Aucun utilisateur',
+    createFirstUser: 'Soyez le premier à créer un compte !',
     signIn: 'Se connecter',
     signOut: 'Se déconnecter',
     signUp: "S'inscrire",
