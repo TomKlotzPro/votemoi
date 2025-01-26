@@ -24,11 +24,20 @@ export async function POST(
       );
     }
 
+    // Get user by name
+    const user = await prisma.user.findUnique({
+      where: { name: userName },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     // Check if vote already exists
     const existingVote = await prisma.vote.findUnique({
       where: {
         userId_linkId: {
-          userId: userName.toLowerCase(),
+          userId: user.id,
           linkId: linkId,
         },
       },
@@ -44,8 +53,11 @@ export async function POST(
     // Create vote
     const vote = await prisma.vote.create({
       data: {
-        userId: userName.toLowerCase(),
+        userId: user.id,
         linkId: linkId,
+      },
+      include: {
+        user: true,
       },
     });
 

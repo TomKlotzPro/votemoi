@@ -24,13 +24,25 @@ export async function POST(
       );
     }
 
+    // Get user by name
+    const user = await prisma.user.findUnique({
+      where: { name: userName },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     // Delete vote if it exists
     const vote = await prisma.vote.delete({
       where: {
         userId_linkId: {
-          userId: userName.toLowerCase(),
+          userId: user.id,
           linkId: linkId,
         },
+      },
+      include: {
+        user: true,
       },
     });
 
