@@ -215,7 +215,6 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
                     <AvatarSelection
                       onSelect={setSelectedAvatar}
                       disabled={isSubmitting}
-                      selected={selectedAvatar}
                     />
                   </div>
                 </div>

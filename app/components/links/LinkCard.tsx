@@ -15,6 +15,7 @@ import VoterList from './link-card/link-card-footer/VoterList';
 import CommentButton from './link-card/link-card-footer/CommentButton';
 import CommentList from './link-card/link-card-footer/comment-list/CommentList';
 import EditLinkModal from './EditLinkModal';
+import { toast } from 'react-hot-toast';
 
 type LinkCardProps = {
   link: FormattedLink;
@@ -32,7 +33,6 @@ export default function LinkCard({
   isOwner,
   isRemoving = false,
   onVote,
-  onUnvote,
   onDelete,
 }: LinkCardProps) {
   const [showAuthForm, setShowAuthForm] = useState(false);
@@ -41,70 +41,11 @@ export default function LinkCard({
   const [voters, setVoters] = useState(link.voters);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState(link.comments);
-  const [optimisticCommentCount, setOptimisticCommentCount] = useState(link.comments.length);
   const userData = useUserDataStore((state) => state.getUserData(link.user.id));
   const syncWithUser = useUserDataStore((state) => state.syncWithUser);
   const { user, setUser } = useUser();
 
-  const handleVote = async () => {
-    try {
-      const response = await fetch(`/api/links/${link.id}/vote`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to vote');
-      }
-
-      // Update the link data with the response
-      if (data.link) {
-        link.votes = data.link.votes;
-        link.voters = data.link.voters;
-        setVoters(data.link.voters);
-      }
-      
-      onVote(link.id);
-    } catch (error) {
-      console.error('Error voting:', error);
-      throw error;
-    }
-  };
-
-  const handleUnvote = async () => {
-    try {
-      const response = await fetch(`/api/links/${link.id}/unvote`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to unvote');
-      }
-
-      // Update the link data with the response
-      if (data.link) {
-        link.votes = data.link.votes;
-        link.voters = data.link.voters;
-        setVoters(data.link.voters);
-      }
-      
-      onUnvote(link.id);
-    } catch (error) {
-      console.error('Error unvoting:', error);
-      throw error;
-    }
-  };
+  
 
   useEffect(() => {
     if (user) {
@@ -126,8 +67,8 @@ export default function LinkCard({
       link.voters = updatedVoters;
       setVoters(updatedVoters);
 
-      // Update comments data
-      link.comments = link.comments.map((comment) =>
+      // Update comments data only when user info changes
+      const updatedComments = link.comments.map((comment) =>
         comment.user.id === user.id
           ? {
               ...comment,
@@ -139,8 +80,12 @@ export default function LinkCard({
             }
           : comment
       );
+      if (JSON.stringify(link.comments) !== JSON.stringify(updatedComments)) {
+        link.comments = updatedComments;
+        setComments(updatedComments);
+      }
     }
-  }, [user, link]);
+  }, [user?.name, user?.avatarUrl]);
 
   // Sync user data on mount
   /* eslint-disable react-hooks/exhaustive-deps */
@@ -160,7 +105,7 @@ export default function LinkCard({
   }, [link.voters]);
 
   // Update voter info when user data changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (userData && voters.some((voter) => voter.id === link.user.id)) {
       const updatedVoters = voters.map((voter) => {
         if (voter.id === link.user.id) {
@@ -180,63 +125,7 @@ export default function LinkCard({
   }, [userData, link.user.id]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
-  const handleCommentSubmit = async (comment: string) => {
-    if (!user) {
-      setShowAuthForm(true);
-      return;
-    }
-
-    if (!comment.trim()) return;
-
-    try {
-      const response = await fetch(`/api/links/${link.id}/comments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: comment.trim() }),
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          setShowAuthForm(true);
-          return;
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (!data.comment || !data.comment.id) {
-        throw new Error('Invalid server response');
-      }
-
-      // Create new comment object with all required fields
-      const newCommentObj = {
-        id: data.comment.id,
-        content: data.comment.content,
-        createdAt: data.comment.createdAt,
-        user: data.comment.user,
-        userId: data.comment.userId,
-        linkId: data.comment.linkId,
-        isDeleted: false,
-      };
-
-      // Update comments array with new comment
-      link.comments = [...link.comments, newCommentObj];
-
-      // Automatically show comments when adding the first comment
-      if (!showComments) {
-        setShowComments(true);
-      }
-      setComments(prev => [...prev, newCommentObj]);
-      setOptimisticCommentCount(prev => prev + 1);
-    } catch (error) {
-      console.error('Failed to add comment:', error);
-      // You might want to show a toast or error message to the user here
-    }
-  };
+ 
 
   const handleVoteSuccess = useCallback((vote: any | null) => {
     if (!user) return;
@@ -269,10 +158,37 @@ export default function LinkCard({
     }
   }, [user]);
 
-  const handleCommentDelete = useCallback((commentId: string) => {
-    setComments(prev => prev.filter(c => c.id !== commentId));
-    setOptimisticCommentCount(prev => prev - 1);
-  }, []);
+  const handleUpdateLink = async (url: string, title: string, description: string | null) => {
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`/api/links/${link.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url, title, description }),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update link');
+      }
+
+      const data = await response.json();
+      
+      // Update local link data
+      link.url = data.link.url;
+      link.title = data.link.title;
+      link.description = data.link.description;
+      
+      setShowEditModal(false);
+    } catch (error) {
+      console.error('Failed to update link:', error);
+      toast.error(fr.errors.failedToUpdateLink);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   return (
     <motion.div
@@ -347,12 +263,34 @@ export default function LinkCard({
                   className="mt-3 overflow-hidden"
                 >
                   <CommentList
-                    comments={comments}
-                    currentUser={user}
                     linkId={link.id}
+                    initialComments={comments}
+                    currentUser={user}
                     onCommentSuccess={handleCommentSuccess}
-                    onCommentAdded={handleCommentSubmit}
-                    onCommentDelete={handleCommentDelete}
+                    createComment={async (linkId, content) => {
+                      const response = await fetch(`/api/links/${linkId}/comments`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ content }),
+                        credentials: 'include',
+                      });
+                      if (!response.ok) {
+                        throw new Error('Failed to create comment');
+                      }
+                      const data = await response.json();
+                      return data.comment;
+                    }}
+                    deleteComment={async (linkId, commentId) => {
+                      const response = await fetch(`/api/links/${linkId}/comments/${commentId}`, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                      });
+                      if (!response.ok) {
+                        throw new Error('Failed to delete comment');
+                      }
+                    }}
                   />
                 </motion.div>
               )}
@@ -365,6 +303,7 @@ export default function LinkCard({
         <EditLinkModal
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
+          onSubmit={handleUpdateLink}
           link={link}
         />
       )}

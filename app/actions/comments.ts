@@ -1,4 +1,3 @@
-import { Comment } from '@prisma/client';
 import { FormattedComment } from '../types/comment';
 
 export async function createComment(linkId: string, content: string): Promise<FormattedComment> {

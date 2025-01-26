@@ -8,7 +8,6 @@ import {
   useState,
 } from 'react';
 import AuthForm from '../components/auth/AuthForm';
-import { User } from '../types/user';
 import { getCurrentSession } from '@/app/actions/users';
 import { FormattedUser } from '@/app/types/user';
 

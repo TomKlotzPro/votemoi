@@ -1,11 +1,11 @@
 'use client';
 
 import { fr } from '@/app/translations/fr';
-import { createComment, deleteComment } from '@/app/actions/comments';
+import { useCommentsStore } from '@/app/stores/commentsStore';
 import { formatDistanceToNow } from 'date-fns';
 import { fr as dateFnsFR } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'framer-motion';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import SafeImage from '../../../../ui/SafeImage';
 import CommentInput from './CommentInput';
@@ -24,31 +24,43 @@ type Comment = {
 };
 
 type CommentListProps = {
-  comments: Comment[];
+  linkId: string;
+  initialComments: Comment[];
   currentUser: {
     id: string;
     name: string;
     avatarUrl: string;
   } | null;
-  linkId: string;
   onCommentSuccess: (comment: Comment | null) => void;
+  createComment: (linkId: string, content: string) => Promise<Comment>;
+  deleteComment: (linkId: string, commentId: string) => Promise<void>;
 };
 
 const COMMENTS_PER_PAGE = 5;
 
 export default function CommentList({
-  comments,
-  currentUser,
   linkId,
+  initialComments,
+  currentUser,
   onCommentSuccess,
+  createComment,
+  deleteComment,
 }: CommentListProps) {
   const [visibleComments, setVisibleComments] = useState(COMMENTS_PER_PAGE);
-  const [isLoading, setIsLoading] = useState(false);
-  const [optimisticComments, setOptimisticComments] = useState(comments);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
+  
+  const commentsStore = useCommentsStore();
+  const comments = commentsStore.getComments(linkId);
 
-  const handleSubmitComment = useCallback(async (content: string) => {
+  // Initialize comments in store only once on mount
+  useEffect(() => {
+    if (initialComments?.length > 0) {
+      commentsStore.setComments(linkId, initialComments);
+    }
+  }, [linkId]); // Remove initialComments and commentsStore from dependencies
+
+  const handleAddComment = useCallback(async (content: string) => {
     if (!currentUser) {
       window.dispatchEvent(new CustomEvent('show-auth-form'));
       return;
@@ -57,230 +69,229 @@ export default function CommentList({
     if (!content.trim()) return;
 
     setIsSubmitting(true);
-    // Create optimistic comment
-    const optimisticComment = {
-      id: `temp-${Date.now()}`,
-      content: content.trim(),
-      createdAt: new Date().toISOString(),
-      userId: currentUser.id,
-      user: {
-        id: currentUser.id,
-        name: currentUser.name,
-        avatarUrl: currentUser.avatarUrl,
-      },
-      linkId,
-    };
-
-    // Optimistically add the comment
-    onCommentSuccess(optimisticComment);
 
     try {
-      const newComment = await createComment(linkId, content);
-      // Replace optimistic comment with real one
+      const response = await createComment(linkId, content);
+      console.log('API Response:', response); // Debug log
+      
+      // Construct comment with fallback values
+      const newComment = {
+        id: response?.id || `${Date.now()}`,
+        content: content.trim(),
+        createdAt: new Date().toISOString(),
+        userId: currentUser.id,
+        user: currentUser,
+        linkId,
+      };
+      
+      commentsStore.addComment(linkId, newComment);
       onCommentSuccess(newComment);
+
+      // Update visible comments
+      setVisibleComments(prev => Math.max(prev, comments.length));
     } catch (error) {
       console.error('Failed to add comment:', error);
-      // Remove optimistic comment on error
-      onCommentSuccess(null);
       toast.error(fr.errors.failedToCreateComment);
     } finally {
       setIsSubmitting(false);
     }
-  }, [currentUser, linkId, onCommentSuccess]);
+  }, [linkId, currentUser, commentsStore, createComment, onCommentSuccess, comments.length]);
 
   const handleDeleteComment = useCallback(async (commentId: string) => {
-    if (!currentUser) {
-      window.dispatchEvent(new CustomEvent('show-auth-form'));
-      return;
-    }
-
-    // Store comment for potential restoration
-    const deletedComment = optimisticComments.find(c => c.id === commentId);
+    setDeletingCommentId(commentId);
     
-    // Optimistically remove comment and update UI
-    onCommentSuccess(null);
-    setOptimisticComments(prev => prev.filter(c => c.id !== commentId));
-
     try {
       await deleteComment(linkId, commentId);
+      commentsStore.removeComment(linkId, commentId);
+      onCommentSuccess(null);
     } catch (error) {
       console.error('Failed to delete comment:', error);
-      // Restore comment on error
-      if (deletedComment) {
-        onCommentSuccess(deletedComment);
-        setOptimisticComments(prev => [...prev, deletedComment]);
-      }
       toast.error(fr.errors.failedToDeleteComment);
+    } finally {
+      setDeletingCommentId(null);
     }
-  }, [currentUser, linkId, optimisticComments, onCommentSuccess]);
+  }, [linkId, commentsStore, deleteComment, onCommentSuccess]);
 
-  useEffect(() => {
-    setOptimisticComments(comments);
-  }, [comments]);
+  const handleLoadMore = useCallback(() => {
+    // When loading more, we want to show more of the older messages
+    setVisibleComments(prev => Math.min(prev + COMMENTS_PER_PAGE, comments.length));
+  }, [comments.length]);
 
-  const handleLoadMore = () => {
-    setIsLoading(true);
-    // Simulate loading for smooth transition
-    setTimeout(() => {
-      setVisibleComments((prev) => prev + COMMENTS_PER_PAGE);
-      setIsLoading(false);
-    }, 300);
-  };
+  const displayedComments = useMemo(() => {
+    // First sort by date ascending (oldest first)
+    const sortedComments = [...comments].sort((a, b) => 
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+    
+    // Then take the last COMMENTS_PER_PAGE items for most recent
+    const recentComments = sortedComments.slice(
+      Math.max(0, sortedComments.length - visibleComments)
+    );
+    
+    return recentComments;
+  }, [comments, visibleComments]);
 
-  const sortedComments = [...optimisticComments].sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  );
+  const formatCommentDate = useCallback((dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return fr.comments.justNow;
+      }
+      return formatDistanceToNow(date, {
+        addSuffix: true,
+        locale: dateFnsFR,
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return fr.comments.justNow;
+    }
+  }, []);
 
-  const displayedComments = sortedComments.slice(-visibleComments);
+  const renderComment = useCallback((comment: Comment) => {
+    const isDeleting = deletingCommentId === comment.id;
+    
+    return (
+      <motion.div
+        key={comment.id}
+        layout
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+        transition={{
+          type: "spring",
+          stiffness: 500,
+          damping: 40,
+          mass: 1
+        }}
+        className="flex space-x-3 py-2"
+      >
+        <div className="flex-shrink-0">
+          <SafeImage
+            src={comment.user.avatarUrl || 'https://api.dicebear.com/7.x/adventurer/svg?seed=fallback'}
+            alt={`${comment.user.name}'s avatar`}
+            width={32}
+            height={32}
+            className="h-8 w-8 rounded-full ring-2 ring-purple-500/20"
+          />
+        </div>
+        <div className="flex-grow min-w-0">
+          <div className="flex items-center space-x-2">
+            <span className="font-medium text-white">
+              {comment.user.name}
+            </span>
+            <span className="text-xs text-gray-400">·</span>
+            <span className="text-xs text-gray-400">
+              {formatCommentDate(comment.createdAt)}
+            </span>
+            {currentUser?.id === comment.userId && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => handleDeleteComment(comment.id)}
+                className="text-gray-400 hover:text-red-400 transition-colors"
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <svg
+                    className="animate-spin h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    role="img"
+                    aria-label={fr.comments.deleting}
+                  >
+                    <title>{fr.comments.deleting}</title>
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    role="img"
+                    aria-label={fr.comments.delete}
+                  >
+                    <title>{fr.comments.delete}</title>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                )}
+              </motion.button>
+            )}
+          </div>
+          <p className="text-sm text-gray-300 break-words">
+            {comment.content}
+          </p>
+        </div>
+      </motion.div>
+    );
+  }, [currentUser?.id, deletingCommentId, formatCommentDate, handleDeleteComment]);
 
   return (
-    <div>
-      {/* Comments list */}
-      {optimisticComments.length > 0 && (
-        <div className="px-4 pt-2 pb-2 space-y-4 border-t border-purple-500/10">
-          {/* Load More button */}
-          {optimisticComments.length > visibleComments && (
+    <div className="space-y-4">
+      {comments.length > 0 && (
+        <div className="px-4 pt-2 pb-2 border-t border-purple-500/10">
+          {comments.length > visibleComments && (
             <div className="flex justify-center">
               <motion.button
                 onClick={handleLoadMore}
-                disabled={isLoading}
-                className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600/80 to-pink-500/80 px-4 py-2 text-sm font-medium text-white/90 transition-all hover:from-purple-500/90 hover:to-pink-400/90 hover:scale-105 hover:text-white"
+                className="text-sm text-purple-400 hover:text-purple-300 transition-colors mb-4 px-4 py-2 rounded-lg hover:bg-purple-500/10"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className={`h-4 w-4 transition-transform duration-300 ${isLoading ? 'animate-spin' : ''}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  {isLoading ? (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  ) : (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 10l7-7m0 0l7 7m-7-7v18"
-                    />
-                  )}
-                </svg>
-                {fr.buttons.loadMore}
+                {fr.comments.loadMore}
               </motion.button>
             </div>
           )}
-
-          {/* Comments */}
-          <AnimatePresence mode="popLayout" initial={false}>
-            {displayedComments.map((comment) => (
-              <motion.div
-                key={comment.id}
-                layout
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 500,
-                  damping: 40,
-                  mass: 1
-                }}
-                className="flex space-x-3 py-2"
-              >
-                <div className="flex-shrink-0">
-                  <SafeImage
-                    src={comment.user.avatarUrl || 'https://api.dicebear.com/7.x/adventurer/svg?seed=fallback'}
-                    alt={comment.user.name}
-                    width={32}
-                    height={32}
-                    className="h-8 w-8 rounded-full ring-2 ring-purple-500/20"
-                  />
-                </div>
-                <div className="flex-grow min-w-0">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium text-white">
-                      {comment.user.name}
-                    </span>
-                    <span className="text-xs text-gray-400">·</span>
-                    <span className="text-xs text-gray-400">
-                      {formatDistanceToNow(new Date(comment.createdAt), {
-                        addSuffix: true,
-                        locale: dateFnsFR,
-                      })}
-                    </span>
-                    {currentUser?.id === comment.userId && (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handleDeleteComment(comment.id)}
-                        className="text-gray-400 hover:text-red-400 transition-colors"
-                        disabled={deletingCommentId === comment.id}
-                      >
-                        {deletingCommentId === comment.id ? (
-                          <svg
-                            className="animate-spin h-4 w-4"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            ></circle>
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                          </svg>
-                        ) : (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-4 w-4"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            fill="none"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        )}
-                      </motion.button>
-                    )}
-                  </div>
-                  <p className="text-gray-300 break-words">{comment.content}</p>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          <div className="space-y-4">
+            <AnimatePresence mode="popLayout">
+              {displayedComments.map(comment => (
+                <motion.div
+                  key={comment.id}
+                  layout
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 500,
+                    damping: 40,
+                    mass: 1
+                  }}
+                  className="flex space-x-3 py-2"
+                >
+                  {renderComment(comment)}
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
         </div>
       )}
-
-      {/* Comment Input */}
-      {currentUser && (
-        <div className="p-4 pt-2">
-          <CommentInput
-            userAvatarUrl={currentUser.avatarUrl}
-            userName={currentUser.name}
-            onSubmit={handleSubmitComment}
-            isSubmitting={isSubmitting}
-          />
-        </div>
-      )}
+      <CommentInput 
+        onSubmit={handleAddComment} 
+        isSubmitting={isSubmitting}
+        userAvatarUrl={currentUser?.avatarUrl || ''}
+        userName={currentUser?.name || ''}
+      />
     </div>
   );
 }

@@ -54,7 +54,6 @@ export default function VotingButton({
         throw new Error(error.message || (isVoting ? fr.errors.failedToVote : fr.errors.failedToUnvote));
       }
 
-      const data = await response.json();
       // Pass vote data to parent for voter list update
       onVoteSuccess(isVoting ? { id: user.id } : null);
     } catch (error) {
