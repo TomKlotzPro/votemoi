@@ -73,14 +73,23 @@ export default function CommentInput({
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5"
               viewBox="0 0 24 24"
-              stroke="currentColor"
               fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
               <motion.path
-                d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L11.414 12l4.293-4.293a1 1 0 111.414-1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414 1.414L8.586 12 4.293 5.707a1 1 0 010-1.414z"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
+                d="M22 2L11 13"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.5, type: "spring" }}
+              />
+              <motion.path
+                d="M22 2L15 22L11 13L2 9L22 2"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.5, type: "spring" }}
               />
             </svg>
           </motion.button>

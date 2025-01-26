@@ -64,6 +64,7 @@ export const fr = {
     send: 'Envoyer',
     showAll: 'Voir tous les commentaires',
     deleted: '[Commentaire supprimé]',
+    loadMore: 'Voir plus de commentaires',
   },
   nav: {
     home: 'Accueil',
