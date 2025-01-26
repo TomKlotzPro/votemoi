@@ -44,11 +44,18 @@ export default function ProfileDropdown({ onClose }: ProfileDropdownProps) {
 
       const nameExists = users.some(
         (u) =>
-          u.id !== user.id && u.name.toLowerCase() === trimmedName.toLowerCase()
+          u.id !== user?.id &&
+          u.name.toLowerCase() === trimmedName.toLowerCase()
       );
 
       if (nameExists) {
         setError(fr.errors.nameExists);
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!user) {
+        setError('Utilisateur non connecté');
         setIsSubmitting(false);
         return;
       }
@@ -58,14 +65,14 @@ export default function ProfileDropdown({ onClose }: ProfileDropdownProps) {
         avatarUrl: selectedAvatar,
       });
 
-      // Update local store first for immediate UI update
-      updateUserData(user.id, {
-        name: trimmedName,
-        avatarUrl: selectedAvatar,
-      });
-
-      setUser(updatedUser as FormattedUser);
-      syncWithUser(updatedUser as FormattedUser);
+      if (updatedUser) {
+        updateUserData(user.id, {
+          name: updatedUser.name,
+          avatarUrl: updatedUser.avatarUrl,
+        });
+        setUser(updatedUser as FormattedUser);
+        syncWithUser(updatedUser as FormattedUser);
+      }
       onClose();
     } catch (error) {
       console.error('Failed to update profile:', error);
@@ -165,7 +172,7 @@ export default function ProfileDropdown({ onClose }: ProfileDropdownProps) {
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting || !name.trim()}
+                disabled={isSubmitting || !name.trim() || !user}
                 className="px-2.5 py-1.5 text-xs bg-purple-500/20 text-purple-300 rounded-md hover:bg-purple-500/30 hover:text-purple-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? fr.common.saving : fr.common.save}

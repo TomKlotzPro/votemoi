@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
+/* eslint-disable no-undef */
 import { generateAvatar } from '@/app/constants/avatars';
 import { Session } from 'next-auth';
 import NextAuth from 'next-auth/next';
@@ -77,3 +78,4 @@ const handler = NextAuth({
 });
 
 export { handler as GET, handler as POST };
+/* eslint-enable no-undef */

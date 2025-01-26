@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -30,10 +30,13 @@ async function main() {
       data: {
         url: 'https://www.booking.com/hotel/fr/domaine-de-la-falaise.fr.html?aid=898224&app_hotel_id=9578639&checkin=2025-05-29&checkout=2025-06-01&from_sn=ios&group_adults=10&group_children=0&label=hotel_details-3n5HQl3%401737637885&no_rooms=1&req_adults=10&req_children=0&room1=A%2CA%2CA%2CA%2CA%2CA%2CA%2CA%2CA%2CA%2C',
         title: 'Domaine de la Falaise, Saint-Hélen, France',
-        description: 'Situé à Saint-Hélen, le Domaine de la Falaise propose une piscine chauffée. Un parking privé est disponible gratuitement sur place.',
+        description:
+          'Situé à Saint-Hélen, le Domaine de la Falaise propose une piscine chauffée. Un parking privé est disponible gratuitement sur place.',
         previewTitle: 'Domaine de la Falaise - Booking.com',
-        previewDescription: 'Découvrez le Domaine de la Falaise à Saint-Hélen. Profitez d\'une piscine chauffée et d\'un parking privé gratuit.',
-        previewImage: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2940&auto=format&fit=crop',
+        previewDescription:
+          "Découvrez le Domaine de la Falaise à Saint-Hélen. Profitez d'une piscine chauffée et d'un parking privé gratuit.",
+        previewImage:
+          'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2940&auto=format&fit=crop',
         previewFavicon: 'https://www.booking.com/favicon.ico',
         previewSiteName: 'Booking.com',
         createdById: user1.id,
@@ -61,12 +64,15 @@ async function main() {
   } catch (error) {
     console.error('Error seeding database:', error);
     throw error;
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
+/* eslint-enable @typescript-eslint/no-require-imports */

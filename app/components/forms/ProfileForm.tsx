@@ -50,7 +50,7 @@ export default function ProfileForm({ onClose }: ProfileFormProps) {
 
       setUser(updatedUser);
       onClose();
-    } catch (err) {
+    } catch {
       setError(fr.errors.generic);
     } finally {
       setIsSubmitting(false);

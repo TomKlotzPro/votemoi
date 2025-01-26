@@ -32,19 +32,21 @@ export default function Home() {
   }, []);
 
   const handleVote = async (linkId: string) => {
-    if (!user) {
-      setShowAuthForm(true);
-      return;
+    try {
+      if (!user) return;
+      await vote(linkId);
+    } catch (error) {
+      console.error('Error voting:', error);
     }
-    await vote(linkId, user.id);
   };
 
   const handleUnvote = async (linkId: string) => {
-    if (!user) {
-      setShowAuthForm(true);
-      return;
+    try {
+      if (!user) return;
+      await unvote(linkId);
+    } catch (error) {
+      console.error('Error unvoting:', error);
     }
-    await unvote(linkId, user.id);
   };
 
   const handleDelete = async (linkId: string) => {

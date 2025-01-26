@@ -1,11 +1,11 @@
 'use client';
 
+import { useUserDataStore } from '@/app/stores/userDataStore';
 import { Vote } from '@/app/types/link';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { AnimatePresence, motion } from 'framer-motion';
 import AnimatedBackground from '../ui/AnimatedBackground';
 import SafeImage from '../ui/SafeImage';
-import { useUserDataStore } from '@/app/stores/userDataStore';
 
 type VotersModalProps = {
   isOpen: boolean;
@@ -18,6 +18,10 @@ export default function VotersModal({
   onClose,
   votes,
 }: VotersModalProps) {
+  /* eslint-disable react-hooks/rules-of-hooks */
+  const voterData = useUserDataStore((state) => state.getUserData);
+  /* eslint-enable react-hooks/rules-of-hooks */
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -57,12 +61,9 @@ export default function VotersModal({
             {/* Voters List */}
             <div className="max-h-[60vh] overflow-y-auto p-4 space-y-3">
               {votes.map((vote, index) => {
-                const voterData = useUserDataStore(
-                  (state) => state.getUserData(vote.user?.id)
-                );
                 const voter = vote.user;
                 if (!voter) return null;
-                
+
                 return (
                   <motion.div
                     key={voter.id}
@@ -76,15 +77,19 @@ export default function VotersModal({
                       transition={{ type: 'spring', stiffness: 400 }}
                     >
                       <SafeImage
-                        src={voterData?.avatarUrl || voter.avatarUrl || '/default-avatar.png'}
-                        alt={voterData?.name || voter.name || 'User'}
+                        src={
+                          voterData(voter.id)?.avatarUrl ||
+                          voter.avatarUrl ||
+                          '/default-avatar.png'
+                        }
+                        alt={voterData(voter.id)?.name || voter.name || 'User'}
                         className="w-10 h-10 rounded-full border-2 border-white/10 group-hover:border-white/20 transition-colors"
                       />
                     </motion.div>
 
                     <div className="flex-1 min-w-0">
                       <h3 className="text-white font-medium truncate">
-                        {voterData?.name || voter.name}
+                        {voterData(voter.id)?.name || voter.name}
                       </h3>
                     </div>
                   </motion.div>

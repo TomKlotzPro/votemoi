@@ -5,9 +5,7 @@ import {
   createLink,
   deleteLink,
   getLinks,
-  unvote,
   updateLink,
-  vote,
 } from '@/app/actions/links';
 import { useUser } from '@/app/context/user-context';
 import { fr } from '@/app/translations/fr';
@@ -171,151 +169,122 @@ export function useLinks() {
     [user]
   );
 
-  const handleVote = useCallback(
-    async (linkId: string, userId: string) => {
+  const voteLink = useCallback(
+    async (linkId: string) => {
       try {
-        if (!user?.id) {
-          setError(fr.errors.loginRequired);
-          return;
+        if (!user) {
+          throw new Error('User not authenticated');
         }
 
-        // Optimistically update the UI
-        setLinks((prev: FormattedLink[]) =>
-          prev.map((link) =>
-            link.id === linkId
-              ? {
-                  ...link,
-                  voteCount: link.voteCount + 1,
-                  hasVoted: true,
-                  voters: [
-                    ...link.voters,
-                    {
-                      id: user.id,
-                      name: user.name || null,
-                      avatarUrl: user.avatarUrl || null,
-                    },
-                  ],
-                }
-              : link
-          )
+        // Optimistically update UI
+        setLinks((prevLinks) =>
+          prevLinks.map((link) => {
+            if (link.id === linkId) {
+              return {
+                ...link,
+                voters: [
+                  ...link.voters,
+                  {
+                    id: user.id,
+                    name: user.name || '',
+                    avatarUrl: user.avatarUrl || '',
+                  },
+                ],
+                voteCount: link.voteCount + 1,
+              };
+            }
+            return link;
+          })
         );
 
-        // Make the API call
-        const result = await vote({ linkId, userId });
-        if (result.error) {
-          // Revert the optimistic update on error
-          setLinks((prev: FormattedLink[]) =>
-            prev.map((link) =>
-              link.id === linkId
-                ? {
-                    ...link,
-                    voteCount: link.voteCount - 1,
-                    hasVoted: false,
-                    voters: link.voters.filter((voter) => voter.id !== user.id),
-                  }
-                : link
-            )
-          );
-          setError(result.error);
-          return;
-        }
-      } catch {
-        // Revert the optimistic update on error
-        setLinks((prev: FormattedLink[]) =>
-          prev.map((link) =>
-            link.id === linkId
-              ? {
+        // Make API call
+        const response = await fetch(`/api/links/${linkId}/vote`, {
+          method: 'POST',
+        });
+
+        if (!response.ok) {
+          // Revert optimistic update on error
+          setLinks((prevLinks) =>
+            prevLinks.map((link) => {
+              if (link.id === linkId) {
+                return {
                   ...link,
-                  voteCount: link.voteCount - 1,
-                  hasVoted: false,
                   voters: link.voters.filter((voter) => voter.id !== user.id),
-                }
-              : link
-          )
-        );
-        setError(fr.errors.failedToVote);
+                  voteCount: link.voteCount - 1,
+                };
+              }
+              return link;
+            })
+          );
+          throw new Error('Failed to vote link');
+        }
+      } catch (error) {
+        console.error('Error voting link:', error);
+        throw error;
       }
     },
     [user]
   );
 
-  const handleUnvote = useCallback(
-    async (linkId: string, userId: string) => {
+  const unvoteLink = useCallback(
+    async (linkId: string) => {
       try {
-        if (!user?.id) {
-          setError(fr.errors.loginRequired);
-          return;
+        if (!user) {
+          throw new Error('User not authenticated');
         }
 
-        // Optimistically update the UI
-        setLinks((prev: FormattedLink[]) =>
-          prev.map((link) =>
-            link.id === linkId
-              ? {
-                  ...link,
-                  voteCount: link.voteCount - 1,
-                  hasVoted: false,
-                  voters: link.voters.filter((voter) => voter.id !== user.id),
-                }
-              : link
-          )
+        // Optimistically update UI
+        setLinks((prevLinks) =>
+          prevLinks.map((link) => {
+            if (link.id === linkId) {
+              return {
+                ...link,
+                voters: link.voters.filter((voter) => voter.id !== user.id),
+                voteCount: link.voteCount - 1,
+              };
+            }
+            return link;
+          })
         );
 
-        // Make the API call
-        const result = await unvote({ linkId, userId });
-        if (result.error) {
-          // Revert the optimistic update on error
-          setLinks((prev: FormattedLink[]) =>
-            prev.map((link) =>
-              link.id === linkId
-                ? {
-                    ...link,
-                    voteCount: link.voteCount + 1,
-                    hasVoted: true,
-                    voters: [
-                      ...link.voters,
-                      {
-                        id: user.id,
-                        name: user.name || null,
-                        avatarUrl: user.avatarUrl || null,
-                      },
-                    ],
-                  }
-                : link
-            )
-          );
-          setError(result.error);
-          return;
-        }
-      } catch {
-        // Revert the optimistic update on error
-        setLinks((prev: FormattedLink[]) =>
-          prev.map((link) =>
-            link.id === linkId
-              ? {
+        // Make API call
+        const response = await fetch(`/api/links/${linkId}/unvote`, {
+          method: 'POST',
+        });
+
+        if (!response.ok) {
+          // Revert optimistic update on error
+          setLinks((prevLinks) =>
+            prevLinks.map((link) => {
+              if (link.id === linkId) {
+                return {
                   ...link,
-                  voteCount: link.voteCount + 1,
-                  hasVoted: true,
                   voters: [
                     ...link.voters,
                     {
                       id: user.id,
-                      name: user.name || null,
-                      avatarUrl: user.avatarUrl || null,
+                      name: user.name || '',
+                      avatarUrl: user.avatarUrl || '',
                     },
                   ],
-                }
-              : link
-          )
-        );
-        setError(fr.errors.failedToUnvote);
+                  voteCount: link.voteCount + 1,
+                };
+              }
+              return link;
+            })
+          );
+          throw new Error('Failed to unvote link');
+        }
+      } catch (error) {
+        console.error('Error unvoting link:', error);
+        throw error;
       }
     },
     [user]
   );
 
   const handleAddComment = useCallback(
-    async (linkId: string, userId: string, content: string) => {
+    async (linkId: string, content: string) => {
       try {
         if (!user?.id) {
           setError('You must be logged in to add a comment');
@@ -324,7 +293,11 @@ export function useLinks() {
 
         setIsLoading(true);
         setError(null);
-        const response = await createComment({ linkId, userId, content });
+        const response = await createComment({
+          linkId,
+          userId: user.id,
+          content,
+        });
 
         if (response.error) {
           setError(response.error);
@@ -374,8 +347,8 @@ export function useLinks() {
     addLink: handleAddLink,
     updateLink: handleUpdateLink,
     deleteLink: handleDeleteLink,
-    vote: handleVote,
-    unvote: handleUnvote,
+    vote: voteLink,
+    unvote: unvoteLink,
     addComment: handleAddComment,
   };
 }
