@@ -1,5 +1,7 @@
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
-import { cookies } from 'next/headers';
+import type { Session } from 'next-auth';
+import { getServerSession } from 'next-auth/next';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(
@@ -7,11 +9,10 @@ export async function POST(
   { params }: { params: { linkId: string } }
 ) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get('userId')?.value;
-    if (!userId) {
+    const session = (await getServerSession(authOptions)) as Session | null;
+    if (!session?.user?.name) {
       return NextResponse.json(
-        { error: 'User not authenticated', vote: null },
+        { error: 'User not authenticated' },
         { status: 401 }
       );
     }
@@ -19,25 +20,24 @@ export async function POST(
     const linkId = params.linkId;
     if (!linkId) {
       return NextResponse.json(
-        { error: 'Link ID is required', vote: null },
+        { error: 'Link ID is required' },
         { status: 400 }
       );
     }
 
-    // Delete the vote
-    const vote = await prisma.vote.deleteMany({
+    // Delete vote if it exists
+    const vote = await prisma.vote.delete({
       where: {
-        userId,
-        linkId,
+        userId_linkId: {
+          userId: session.user.name.toLowerCase(),
+          linkId: linkId,
+        },
       },
     });
 
     return NextResponse.json({ vote });
   } catch (error) {
-    console.error('Failed to delete vote:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete vote', vote: null },
-      { status: 500 }
-    );
+    console.error('Error unvoting:', error);
+    return NextResponse.json({ error: 'Failed to unvote' }, { status: 500 });
   }
 }

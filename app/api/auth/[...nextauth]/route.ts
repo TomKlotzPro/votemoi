@@ -2,7 +2,7 @@
 // @ts-nocheck
 /* eslint-disable no-undef */
 import { generateAvatar } from '@/app/constants/avatars';
-import { Session } from 'next-auth';
+import { AuthOptions, Session } from 'next-auth';
 import NextAuth from 'next-auth/next';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
@@ -21,7 +21,7 @@ declare module 'next-auth' {
   }
 }
 
-const handler = NextAuth({
+export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -47,7 +47,7 @@ const handler = NextAuth({
     }),
   ],
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as const,
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
@@ -75,7 +75,9 @@ const handler = NextAuth({
     signIn: '/auth/signin',
     error: '/auth/signin',
   },
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
 /* eslint-enable no-undef */

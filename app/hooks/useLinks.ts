@@ -200,6 +200,7 @@ export function useLinks() {
         // Make API call
         const response = await fetch(`/api/links/${linkId}/vote`, {
           method: 'POST',
+          credentials: 'include', // Important for sending session cookie
         });
 
         if (!response.ok) {
@@ -250,6 +251,7 @@ export function useLinks() {
         // Make API call
         const response = await fetch(`/api/links/${linkId}/unvote`, {
           method: 'POST',
+          credentials: 'include', // Important for sending session cookie
         });
 
         if (!response.ok) {
