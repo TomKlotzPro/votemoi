@@ -7,8 +7,8 @@ export async function POST(
   { params }: { params: { linkId: string } }
 ) {
   try {
-    const cookieStore = await cookies();
-    const userName = cookieStore.get('userName')?.value;
+    const cookieStore = cookies();
+    const userName = (await cookieStore).get('userName')?.value;
     if (!userName) {
       return NextResponse.json(
         { error: 'User not authenticated' },
@@ -27,6 +27,11 @@ export async function POST(
     // Get user by name
     const user = await prisma.user.findUnique({
       where: { name: userName },
+      select: {
+        id: true,
+        name: true,
+        avatarUrl: true,
+      },
     });
 
     if (!user) {
@@ -51,17 +56,22 @@ export async function POST(
     }
 
     // Create vote
-    const vote = await prisma.vote.create({
+    await prisma.vote.create({
       data: {
         userId: user.id,
         linkId: linkId,
       },
-      include: {
-        user: true,
-      },
     });
 
-    return NextResponse.json({ vote });
+    // Return user data for frontend
+    return NextResponse.json({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        avatarUrl: user.avatarUrl,
+      },
+    });
   } catch (error) {
     console.error('Error voting:', error);
     return NextResponse.json({ error: 'Failed to vote' }, { status: 500 });

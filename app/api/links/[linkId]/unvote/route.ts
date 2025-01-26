@@ -7,8 +7,8 @@ export async function POST(
   { params }: { params: { linkId: string } }
 ) {
   try {
-    const cookieStore = await cookies();
-    const userName = cookieStore.get('userName')?.value;
+    const cookieStore = cookies();
+    const userName = (await cookieStore).get('userName')?.value;
     if (!userName) {
       return NextResponse.json(
         { error: 'User not authenticated' },
@@ -27,6 +27,11 @@ export async function POST(
     // Get user by name
     const user = await prisma.user.findUnique({
       where: { name: userName },
+      select: {
+        id: true,
+        name: true,
+        avatarUrl: true,
+      },
     });
 
     if (!user) {
@@ -34,19 +39,17 @@ export async function POST(
     }
 
     // Delete vote if it exists
-    const vote = await prisma.vote.delete({
+    await prisma.vote.delete({
       where: {
         userId_linkId: {
           userId: user.id,
           linkId: linkId,
         },
       },
-      include: {
-        user: true,
-      },
     });
 
-    return NextResponse.json({ vote });
+    // Return success response
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error unvoting:', error);
     return NextResponse.json({ error: 'Failed to unvote' }, { status: 500 });
