@@ -1,5 +1,6 @@
 'use client';
 
+import { useUser } from '@/app/context/user-context';
 import { useUserDataStore } from '@/app/stores/userDataStore';
 import { fr } from '@/app/translations/fr';
 import { FormattedLink } from '@/app/types/link';
@@ -12,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { AnimatePresence, motion } from 'framer-motion';
 import React from 'react';
+import AuthForm from '../auth/AuthForm';
 import SafeImage from '../ui/SafeImage';
 import EditLinkModal from './EditLinkModal';
 
@@ -37,10 +39,12 @@ export default function LinkCard({
   onDelete,
 }: LinkCardProps) {
   const [showEditModal, setShowEditModal] = React.useState(false);
+  const [showAuthForm, setShowAuthForm] = React.useState(false);
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [voters, setVoters] = React.useState(link.voters);
   const userData = useUserDataStore((state) => state.getUserData(link.user.id));
   const syncWithUser = useUserDataStore((state) => state.syncWithUser);
+  const { user, setUser } = useUser();
 
   // Sync user data on mount
   /* eslint-disable react-hooks/exhaustive-deps */
@@ -100,6 +104,11 @@ export default function LinkCard({
   const handleVoteClick = async (
     _event: React.MouseEvent<HTMLButtonElement>
   ) => {
+    if (!user) {
+      setShowAuthForm(true);
+      return;
+    }
+
     if (isVoted) {
       await onUnvote();
     } else {
@@ -546,6 +555,18 @@ export default function LinkCard({
           </div>
         </motion.div>
       </motion.article>
+
+      {showAuthForm && (
+        <AuthForm
+          onSuccess={(newUser) => {
+            setUser(newUser);
+            setShowAuthForm(false);
+            // Try to vote after successful login
+            onVote();
+          }}
+          onClose={() => setShowAuthForm(false)}
+        />
+      )}
 
       {showEditModal && (
         <EditLinkModal
