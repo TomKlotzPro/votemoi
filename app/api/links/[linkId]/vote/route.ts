@@ -1,7 +1,5 @@
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
-import type { Session } from 'next-auth';
-import { getServerSession } from 'next-auth/next';
+import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(
@@ -9,8 +7,9 @@ export async function POST(
   { params }: { params: { linkId: string } }
 ) {
   try {
-    const session = (await getServerSession(authOptions)) as Session | null;
-    if (!session?.user?.name) {
+    const cookieStore = await cookies();
+    const userName = cookieStore.get('userName')?.value;
+    if (!userName) {
       return NextResponse.json(
         { error: 'User not authenticated' },
         { status: 401 }
@@ -29,7 +28,7 @@ export async function POST(
     const existingVote = await prisma.vote.findUnique({
       where: {
         userId_linkId: {
-          userId: session.user.name.toLowerCase(),
+          userId: userName.toLowerCase(),
           linkId: linkId,
         },
       },
@@ -45,7 +44,7 @@ export async function POST(
     // Create vote
     const vote = await prisma.vote.create({
       data: {
-        userId: session.user.name.toLowerCase(),
+        userId: userName.toLowerCase(),
         linkId: linkId,
       },
     });

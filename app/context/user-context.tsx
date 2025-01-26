@@ -45,8 +45,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const handleSetUser = useCallback((newUser: User | null) => {
     if (newUser) {
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(newUser));
+      // Set cookie for API authentication
+      document.cookie = `userName=${newUser.name}; path=/`;
     } else {
       localStorage.removeItem(USER_STORAGE_KEY);
+      // Remove cookie when user logs out
+      document.cookie =
+        'userName=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     }
     setUser(newUser);
   }, []);
