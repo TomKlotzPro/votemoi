@@ -5,5 +5,15 @@
   "outputDirectory": ".next",
   "env": {
     "NODE_OPTIONS": "--experimental-fetch"
-  }
+  },
+  "routes": [
+    {
+      "src": "/api/links/([^/]+)/vote",
+      "dest": "/api/links/$1/vote"
+    },
+    {
+      "src": "/api/links/([^/]+)/unvote",
+      "dest": "/api/links/$1/unvote"
+    }
+  ]
 }
