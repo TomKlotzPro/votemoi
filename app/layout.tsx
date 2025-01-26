@@ -1,7 +1,7 @@
 import ClientLayout from '@/app/components/layout/ClientLayout';
 import Navigation from '@/app/components/layout/Navigation';
 import { Providers } from '@/app/components/providers/Providers';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import React from 'react';
 import { Toaster } from 'react-hot-toast';
@@ -14,7 +14,18 @@ import { preloadLinks } from './utils/link-preloader';
 
 const inter = Inter({ subsets: ['latin'] });
 
+export const viewport: Viewport = {
+  themeColor: '#1e1e38',
+  colorScheme: 'dark',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || 'https://votemoi.vercel.app'
+  ),
   title: 'VoteMoi - Partagez et votez pour vos liens préférés',
   description:
     'VoteMoi est une plateforme sociale permettant de partager et voter pour vos liens préférés dans une ambiance synthwave unique.',
@@ -23,9 +34,11 @@ export const metadata: Metadata = {
   creator: 'Tom Klotz',
   publisher: 'VoteMoi',
   robots: 'index, follow',
-  themeColor: '#1e1e38',
-  colorScheme: 'dark',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
+  manifest: '/site.webmanifest',
   openGraph: {
     type: 'website',
     locale: 'fr_FR',
@@ -50,24 +63,6 @@ export const metadata: Metadata = {
       'VoteMoi est une plateforme sociale permettant de partager et voter pour vos liens préférés dans une ambiance synthwave unique.',
     images: ['/og-image.png'],
   },
-  icons: {
-    icon: [
-      { url: '/favicon.ico' },
-      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
-      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
-    ],
-    apple: [
-      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
-    ],
-    other: [
-      {
-        rel: 'mask-icon',
-        url: '/safari-pinned-tab.svg',
-        color: '#1e1e38',
-      },
-    ],
-  },
-  manifest: '/site.webmanifest',
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {

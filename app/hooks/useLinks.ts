@@ -217,6 +217,13 @@ export function useLinks() {
               return link;
             })
           );
+
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to vote link');
+        }
+
+        const data = await response.json();
+        if (!data.success) {
           throw new Error('Failed to vote link');
         }
       } catch (error) {
@@ -275,6 +282,13 @@ export function useLinks() {
               return link;
             })
           );
+
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to unvote link');
+        }
+
+        const data = await response.json();
+        if (!data.success) {
           throw new Error('Failed to unvote link');
         }
       } catch (error) {

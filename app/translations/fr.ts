@@ -57,7 +57,13 @@ export const fr = {
     vote: 'Voter',
     unvote: 'Retirer le vote',
     voted: 'Voté',
-    voters: 'Personnes ayant voté',
+    voters: 'Votants',
+  },
+  comments: {
+    placeholder: 'Écrivez un commentaire...',
+    send: 'Envoyer',
+    showAll: 'Voir tous les commentaires',
+    deleted: '[Commentaire supprimé]',
   },
   nav: {
     home: 'Accueil',
