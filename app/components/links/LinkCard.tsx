@@ -46,7 +46,9 @@ export default function LinkCard({
   /* eslint-disable react-hooks/exhaustive-deps */
   React.useEffect(() => {
     syncWithUser({
-      ...link.user,
+      id: link.user.id,
+      name: link.user.name || '',
+      avatarUrl: link.user.avatarUrl || '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
