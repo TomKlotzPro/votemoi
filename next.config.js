@@ -25,35 +25,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  async redirects() {
-    return [
-      // Redirect www to non-www
-      {
-        source: '/:path*',
-        has: [
-          {
-            type: 'host',
-            value: 'www.votemoi.app',
-          },
-        ],
-        permanent: true,
-        destination: 'https://votemoi.app/:path*',
-      },
-      // Redirect HTTP to HTTPS
-      {
-        source: '/:path*',
-        has: [
-          {
-            type: 'header',
-            key: 'x-forwarded-proto',
-            value: 'http',
-          },
-        ],
-        permanent: true,
-        destination: 'https://votemoi.app/:path*',
-      },
-    ];
-  },
   headers: async () => {
     return [
       {
@@ -62,10 +33,6 @@ const nextConfig = {
           {
             key: 'X-DNS-Prefetch-Control',
             value: 'on',
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains',
           },
           {
             key: 'X-Frame-Options',
@@ -77,7 +44,7 @@ const nextConfig = {
           },
           {
             key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
+            value: 'strict-origin-when-cross-origin',
           },
         ],
       },
