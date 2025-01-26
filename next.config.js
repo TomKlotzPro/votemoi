@@ -16,7 +16,7 @@ const nextConfig = {
   },
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3000', 'votemoi.app'],
+      allowedOrigins: ['localhost:3000', 'votemoi.app', 'www.votemoi.app'],
     },
   },
   eslint: {
@@ -27,6 +27,19 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // Redirect www to non-www
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'www.votemoi.app',
+          },
+        ],
+        permanent: true,
+        destination: 'https://votemoi.app/:path*',
+      },
+      // Redirect HTTP to HTTPS
       {
         source: '/:path*',
         has: [
