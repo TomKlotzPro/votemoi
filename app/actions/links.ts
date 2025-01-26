@@ -91,10 +91,24 @@ export async function getLinks(
           include: {
             user: true,
           },
+          where: {
+            user: {
+              id: {
+                not: null,
+              },
+            },
+          },
         },
         votes: {
           include: {
             user: true,
+          },
+          where: {
+            user: {
+              id: {
+                not: null,
+              },
+            },
           },
         },
       },
