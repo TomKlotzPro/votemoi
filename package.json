@@ -12,14 +12,14 @@
     "start": "NODE_OPTIONS='--experimental-fetch' next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "prisma:seed": "npx ts-node prisma/seed.ts",
+    "prisma:seed": "npx tsx prisma/seed.ts",
     "postinstall": "prisma generate",
     "vercel-build": "node vercel-build.cjs",
     "prepare": "husky install",
     "generate-icons": "node scripts/generate-icons.js"
   },
   "prisma": {
-    "seed": "npx ts-node prisma/seed.ts"
+    "seed": "npx tsx prisma/seed.ts"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -48,6 +48,7 @@
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.5.1",
     "tailwind-merge": "^2.2.0",
+    "tsx": "^4.19.2",
     "undici": "^6.6.0",
     "zustand": "^5.0.3"
   },

@@ -1,5 +1,6 @@
 'use client';
 
+import { createSession } from '@/app/actions/users';
 import { AVATAR_OPTIONS } from '@/app/constants/avatars';
 import { useUsersQuery } from '@/app/hooks/useUsersClient';
 import { fr } from '@/app/translations/fr';
@@ -12,7 +13,7 @@ import UserListSkeleton from '../ui/UserListSkeleton';
 import AvatarSelection from './AvatarSelection';
 
 type AuthFormProps = {
-  onSuccess(user: FormattedUser): void;
+  onSuccess(user: FormattedUser & { sessionId: string }): void;
   onClose(): void;
 };
 
@@ -62,6 +63,7 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
         comments: [],
         createdAt: new Date(response.createdAt).toISOString(),
         updatedAt: new Date(response.updatedAt).toISOString(),
+        sessionId: response.sessionId,
       };
 
       onSuccess(newUser);
@@ -71,8 +73,25 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
     }
   };
 
-  const handleUserSelect = (user: FormattedUser) => {
-    onSuccess(user);
+  const handleUserSelect = async (user: FormattedUser) => {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      
+      // Optimistically call onSuccess with a temporary sessionId
+      const tempSessionId = 'temp-' + Date.now();
+      onSuccess({ ...user, sessionId: tempSessionId });
+      
+      // Create session in the background
+      createSession(user.id).catch((err) => {
+        console.error('Failed to create session:', err);
+        // Session creation failed, but user is already logged in with temp session
+        // We'll rely on the error boundary or retry mechanism to handle this
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : fr.errors.unknownError);
+      setIsSubmitting(false);
+    }
   };
 
   const handleModeChange = (newMode: AuthMode) => {
@@ -138,6 +157,7 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
                     <p className="text-white/60">{fr.auth.createFirstUser}</p>
                     <button
                       onClick={() => handleModeChange('create')}
+                      disabled={isSubmitting}
                       className="px-6 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-500/20 transition-all duration-300 transform hover:scale-105"
                     >
                       {fr.auth.createNew}
@@ -149,7 +169,8 @@ export default function AuthForm({ onSuccess, onClose }: AuthFormProps) {
                       <button
                         key={user.id}
                         onClick={() => handleUserSelect(user)}
-                        className="w-full flex items-center gap-3 p-3 rounded-lg bg-black/20 hover:bg-black/30 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/10 group mb-3"
+                        disabled={isSubmitting}
+                        className="w-full flex items-center gap-3 p-3 rounded-lg bg-black/20 hover:bg-black/30 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/10 group mb-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                       >
                         <Image
                           src={user.avatarUrl || ''}

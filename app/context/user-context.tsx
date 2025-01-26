@@ -8,11 +8,12 @@ import {
   useState,
 } from 'react';
 import AuthForm from '../components/auth/AuthForm';
-import { User } from '../types/user';
+import { getCurrentSession } from '@/app/actions/users';
+import { FormattedUser } from '@/app/types/user';
 
 type UserContextType = {
-  user: User | null;
-  setUser: (user: User | null) => void;
+  user: (FormattedUser & { sessionId: string }) | null;
+  setUser: (user: (FormattedUser & { sessionId: string }) | null) => void;
   showAuthForm: () => void;
   hideAuthForm: () => void;
   isAuthFormVisible: boolean;
@@ -23,38 +24,86 @@ type UserContextType = {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 const USER_STORAGE_KEY = 'votemoi_user';
+const SESSION_STORAGE_KEY = 'votemoi_session';
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setInternalUser] = useState<(FormattedUser & { sessionId: string }) | null>(null);
   const [isAuthFormVisible, setIsAuthFormVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  // Initialize user from localStorage
+
   useEffect(() => {
-    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-    if (storedUser) {
+    const checkSession = async () => {
       try {
-        setUser(JSON.parse(storedUser));
+        const session = await getCurrentSession();
+        if (session) {
+          setInternalUser({
+            ...session.user,
+            sessionId: session.id,
+            links: [],
+            votes: [],
+            comments: [],
+          });
+        } else {
+          const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+          const storedSession = localStorage.getItem(SESSION_STORAGE_KEY);
+          
+          if (storedUser && storedSession) {
+            try {
+              const parsedUser = JSON.parse(storedUser);
+              const parsedSession = JSON.parse(storedSession);
+              
+              // Check if session is expired
+              if (new Date(parsedSession.expiresAt) > new Date()) {
+                setInternalUser(parsedUser);
+              } else {
+                // Clear expired session
+                handleSetUser(null);
+              }
+            } catch (error) {
+              console.error('Failed to parse stored user/session:', error);
+              handleSetUser(null);
+            }
+          }
+        }
       } catch (error) {
-        console.error('Failed to parse stored user:', error);
-        localStorage.removeItem(USER_STORAGE_KEY);
+        console.error('Failed to check session:', error);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+
+    checkSession();
   }, []);
 
-  const handleSetUser = useCallback((newUser: User | null) => {
-    if (newUser) {
+  const handleSetUser = useCallback((newUser: (FormattedUser & { sessionId: string }) | null, sessionId?: string) => {
+    if (newUser && sessionId) {
+      const session = {
+        id: sessionId,
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      };
+      
+      // Store user and session in localStorage
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(newUser));
-      // Set cookie for API authentication
-      document.cookie = `userName=${newUser.name}; path=/`;
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
     } else {
+      // Clear storage
       localStorage.removeItem(USER_STORAGE_KEY);
-      // Remove cookie when user logs out
-      document.cookie =
-        'userName=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      localStorage.removeItem(SESSION_STORAGE_KEY);
     }
-    setUser(newUser);
+    setInternalUser(newUser);
   }, []);
+
+  const setUser = useCallback((newUser: (FormattedUser & { sessionId: string }) | null) => {
+    if (newUser) {
+      handleSetUser(newUser);
+    } else {
+      handleSetUser(null);
+      // Clear session cookie
+      document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      // Trigger a page refresh to clear all user-specific states
+      window.location.reload();
+    }
+  }, [handleSetUser]);
 
   const showAuthForm = useCallback(() => {
     setIsAuthFormVisible(true);
@@ -65,19 +114,17 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const handleAuthSuccess = useCallback(
-    (authenticatedUser: User) => {
-      handleSetUser(authenticatedUser);
+    (authenticatedUser: (FormattedUser & { sessionId: string }) & { sessionId: string }) => {
+      handleSetUser(authenticatedUser, authenticatedUser.sessionId);
       hideAuthForm();
     },
     [handleSetUser, hideAuthForm]
   );
 
   const logout = useCallback(() => {
-    localStorage.removeItem(USER_STORAGE_KEY);
     setUser(null);
-  }, []);
+  }, [setUser]);
 
-  // Don't render anything until we've checked localStorage
   if (isLoading) {
     return null;
   }
@@ -86,7 +133,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     <UserContext.Provider
       value={{
         user,
-        setUser: handleSetUser,
+        setUser,
         showAuthForm,
         hideAuthForm,
         isAuthFormVisible,
