@@ -91,35 +91,28 @@ export async function getLinks(
           include: {
             user: true,
           },
-          where: {
-            user: {
-              id: {
-                not: null,
-              },
-            },
-          },
         },
         votes: {
           include: {
             user: true,
           },
-          where: {
-            user: {
-              id: {
-                not: null,
-              },
-            },
-          },
         },
       },
     });
 
-    const formattedLinks = links.map((link) =>
-      formatLink({
+    const formattedLinks = links.map((link) => {
+      const filteredVotes =
+        link.votes?.filter((vote) => vote.user !== null) ?? [];
+      const filteredComments =
+        link.comments?.filter((comment) => comment.user !== null) ?? [];
+
+      return formatLink({
         ...link,
+        votes: filteredVotes,
+        comments: filteredComments,
         currentUserId: userId,
-      })
-    );
+      });
+    });
 
     return { links: formattedLinks };
   } catch (error) {
